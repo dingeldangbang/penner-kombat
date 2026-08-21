@@ -110,19 +110,23 @@ Assets/
 
 ---
 
-## 🚀 So startest du (Unity-Setup)
+## 🚀 So startest du (5 Minuten bis zum ersten Kampf)
 
-1. **Unity Hub** → neues Projekt **„3D (URP)"** mit **Unity 2023 LTS** oder **Unity 6**.
-2. `Assets/Scripts` aus diesem Repo in das Projekt kopieren.
-3. **Package Manager** aktivieren:
-   - **Input System** (`com.unity.inputsystem`) — Voraussetzung für `FighterInput`.
-   - **TextMeshPro** (TMP Essentials importieren).
-4. **Layers/Tags** anlegen: `Ground`, `Fighter`, `Interactable`, `Projectile`. Die `enemyLayer`-Masken der Kämpfer auf die `Fighter`-Layer setzen.
-5. **Eingabe-Modus** in *Player Settings → Active Input Handling* auf **„Both"** (oder „Input System Package").
-6. **Minimal-Szene aufbauen** (siehe `docs/SETUP.md`): Ebene + `Bootstrapper`-Object.
-7. Kontroll-Build starten.
+1. **Unity Hub → Add** → diesen Repo-Ordner wählen. `Packages/manifest.json` und
+   `ProjectSettings/` liegen bei, das Repo öffnet direkt als Unity-Projekt
+   (Zielversion **2022.3 LTS**, neuere Versionen migrieren automatisch).
+2. Beim ersten Öffnen richtet sich das Projekt selbst ein (Tags, Layer, `PK_URP`,
+   TMP-Ressourcen, *Active Input Handling = Both*). Falls Unity einen Neustart
+   verlangt: zulassen.
+3. Menü **`Tools → Penner Kombat → ▶ Alles einrichten und spielen`** —
+   erzeugt Szene, Boden, Wände, HUD, FighterDatabase, 9 Platzhalter-Kämpfer und startet Play.
+4. Kämpfen: **P1 = WASD · J leicht · K schwer · Shift Block · Space Sprung · F4 Frame-Daten.**
 
-> Details, Prefab-Anforderungen und Empfehlungen: **[docs/SETUP.md](docs/SETUP.md)**
+Ohne Modelle sind die Kämpfer Kapseln — Bewegung, Hitboxen, Combos, KI, Runden,
+HUD und alle Effekte laufen trotzdem vollständig.
+
+> Schritt-für-Schritt, Fehlerbehebung und der Weg zu echten Modellen:
+> **[docs/SPIELEN.md](docs/SPIELEN.md)** · Prefab-Details: **[docs/SETUP.md](docs/SETUP.md)**
 
 ## 📚 Dokumentation
 
@@ -134,6 +138,7 @@ Assets/
 | [docs/TROPHIES.md](docs/TROPHIES.md) | Alle 56 Trophäen |
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
+| [docs/SPIELEN.md](docs/SPIELEN.md) | **Vom Repo zum laufenden Kampf** — MVP-Anleitung, Steuerung, Fehlerbehebung |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
 | [docs/EXTRAS.md](docs/EXTRAS.md) | Arena-Zerstörung, Waffen, Power-Ups, Konter, Ragdoll, Bosse, Crowd, Beat-Sync |
 | [docs/3D.md](docs/3D.md) | 3D-Kampfraum: Kameramodi, 360°-Bewegung, Rolle, 3D-Hitboxen, Arena-Objekte |

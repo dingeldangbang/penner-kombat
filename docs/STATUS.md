@@ -41,11 +41,11 @@ Prefabs oder Sprites nötig (siehe `docs/VISUALS.md`).
 
 | # | Fehlt | Warum kein Skript hilft | Priorität |
 |---|---|---|---|
-| 1 | **Unity-Projekt selbst** (`ProjectSettings/`, `Packages/manifest.json`) | Erzeugt Unity beim Projektanlegen | 🔴 |
+| ~~1~~ | ~~**Unity-Projekt selbst**~~ | **erledigt**: `Packages/manifest.json` + `ProjectSettings/` liegen im Repo | ✅ |
 | 2 | **Charakter-Modelle + Rigs** (9×) | Art-Asset; Proportionen stehen in `docs/DESIGN.md` | 🔴 |
 | 3 | **Animationen** (Idle, Walk, Attacks, Block, Jump, HitReact, Death, Specials, Fatality) | Art-Asset; Frame-Daten liegen in `docs/MOVESETS.md` | 🔴 |
 | 4 | **Animator-Controller** mit den Parametern `Walk`, `Block`, `Jump`, `LightAttack`, `HeavyAttack`, `HitReact`, `Death` | Muss im Editor verdrahtet werden — Namen sind im Code fix | 🔴 |
-| 5 | **Charakter-Prefabs** (Capsule + Rigidbody + Collider + `attackPoint` + Character-Script) | Editor-Arbeit, danach in `FighterDatabase` zuweisen | 🔴 |
+| ~~5~~ | ~~**Charakter-Prefabs**~~ | **erledigt für Platzhalter**: `FighterFactory` baut sie zur Laufzeit, `PkQuickStart` als Prefabs. Echte Modell-Prefabs fehlen weiterhin | 🟡 |
 | 6 | **Szenen** `MainMenu`, `Arena`, `StoryMode` | `Arena` erzeugt der Setup-Wizard, die anderen zwei nicht | 🟡 |
 | 7 | **Audio** (31 Tracks, SFX, Voice) | Siehe `docs/SOUNDTRACK.md`; ohne Clips greifen die prozeduralen Fallback-Pings | 🟡 |
 | 8 | **Arena-Meshes** (Bierkästen, Wäscheleine, Neonschild) | `ArenaProp` funktioniert mit Platzhalter-Würfeln; Optik fehlt | 🟡 |
@@ -76,8 +76,9 @@ hängt alles an Punkt 1–5 der Tabelle oben, und das ist Editor-/Art-Arbeit.
 
 ## 🚀 Empfohlene Reihenfolge
 
-1. Unity-Projekt (URP) anlegen, `Assets/Scripts`, `Assets/Shaders`, `Assets/Plugins` hineinkopieren
-2. `Tools → Penner Kombat → Setup-Szene erzeugen`
-3. **Ein** Charakter-Prefab bauen (Capsule reicht) und in `FighterDatabase` eintragen
-4. Play drücken → `TestRunner`-Log prüfen (✅/❌) → Fehler an mich zurückmelden
-5. Erst danach Art, Audio und die restlichen acht Prefabs
+1. Repo in Unity Hub öffnen (Projektdateien liegen jetzt bei)
+2. `Tools → Penner Kombat → ▶ Alles einrichten und spielen`
+3. Play läuft → Konsolen-Fehlerliste + `TestRunner`-Log an mich zurückmelden
+4. Erst danach Art, Audio und echte Charakter-Prefabs
+
+Details: **[SPIELEN.md](SPIELEN.md)**

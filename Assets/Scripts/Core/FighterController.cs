@@ -108,9 +108,26 @@ namespace PennerKombat
         protected virtual void Awake()
         {
             rb = GetComponent<Rigidbody>();
+            if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.FreezeRotation;
             anim = GetComponent<Animator>();
             currentHP = maxHP;
+
+            // --- Spielbarkeit ohne Handarbeit (docs/SPIELEN.md) ---
+            // Leerer LayerMask hieße: kein Angriff trifft jemals. Deshalb Fallback.
+            if (enemyLayer.value == 0) enemyLayer = FighterFactory.DefaultEnemyMask();
+            if (GetComponent<Collider>() == null)
+            {
+                var cap = gameObject.AddComponent<CapsuleCollider>();
+                cap.height = 1.8f; cap.radius = 0.4f; cap.center = new Vector3(0f, 0.9f, 0f);
+            }
+            if (attackPoint == null)
+            {
+                var ap = new GameObject("AttackPoint");
+                ap.transform.SetParent(transform, false);
+                ap.transform.localPosition = new Vector3(0f, 1.1f, 0.9f);
+                attackPoint = ap.transform;
+            }
 
             commandInput = GetComponent<CommandInput>();
             if (commandInput == null) commandInput = gameObject.AddComponent<CommandInput>();

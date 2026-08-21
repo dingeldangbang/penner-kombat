@@ -1,6 +1,31 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Spielbar ohne Handarbeit (MVP)
+- **Unity-Projektdateien ergänzt**: `Packages/manifest.json` (URP, Input System, TMP, uGUI),
+  `ProjectSettings/ProjectVersion.txt` und `TagManager.asset` (Tags `Ground`/`Fighter`/
+  `Interactable`/`Projectile`, gleichnamige Layer). Das Repo öffnet damit direkt als Unity-Projekt.
+- **`Core/FighterFactory.cs`**: baut komplette, spielbare Kämpfer aus Code (Kapsel-Körper mit Kopf,
+  Armen und Blickrichtung, Rigidbody, Collider, AttackPoint, Charakterskript, Palettenfarben).
+  Greift immer dann, wenn in der `FighterDatabase` kein echtes Prefab hinterlegt ist.
+- **`UI/HudBuilder.cs`**: HUD zur Laufzeit — HP-Balken, Fatal-Blow-Leisten, Timer, Rundenanzeige,
+  Combo-Texte, Namen, Steuerungs-Hinweis, Ergebnis-Panel mit Revanche-Knopf, EventSystem.
+- **`Bootstrapper`** legt bei Bedarf Boden (30×30 m) und vier Begrenzungswände an und erzeugt HUD
+  sowie Frame-Daten-Overlay.
+- **`GameManager.EnsureDependencies()`**: Datenbank, Spawn-Punkte, HUD, Kamera, Arena und Audio
+  werden selbst beschafft — ein Match startet auch in einer nackten Szene.
+- **Treffer-Fix**: ein leerer `enemyLayer` bedeutete bisher, dass *kein* Angriff jemals trifft.
+  `FighterController.Awake()` setzt jetzt einen sinnvollen Fallback und legt fehlenden Collider,
+  Rigidbody und AttackPoint an.
+- **`Training/FrameDataOverlay.cs`** (Taste **F4**): Startup/Active/Recovery in Frames, Block-,
+  Rollen- und i-Frame-Status, Combo, Abstand, Fatal-Blow-Stand; Hitbox-Gizmos in der Szenenansicht.
+- **`Editor/PkProjectSetup.cs`**: richtet Tags, Layer, Define `PK_URP`, TMP-Grundressourcen und
+  *Active Input Handling = Both* beim ersten Öffnen automatisch ein.
+- **`Editor/PkQuickStart.cs`**: `Tools → Penner Kombat → ▶ Alles einrichten und spielen` —
+  Projekt-Setup, Szene, 9 Platzhalter-Prefabs inkl. Material-Assets, Datenbank-Zuweisung, Play.
+  Roster-Einträge werden als Unter-Assets gespeichert (überlebten vorher keinen Editor-Neustart).
+- **Neue Doku** `docs/SPIELEN.md` (MVP-Anleitung, Steuerungstabelle, Fehlerbehebung, Modell-Umstieg).
+
 ### Gameplay-Visuals, Effekte & Combo-Feedback (Cover-Look)
 - **Neue VFX-Schicht** `Assets/Scripts/VFX/` — komplett prozedural, keine Art-Assets nötig:
   `PennerPalette` (Farbpalette vom Cover), `VFXManager` (HitSpark/Blut/Schockwelle/GoldKrit/Staub),

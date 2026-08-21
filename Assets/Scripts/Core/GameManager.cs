@@ -52,9 +52,51 @@ namespace PennerKombat
 
         void Start()
         {
+            EnsureDependencies();
+
             // Standard: Le Binde (Spieler) vs. Mojo Bob (KI) für schnellen Test.
             if (player1 == null && !matchEnded)
                 StartVersusFight(0, 2);
+        }
+
+        /// <summary>
+        /// Sorgt dafür, dass ein Match auch dann startet, wenn in der Szene
+        /// nichts von Hand verdrahtet wurde: Datenbank, Spawn-Punkte, HUD,
+        /// Kamera, Arena und Audio werden bei Bedarf selbst erzeugt.
+        /// (docs/SPIELEN.md)
+        /// </summary>
+        public void EnsureDependencies()
+        {
+            if (database == null)
+            {
+                database = Resources.Load<FighterDatabase>("FighterDatabase");
+                if (database == null)
+                {
+                    database = ScriptableObject.CreateInstance<FighterDatabase>();
+                    Debug.Log("[Penner Kombat] Keine FighterDatabase gefunden — Standard-Roster wird zur Laufzeit erzeugt.");
+                }
+            }
+            if (database.fighters.Count == 0) database.EnsureDefaultRoster();
+
+            if (spawnPoint1 == null)
+            {
+                var go = new GameObject("SpawnPoint1");
+                go.transform.position = new Vector3(-4f, 0.1f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                spawnPoint1 = go.transform;
+            }
+            if (spawnPoint2 == null)
+            {
+                var go = new GameObject("SpawnPoint2");
+                go.transform.position = new Vector3(4f, 0.1f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
+                spawnPoint2 = go.transform;
+            }
+
+            if (uiManager == null) uiManager = UIManager.Instance != null ? UIManager.Instance : HudBuilder.Ensure();
+            if (cameraController == null) cameraController = CameraController.Instance;
+            if (arenaManager == null) arenaManager = ArenaManager.Instance;
+            if (audioManager == null) audioManager = AudioManager.Instance;
         }
 
         // ===== Öffentliche Einstiegspunkte =====
@@ -92,6 +134,7 @@ namespace PennerKombat
 
         void SpawnFighters(int p1Idx, int p2Idx, bool isAI)
         {
+            EnsureDependencies();
             if (database == null || database.fighters.Count == 0)
             {
                 Debug.LogError("GameManager: keine FighterDatabase konfiguriert.");
@@ -104,15 +147,17 @@ namespace PennerKombat
             if (player1 != null) Destroy(player1.gameObject);
             if (player2 != null) Destroy(player2.gameObject);
 
-            GameObject p1Obj = Instantiate(d1.prefab, spawnPoint1.position, spawnPoint1.rotation);
+            GameObject p1Obj = SpawnOne(d1, spawnPoint1);
             player1 = p1Obj.GetComponent<FighterController>();
             player1.playerIndex = 0;
             player1.isAI = false;
 
-            GameObject p2Obj = Instantiate(d2.prefab, spawnPoint2.position, spawnPoint2.rotation);
+            GameObject p2Obj = SpawnOne(d2, spawnPoint2);
             player2 = p2Obj.GetComponent<FighterController>();
             player2.playerIndex = 1;
             player2.isAI = isAI;
+
+            if (uiManager != null) uiManager.SetNames(player1.displayName, player2.displayName);
 
             // Events verdrahten
             player1.OnDeath += OnFighterDeath;
@@ -131,6 +176,26 @@ namespace PennerKombat
             }
 
             OnFightersSpawned?.Invoke(player1, player2);
+        }
+
+        /// <summary>
+        /// Spawnt einen Kämpfer: echtes Prefab, falls hinterlegt — sonst den
+        /// prozeduralen Platzhalter aus <see cref="FighterFactory"/>.
+        /// </summary>
+        GameObject SpawnOne(FighterConfig cfg, Transform spawn)
+        {
+            if (cfg.prefab != null)
+            {
+                var go = Instantiate(cfg.prefab, spawn.position, spawn.rotation);
+                if (go.GetComponent<FighterController>() == null)
+                {
+                    Debug.LogWarning($"[Penner Kombat] Prefab von '{cfg.id}' hat keinen FighterController — "
+                                   + "es wird stattdessen ein Platzhalter erzeugt.");
+                    Destroy(go);
+                }
+                else return go;
+            }
+            return FighterFactory.CreatePlaceholder(cfg, spawn.position, spawn.rotation);
         }
 
         void StartNewRound()

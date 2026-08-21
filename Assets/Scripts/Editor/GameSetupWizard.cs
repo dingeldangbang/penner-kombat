@@ -78,6 +78,8 @@ namespace PennerKombat.Editor
             }
 
             // FighterDatabase anlegen und befüllen
+            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
+                AssetDatabase.CreateFolder("Assets", "Resources");
             string path = "Assets/Resources/FighterDatabase.asset";
             var db = AssetDatabase.LoadAssetAtPath<FighterDatabase>(path);
             if (db == null)

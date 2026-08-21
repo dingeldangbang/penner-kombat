@@ -18,6 +18,12 @@ namespace PennerKombat
         public bool createFatalBlow = true;
         public bool createFatality = true;
         public bool createSaveSystem = true;
+        [Tooltip("HUD (Lebensbalken, Timer, Combo, Ergebnis) zur Laufzeit bauen, falls keins in der Szene liegt.")]
+        public bool createHud = true;
+        [Tooltip("Boden + Begrenzungswände erzeugen, falls die Szene leer ist.")]
+        public bool createGround = true;
+        [Tooltip("Frame-Daten-Overlay bereitstellen (im Spiel mit F4 einblenden).")]
+        public bool createFrameDataOverlay = true;
 
         [Header("Extras (docs/EXTRAS.md)")]
         public bool createMusicSync = true;
@@ -58,6 +64,9 @@ namespace PennerKombat
                 cc.transform.position = new Vector3(0f, 15f, -12f);
             }
             if (createSaveSystem && SaveSystem.Instance == null) SaveSystem.Ensure();
+            if (createGround) EnsureGround();
+            if (createHud) HudBuilder.Ensure();
+            if (createFrameDataOverlay) FrameDataOverlay.Ensure();
             if (createTouchControls && TouchControls.Ensure(touchControlsOnDesktop) != null)
             {
                 AntiGhosting.Ensure();
@@ -88,6 +97,57 @@ namespace PennerKombat
 #if PK_URP
             UrpPostProcessingDriver.Ensure();
 #endif
+        }
+
+        /// <summary>
+        /// Legt Boden und Begrenzungswände an, falls die Szene noch keinen
+        /// Boden hat — sonst fallen die Kämpfer beim Start ins Nichts.
+        /// </summary>
+        void EnsureGround()
+        {
+            if (GameObject.Find("~Ground") != null) return;
+            if (Physics.Raycast(new Vector3(0f, 25f, 0f), Vector3.down, 60f)) return;
+
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            ground.name = "~Ground";
+            ground.transform.localScale = new Vector3(3f, 1f, 3f);   // 30 x 30 Meter
+            try { ground.tag = GameConstants.TagGround; } catch (UnityException) { }
+            var groundRenderer = ground.GetComponent<MeshRenderer>();
+            if (groundRenderer != null)
+            {
+                var mat = new Material(FighterFactory.DefaultShader());
+                Color asphalt = Color.Lerp(PennerPalette.NightBlue, Color.black, 0.35f);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", asphalt);
+                if (mat.HasProperty("_Color")) mat.SetColor("_Color", asphalt);
+                groundRenderer.sharedMaterial = mat;
+            }
+
+            var walls = new GameObject("~Walls");
+            float half = 13f;
+            (Vector3 pos, Vector3 scale)[] defs =
+            {
+                (new Vector3(0f, 2f,  half), new Vector3(half * 2f, 4f, 0.6f)),
+                (new Vector3(0f, 2f, -half), new Vector3(half * 2f, 4f, 0.6f)),
+                (new Vector3( half, 2f, 0f), new Vector3(0.6f, 4f, half * 2f)),
+                (new Vector3(-half, 2f, 0f), new Vector3(0.6f, 4f, half * 2f))
+            };
+            foreach (var (wPos, wScale) in defs)
+            {
+                var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                wall.name = "Wall";
+                wall.transform.SetParent(walls.transform, false);
+                wall.transform.position = wPos;
+                wall.transform.localScale = wScale;
+                var wr = wall.GetComponent<MeshRenderer>();
+                if (wr != null)
+                {
+                    var wm = new Material(FighterFactory.DefaultShader());
+                    Color brick = Color.Lerp(PennerPalette.Earth, Color.black, 0.45f);
+                    if (wm.HasProperty("_BaseColor")) wm.SetColor("_BaseColor", brick);
+                    if (wm.HasProperty("_Color")) wm.SetColor("_Color", brick);
+                    wr.sharedMaterial = wm;
+                }
+            }
         }
 
         /// <summary>Verteilt das Standard-Arsenal im Hinterhof.</summary>
