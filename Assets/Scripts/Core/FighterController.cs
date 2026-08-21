@@ -52,6 +52,18 @@ namespace PennerKombat
         public AudioClip hurtSound;
         public AudioClip fatalBlowSound;
 
+        [Header("3D-Bewegung (docs/3D.md §3)")]
+        [Tooltip("Bewegung relativ zur Kamera statt zu den Weltachsen.")]
+        public bool cameraRelativeMovement = true;
+        public float runSpeedMultiplier = 1.6f;
+        public float strafeSpeed = 4f;
+        public float turnSpeed = 12f;
+        [Header("Ausweichrolle")]
+        public float rollDistance = 3.2f;
+        public float rollDuration = 0.32f;
+        public float rollInvulnerable = 0.2f;
+        public float rollCooldown = 0.8f;
+
         [Header("Physics")]
         public float gravity = GameConstants.DefaultGravity;
         public float jumpForce = GameConstants.DefaultJumpForce;
@@ -67,6 +79,17 @@ namespace PennerKombat
         protected bool isHeavy;
         protected float lastHitTime;
         protected HashSet<FighterController> hitThisAttack = new HashSet<FighterController>();
+
+        // 3D-Bewegung
+        protected bool isRolling;
+        protected float rollTimer;
+        protected float rollCdTimer;
+        protected Vector3 rollDirection;
+        protected float invulnerableTimer;
+
+        /// <summary>True, während der Kämpfer unverwundbar ist (Rolle, Cinematic).</summary>
+        public bool IsInvulnerable => invulnerableTimer > 0f;
+        public bool IsRolling => isRolling;
 
         // Fatal Blow (X-Ray) Leiste
         [HideInInspector] public float fatalBlowMeter;
@@ -96,6 +119,10 @@ namespace PennerKombat
             if (GetComponent<CharacterVisuals>() == null) gameObject.AddComponent<CharacterVisuals>();
             if (GetComponent<CharacterShaderBinder>() == null) gameObject.AddComponent<CharacterShaderBinder>();
             if (GetComponent<MedSystem>() == null) gameObject.AddComponent<MedSystem>();
+            // 3D-Schicht: Animator-Brücke, Combo-Trail, Arena-Interaktion
+            if (GetComponent<AnimationsController3D>() == null) gameObject.AddComponent<AnimationsController3D>();
+            if (GetComponent<ComboTrail3D>() == null) gameObject.AddComponent<ComboTrail3D>();
+            if (GetComponent<ArenaInteraction>() == null) gameObject.AddComponent<ArenaInteraction>();
         }
 
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
@@ -118,6 +145,14 @@ namespace PennerKombat
         {
             TickMoveCooldowns();
             if (attackTimer > 0) attackTimer -= Time.deltaTime;
+            if (invulnerableTimer > 0f) invulnerableTimer -= Time.deltaTime;
+            if (rollCdTimer > 0f) rollCdTimer -= Time.deltaTime;
+
+            if (isRolling)
+            {
+                TickRoll();
+                return;
+            }
             if (stunTimer > 0)
             {
                 stunTimer -= Time.deltaTime;
@@ -133,6 +168,9 @@ namespace PennerKombat
 
                 if (FighterInput.Instance.GetJump(playerIndex) && isGrounded)
                     Jump();
+                // Ausweichrolle: EX-Taste + Richtung (Standard O bzw. Num 6)
+                if (FighterInput.Instance.GetEx(playerIndex) && isGrounded && !isAttacking)
+                    StartRoll(moveDir);
                 if (FighterInput.Instance.GetLightAttack(playerIndex) && attackTimer <= 0 && !isBlocking)
                     StartAttack(false);
                 if (FighterInput.Instance.GetHeavyAttack(playerIndex) && attackTimer <= 0 && !isBlocking)
@@ -172,17 +210,88 @@ namespace PennerKombat
             // Sigis Root-Zugriff invertiert die Bewegung
             if (GetComponent<InputHack>() is { } hack && hack.Active)
                 dir = -dir;
-            if (isBlocking) dir *= GameConstants.BlockMoveScale;
+
+            // 360°: Eingabe relativ zur Kamera interpretieren
+            if (cameraRelativeMovement && dir.sqrMagnitude > 0.001f)
+                dir = CameraController.ToWorld(new Vector2(dir.x, dir.z));
+
+            float speed = moveSpeed;
+            if (isBlocking) { dir *= GameConstants.BlockMoveScale; speed = strafeSpeed; }
+
             // TetraPaks "Kater" verlangsamt
             if (GetComponent<SlowDebuff>() is { } slow && slow.IsActive)
                 dir *= slow.speedScale;
-            rb.velocity = new Vector3(dir.x * moveSpeed, rb.velocity.y, dir.z * moveSpeed);
+
+            rb.velocity = new Vector3(dir.x * speed, rb.velocity.y, dir.z * speed);
+
             if (dir.sqrMagnitude > 0.001f)
             {
-                transform.rotation = Quaternion.LookRotation(dir);
-                if (anim != null) anim.SetBool("Walk", true);
+                // Beim Blocken zum Gegner schauen (Strafe), sonst in Laufrichtung drehen
+                Vector3 face = dir.normalized;
+                if (isBlocking)
+                {
+                    var foe = GetEnemy();
+                    if (foe != null)
+                    {
+                        Vector3 toFoe = foe.transform.position - transform.position;
+                        toFoe.y = 0f;
+                        if (toFoe.sqrMagnitude > 0.001f) face = toFoe.normalized;
+                    }
+                }
+                transform.rotation = Quaternion.Slerp(transform.rotation,
+                    Quaternion.LookRotation(face), turnSpeed * Time.deltaTime);
+
+                if (anim != null)
+                {
+                    anim.SetBool("Walk", true);
+                    anim.SetFloat("MoveSpeed", dir.magnitude * speed);
+                }
             }
-            else if (anim != null) anim.SetBool("Walk", false);
+            else if (anim != null)
+            {
+                anim.SetBool("Walk", false);
+                anim.SetFloat("MoveSpeed", 0f);
+            }
+        }
+
+        // ==================================================================
+        //  Ausweichrolle (3D)
+        // ==================================================================
+
+        /// <summary>Rolle in die angegebene Richtung; ohne Richtung nach hinten.</summary>
+        public virtual bool StartRoll(Vector3 inputDir)
+        {
+            if (isRolling || rollCdTimer > 0f || IsStuck() || stunTimer > 0f) return false;
+
+            Vector3 dir = inputDir;
+            if (cameraRelativeMovement && dir.sqrMagnitude > 0.001f)
+                dir = CameraController.ToWorld(new Vector2(dir.x, dir.z));
+            if (dir.sqrMagnitude < 0.001f) dir = -transform.forward;
+
+            rollDirection = dir.normalized;
+            isRolling = true;
+            rollTimer = rollDuration;
+            rollCdTimer = rollCooldown;
+            invulnerableTimer = rollInvulnerable;
+            isBlocking = false;
+
+            if (anim != null) anim.SetTrigger("Roll");
+            transform.rotation = Quaternion.LookRotation(rollDirection);
+            VFXManager.Instance?.PlayDust(transform.position, 0.7f);
+            return true;
+        }
+
+        void TickRoll()
+        {
+            rollTimer -= Time.deltaTime;
+            float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
+            rb.velocity = new Vector3(rollDirection.x * speed, rb.velocity.y, rollDirection.z * speed);
+
+            if (rollTimer <= 0f)
+            {
+                isRolling = false;
+                rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+            }
         }
 
         /// <summary>Empfänger für Mells "Pampe"-Sludge (broadcastet vom Projektil).</summary>
@@ -210,9 +319,12 @@ namespace PennerKombat
         public virtual void Jump()
         {
             if (!isGrounded || IsStuck()) return;
-            rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
+            // 3D-Sprung: behält horizontalen Schwung, leichter Vorwärtsanteil
+            Vector3 horizontal = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+            if (horizontal.sqrMagnitude < 0.5f) horizontal = transform.forward * 1.5f;
+            rb.velocity = new Vector3(horizontal.x, jumpForce, horizontal.z);
             isGrounded = false;
-            if (anim != null) anim.SetTrigger("Jump");
+            if (anim != null) { anim.SetTrigger("Jump"); anim.SetBool("IsGrounded", false); }
         }
 
         /// <summary>Öffentlicher Angriffsstart (KI- und Trigger-API).</summary>
@@ -302,6 +414,14 @@ namespace PennerKombat
         // --- Schaden ---
         public virtual void TakeDamage(float damage, Vector3 knockbackDir, FighterController attacker)
         {
+            // Unverwundbar (Ausweichrolle, Cinematic): Treffer verpufft sichtbar
+            if (invulnerableTimer > 0f)
+            {
+                FloatingText.Show(transform.position + Vector3.up * 2.2f, "AUSGEWICHEN",
+                                  PennerPalette.NeonBlue, 0.7f);
+                return;
+            }
+
             if (isBlocking)
             {
                 damage *= Mathf.Max(0.05f, GameConstants.BlockDamageReduction - blockReductionBonus);
@@ -425,6 +545,10 @@ namespace PennerKombat
             attackTimer = 0f;
             hitThisAttack.Clear();
             ResetFatalBlow();
+            isRolling = false;
+            rollTimer = 0f;
+            rollCdTimer = 0f;
+            invulnerableTimer = 0f;
             GetComponent<MedSystem>()?.ResetForRound();
             gameObject.SetActive(true);
         }

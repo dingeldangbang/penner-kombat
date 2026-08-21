@@ -51,6 +51,14 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Bootstrap**: `Bootstrapper` erzeugt alle Manager automatisch
 - **Editor-Wizard**: `Tools → Penner Kombat → Setup-Szene erzeugen`
 
+### 3D-Kampfraum
+- **Kamera** `CameraController`: Dynamic / Follow / TopDown / Cinematic + Kamerafahrten
+- **360°-Bewegung**: kamerarelativ, geglättete Drehung, Strafe beim Blocken, **Ausweichrolle mit i-Frames**
+- **3D-Hitboxen** `Hitbox3D`: Sphere, Box, Capsule, **Cone** (Winkeltest) mit Gizmos
+- **Arena-Objekte** `ArenaObject3D`: werfen, sprengen, Trampolin, Falle — Interaktion per `E`
+- **Räumliche Effekte**: `ComboTrail3D` (LineRenderer-Spur), `ComboExplosion3D` (Druckwelle + Rückstoß)
+- **Netzwerk** `NetworkSync3D`: 20 Hz Positions-/Rotations-Sync mit Interpolation
+
 ### Visuals & Effekte (Cover-Look)
 - **Farbpalette** `PennerPalette`: Blutrot/Nachtblau/Laternen-Orange/Gold/Neonblau — direkt vom Cover abgeleitet
 - **Treffer-VFX** `VFXManager`: Funken, Blut (schadensskaliert), Schockwellen, Goldsterne, Staub — **prozedural, ohne Art-Assets**
@@ -118,6 +126,7 @@ Assets/
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
+| [docs/3D.md](docs/3D.md) | 3D-Kampfraum: Kameramodi, 360°-Bewegung, Rolle, 3D-Hitboxen, Arena-Objekte |
 | [docs/SERVER.md](docs/SERVER.md) | Relay-Server: Start, Protokoll, Deployment, Grenzen |
 | [docs/CONTROLS.md](docs/CONTROLS.md) | Tastatur (P1/P2), Gamepad, KI-Stufen, Multiplayer-Modi |
 | [docs/TOUCH.md](docs/TOUCH.md) | Touch-Steuerung: Joystick, Buttons, Gesten, Layout-Editor, Optionen |

@@ -14,7 +14,8 @@ Skript erzeugen lässt.
 | Bereich | Dateien |
 |---|---|
 | **Core** | `Core/FighterController.cs` (abstrakt, virtual/protected), `FighterInput.cs` (Tastatur P1+P2, Gamepad, Touch), `VirtualInput.cs`, `MedSystem.cs`, `GameManager.cs`, `UIManager.cs`, `ArenaManager.cs`, `CameraController.cs`, `AudioManager.cs`, `Bootstrapper.cs`, `GameConstants.cs`, `HitboxManager.cs`, `ObjectPool.cs`, `Timer.cs` |
-| **Kampf** | `Combat/CommandInput.cs` (Numpad-Notation), `MoveData.cs`, `MoveCatalog.cs`, `FatalBlowSystem.cs`, `FatalitySystem.cs` |
+| **Kampf** | `Combat/CommandInput.cs` (Numpad-Notation), `MoveData.cs`, `MoveCatalog.cs`, `FatalBlowSystem.cs`, `FatalitySystem.cs`, `Hitbox3D.cs` (Sphere/Box/Capsule/Cone) |
+| **3D** | Kamera mit 4 Modi, 360°-Bewegung + Ausweichrolle, `ArenaObject3D`, `ComboTrail3D`, `ComboExplosion3D`, `AnimationsController3D`, `NetworkSync3D` |
 | **Charaktere** | alle 9 in `Characters/` + Summons (`MopsController`, `Herta`, `RatController`) |
 | **Projektile** | Bottle, Coin, LuckyBag, Sludge, Spoon |
 | **KI** | `AI/AIController.cs` — 6 Schwierigkeitsstufen, Combo-Ketten, Med-Nutzung |

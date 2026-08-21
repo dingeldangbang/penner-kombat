@@ -48,6 +48,14 @@
   (JSON in PlayerPrefs) und `TouchDebug` (F3-Overlay). Alles prozedural, ohne Prefabs;
   `FighterInput` verodert Touch mit Tastatur und Gamepad, das Optionsmenü bekommt eine
   Touch-Sektion. Doku: `docs/TOUCH.md`.
+- **3D-Kampfraum**: `CameraController` mit vier Modi (Dynamic/Follow/TopDown/Cinematic) und
+  Kamerafahrten; kamerarelative 360°-Bewegung, geglättete Drehung, Strafe beim Blocken und
+  **Ausweichrolle mit 0,2 s Unverwundbarkeit**; `Combat/Hitbox3D.cs` (Sphere/Box/Capsule/Cone
+  mit Gizmos); `VFX/ArenaObject3D.cs` + `ArenaInteraction` (werfen, sprengen, Trampolin, Falle);
+  `VFX/ComboTrail3D.cs` und `VFX/ComboExplosion3D.cs` (Druckwelle mit AddExplosionForce);
+  `Core/AnimationsController3D.cs` (setzt Mecanim-Parameter nur, wenn sie existieren);
+  `Network/NetworkSync3D.cs` (20 Hz Sync mit Interpolation und kurzer Extrapolation).
+  Setup-Wizard stellt Wände und ein werfbares Objekt auf. Doku: `docs/3D.md`.
 - **Relay-Server** (`server/`, Node ≥ 18 + `ws`): verwaltet Räume und spiegelt Nachrichten
   zwischen den Spielern; Ready→`start`, Host-Übergabe beim Verlassen, Heartbeat gegen tote
   Verbindungen, Aufräumen leerer Räume, HTTP-Endpunkte `/health` und `/rooms`.

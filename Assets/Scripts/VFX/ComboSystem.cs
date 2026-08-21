@@ -117,9 +117,10 @@ namespace PennerKombat
 
             if (combo >= 21)
             {
-                // Feuerwerk-Stufe (Spec 4.3)
+                // Feuerwerk-Stufe (Spec 4.3) + räumliche Druckwelle
                 CameraShake.Shake(12f, 0.18f);
                 vfx?.PlayFireworks(pos, 5);
+                ComboExplosion3D.Ensure().SpawnForCombo(pos, combo);
             }
             else if (combo >= 16)
             {
@@ -129,7 +130,7 @@ namespace PennerKombat
             else if (combo >= 11)
             {
                 CameraShake.Shake(8f, 0.12f);
-                if (vfx != null) vfx.PlayDust(pos, 1.4f);
+                ComboExplosion3D.Ensure().SpawnForCombo(pos, combo);
             }
             else if (combo >= 8)
             {
