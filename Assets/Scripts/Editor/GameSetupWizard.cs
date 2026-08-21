@@ -32,9 +32,24 @@ namespace PennerKombat.Editor
             var spawn2 = new GameObject("SpawnPoint2");
             spawn2.transform.position = new Vector3(4f, 0f, 0f);
 
-            // Bootstrapper (erzeugt Manager zur Laufzeit)
+            // Bootstrapper (erzeugt Manager + VFX-Schicht zur Laufzeit)
             var boot = new GameObject("Boot");
             boot.AddComponent<Bootstrapper>();
+
+            // Arena-Look: Laternen, Neon, Nacht-Ambient (docs/VISUALS.md §3)
+            var visuals = new GameObject("ArenaVisuals");
+            visuals.AddComponent<ArenaVisuals>();
+
+            // Boden im Cover-Look einfärben (nasses Pflaster, Nachtblau)
+            var groundRenderer = ground.GetComponent<MeshRenderer>();
+            if (groundRenderer != null && groundRenderer.sharedMaterial != null)
+            {
+                var mat = new Material(groundRenderer.sharedMaterial);
+                mat.color = Color.Lerp(PennerPalette.NightBlue, Color.black, 0.25f);
+                if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.65f);
+                if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.65f);
+                groundRenderer.sharedMaterial = mat;
+            }
 
             // FighterDatabase anlegen und befüllen
             string path = "Assets/Resources/FighterDatabase.asset";

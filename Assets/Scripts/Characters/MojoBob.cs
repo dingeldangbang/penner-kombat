@@ -218,6 +218,13 @@ namespace PennerKombat
             superModeTimer = 8f;
             currentCritChance = 1f;
             if (dingeneldangSound != null) AudioSource.PlayClipAtPoint(dingeneldangSound, transform.position);
+
+            // Super-Mode-Präsentation: goldene Lichtsäule + Aura-Burst
+            GetComponent<CharacterVisuals>()?.BuffFlash(PennerPalette.Gold, 1.0f);
+            VFXManager.Instance?.PlayHit(transform.position + Vector3.up, Vector3.up, 20f,
+                                         HitTier.Critical, fighterId);
+            ScreenEffects.FlashColor(PennerPalette.Gold, 0.5f, 0.35f);
+            FloatingText.Show(transform.position + Vector3.up * 2.6f, "DINGENELDANG!", PennerPalette.Gold, 2f);
         }
 
         void EndSuperMode()
@@ -226,6 +233,8 @@ namespace PennerKombat
             currentCritChance = baseCritChance;
             isLockedOut = true;
             lockoutTimer = 15f;
+            // 15 s Lockout: grauer Filter für den lokalen Spieler
+            if (!isAI) ScreenEffects.SetTint(new Color(0.35f, 0.35f, 0.38f, 0.28f));
         }
 
         // ---- Wette ----
@@ -263,6 +272,11 @@ namespace PennerKombat
         {
             if (critSound != null) AudioSource.PlayClipAtPoint(critSound, transform.position);
             RecordCrit(true);
+
+            // Krit-Präsentation (docs/VISUALS.md §4.4): Goldblitz, Sterne,
+            // 2 Frames Freeze und der „DINGENELDANG!"-Schriftzug.
+            PlayHitFeedback(target, 12f * critMultiplier, HitTier.Critical);
+            FloatingText.Show(transform.position + Vector3.up * 2.4f, "DINGENELDANG!", PennerPalette.Gold);
 
             // Trophäe: 7 Krit-Treffer in einer Combo
             if (TrophyManager.Instance != null && comboCount >= 7)

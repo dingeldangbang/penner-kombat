@@ -51,6 +51,17 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Bootstrap**: `Bootstrapper` erzeugt alle Manager automatisch
 - **Editor-Wizard**: `Tools → Penner Kombat → Setup-Szene erzeugen`
 
+### Visuals & Effekte (Cover-Look)
+- **Farbpalette** `PennerPalette`: Blutrot/Nachtblau/Laternen-Orange/Gold/Neonblau — direkt vom Cover abgeleitet
+- **Treffer-VFX** `VFXManager`: Funken, Blut (schadensskaliert), Schockwellen, Goldsterne, Staub — **prozedural, ohne Art-Assets**
+- **Combo-Feedback** `ComboSystem` + `ComboCounterUI`: Zähler 1–4 weiß / 5–9 gold / 10+ rot flackernd, Ping-Leiter bei 3/5/8/10+
+- **Kamera** `CameraShake`: Shake 2–20 px, Combo-Zoom bis 1,25×, Hitstop, Frame-Freeze, Zeitlupe (Mops 0,1× · X-Ray 0,5× · Fatality 0,3×)
+- **Screen-FX** `ScreenEffects`: Vignette, Rotblitze, Mells Puls-Rand, Blackout, Blut auf der Linse
+- **Arena-Look** `ArenaVisuals`: Laternen-Spotlights, Mondlicht, flackerndes Neonschild, Mücken/Staub/Rauch, nasses Pflaster
+- **Charakter-Auren** `CharacterVisuals`: Le Bindes Fettglanz, Mells pulsabhängiges Flackern, Bobs Gold-Staub je Mojo-Punkt
+- **Status-HUD** `HudStatusBars`: Mojo-Punkte, Puls-Balken (schlägt im Takt), Schmier-Schlüppa, Fatal-Blow
+- **Optional URP** `UrpPostProcessingDriver` (Define `PK_URP`): Bloom, ACES, Vignette, CA, DoF, Film Grain
+
 ---
 
 ## 📁 Projektstruktur
@@ -97,6 +108,7 @@ Assets/
 |-------|--------|
 | [docs/DESIGN.md](docs/DESIGN.md) | Design-Dokument der Roster-Erweiterung (Le Binde, Mell, Mojo Bob, Arena) |
 | [docs/MOVESETS.md](docs/DESIGN.md) | Movesets/Frame-Daten aller Charaktere (Design-Kapitel §1.1–§1.9) |
+| [docs/VISUALS.md](docs/VISUALS.md) | Gameplay-Visuals, Effekte & Combo-Feedback (Cover-Look) |
 | [docs/TROPHIES.md](docs/TROPHIES.md) | Alle 56 Trophäen |
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |

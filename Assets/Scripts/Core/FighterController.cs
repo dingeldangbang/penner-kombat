@@ -91,6 +91,9 @@ namespace PennerKombat
 
             commandInput = GetComponent<CommandInput>();
             if (commandInput == null) commandInput = gameObject.AddComponent<CommandInput>();
+
+            // Visuelle Signatur (Aura, Trail, Zustands-FX) — docs/VISUALS.md §2
+            if (GetComponent<CharacterVisuals>() == null) gameObject.AddComponent<CharacterVisuals>();
         }
 
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
@@ -251,10 +254,37 @@ namespace PennerKombat
                 OnDamageDealt?.Invoke(this, enemy, dmg);
                 OnDealtHit(enemy, dmg);
 
+                // --- Visuelles Trefferfeedback (docs/VISUALS.md §4) ---
+                Vector3 impact = c.ClosestPoint(attackPoint != null ? attackPoint.position : transform.position);
+                PlayHitFeedback(enemy, impact, dmg, isHeavy ? HitTier.Heavy : HitTier.Light);
+
                 if (hitEffectPrefab != null)
                     Instantiate(hitEffectPrefab, c.ClosestPoint(transform.position), Quaternion.identity);
                 if (hitSound != null) AudioSource.PlayClipAtPoint(hitSound, transform.position);
             }
+        }
+
+        /// <summary>
+        /// Spielt Partikel, Screen-Shake, Hitstop und Combo-Eskalation für einen
+        /// gelandeten Treffer. Unterklassen rufen das für Spezials/EX/Krits mit
+        /// der passenden <see cref="HitTier"/> auf.
+        /// </summary>
+        public void PlayHitFeedback(FighterController target, Vector3 impactPoint, float damage, HitTier tier)
+        {
+            Vector3 dir = target != null
+                ? (target.transform.position - transform.position).normalized
+                : transform.forward;
+
+            VFXManager.Instance?.PlayHit(impactPoint, dir, damage, tier, fighterId);
+            ComboSystem.Instance?.RegisterHit(this, target, damage, tier);
+        }
+
+        /// <summary>Kurzform: Trefferfeedback auf Höhe der Brust des Ziels.</summary>
+        public void PlayHitFeedback(FighterController target, float damage, HitTier tier)
+        {
+            Vector3 p = target != null ? target.transform.position + Vector3.up * 1.1f
+                                       : transform.position + transform.forward;
+            PlayHitFeedback(target, p, damage, tier);
         }
 
         /// <summary>Krit-/Buff-Anpassung des Schadens. Wird in Unterklassen (MojoBob) überschrieben.</summary>
@@ -274,6 +304,7 @@ namespace PennerKombat
                 if (blockEffectPrefab != null)
                     Instantiate(blockEffectPrefab, transform.position + Vector3.up, Quaternion.identity);
                 if (blockSound != null) AudioSource.PlayClipAtPoint(blockSound, transform.position);
+                VFXManager.Instance?.PlayBlock(transform.position + Vector3.up * 1.1f, knockbackDir);
                 StartCoroutine(BlockStun(0.15f));
                 OnBlocked(attacker);
                 return;
@@ -343,6 +374,11 @@ namespace PennerKombat
         {
             if (!fatalBlowReady || target == null) return false;
             if (fatalBlowSound != null) AudioSource.PlayClipAtPoint(fatalBlowSound, transform.position);
+            // X-Ray-Präsentation: Zeitlupe 0,5x, harter Shake, Röntgen-Blitz
+            CameraShake.SlowMotion(0.5f, 0.8f);
+            PlayHitFeedback(target, target.transform.position + Vector3.up * 1.1f,
+                            GameConstants.FatalBlowDamageMax, HitTier.FatalBlow);
+            ScreenEffects.FlashColor(Color.white, 0.6f, 0.25f);
             ResetFatalBlow();
             return true;
         }
@@ -353,13 +389,21 @@ namespace PennerKombat
         /// </summary>
         public virtual void PerformFatality(FighterController target, string fatalityId)
         {
-            if (target != null) target.TakeDamage(999f, transform.forward, this);
+            if (target == null) return;
+            // Fatality-Präsentation: 0,3x Zeitlupe, Blutfontäne, Linsen-Splatter
+            CameraShake.SlowMotion(0.3f, 1.2f);
+            VFXManager.Instance?.PlayHit(target.transform.position + Vector3.up * 1.1f,
+                                         transform.forward, 100f, HitTier.Fatality, fighterId);
+            target.TakeDamage(999f, transform.forward, this);
         }
 
         // --- Tod / Runde ---
         public virtual void Die()
         {
             if (anim != null) anim.SetTrigger("Death");
+            VFXManager.Instance?.PlayHit(transform.position + Vector3.up, Vector3.up, 30f,
+                                         HitTier.Heavy, fighterId);
+            ComboSystem.Instance?.ResetAll();
             OnDeath?.Invoke(this);
             gameObject.SetActive(false);
         }

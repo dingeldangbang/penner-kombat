@@ -18,6 +18,12 @@ namespace PennerKombat
         public bool createFatalBlow = true;
         public bool createFatality = true;
 
+        [Header("Visuals & VFX (docs/VISUALS.md)")]
+        public bool createVfx = true;
+        public bool createComboFeedback = true;
+        public bool createScreenEffects = true;
+        public bool createArenaVisuals = true;
+
         void Awake()
         {
             if (createInput && FighterInput.Instance == null) gameObject.AddComponent<FighterInput>();
@@ -37,6 +43,21 @@ namespace PennerKombat
             }
             if (createFatalBlow) gameObject.AddComponent<FatalBlowSystem>();
             if (createFatality) gameObject.AddComponent<FatalitySystem>();
+
+            // --- Visuelle Schicht ---
+            if (createVfx && VFXManager.Instance == null) VFXManager.Ensure();
+            if (createScreenEffects && ScreenEffects.Instance == null) ScreenEffects.Ensure();
+            if (createComboFeedback)
+            {
+                if (ComboSystem.Instance == null) ComboSystem.Ensure();
+                if (ComboCounterUI.Instance == null) ComboCounterUI.Ensure();
+            }
+            if (createArenaVisuals && ArenaVisuals.Instance == null) ArenaVisuals.Ensure();
+            if (createComboFeedback && HudStatusBars.Instance == null) HudStatusBars.Ensure();
+            CameraShake.Ensure();
+#if PK_URP
+            UrpPostProcessingDriver.Ensure();
+#endif
         }
 
         void Start()

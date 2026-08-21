@@ -1,5 +1,24 @@
 # Changelog
 
+## [Unveröffentlicht]
+### Gameplay-Visuals, Effekte & Combo-Feedback (Cover-Look)
+- **Neue VFX-Schicht** `Assets/Scripts/VFX/` — komplett prozedural, keine Art-Assets nötig:
+  `PennerPalette` (Farbpalette vom Cover), `VFXManager` (HitSpark/Blut/Schockwelle/GoldKrit/Staub),
+  `CameraShake` (Shake, Combo-Zoom, Hitstop, Frame-Freeze, Zeitlupe), `ScreenEffects`
+  (Vignette, Blitze, Puls-Rand, Blackout, Linsen-Splatter), `ComboSystem` + `ComboCounterUI`
+  (Eskalation 1–4/5–9/10+ mit Sound-Pings), `CharacterVisuals` (Auren/Trails je Kämpfer),
+  `ArenaVisuals` (Laternen, Neon-Flackern, Nacht-Ambient, Atmosphäre-Partikel),
+  `HudStatusBars` (Mojo/Puls/Schmier-Schlüppa), `FloatingText` (Callouts),
+  `UrpPostProcessingDriver` (optional via Define `PK_URP`).
+- **Kampfsystem verdrahtet**: `FighterController.PlayHitFeedback(...)` mit Trefferklassen
+  (`HitTier`), Block-, X-Ray- und Fatality-Präsentation.
+- **Charakter-Effekte**: Bobs Krit (Goldblitz + Frame-Freeze + „DINGENELDANG!"),
+  Mells Defi/Blackout/Puls-Rand, Le Bindes Mops-Kommando (Zeitlupe + Props kippen),
+  REIF!-Glow, Flaschenhals-Glassplitter.
+- **Bootstrapper & Setup-Wizard** erzeugen die Visual-Schicht automatisch; `TestRunner`
+  prüft sie mit drei neuen Checks.
+- **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping).
+
 ## [1.3.0] — 2026-08-21
 ### Trophäen, Soundtrack, Fatalities, GitHub-Bereitstellung
 - **Vollständiges Trophäensystem (56)**: `TrophyManager` registriert alle 56
