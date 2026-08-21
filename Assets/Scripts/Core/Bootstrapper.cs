@@ -49,7 +49,11 @@ namespace PennerKombat
                 cc.transform.position = new Vector3(0f, 15f, -12f);
             }
             if (createSaveSystem && SaveSystem.Instance == null) SaveSystem.Ensure();
-            if (createTouchControls) TouchControls.Ensure(touchControlsOnDesktop);
+            if (createTouchControls && TouchControls.Ensure(touchControlsOnDesktop) != null)
+            {
+                AntiGhosting.Ensure();
+                InputBuffer.Ensure();
+            }
             if (createFatalBlow) gameObject.AddComponent<FatalBlowSystem>();
             if (createFatality) gameObject.AddComponent<FatalitySystem>();
 

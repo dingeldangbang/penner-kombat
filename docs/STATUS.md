@@ -51,15 +51,19 @@ Prefabs oder Sprites nötig (siehe `docs/VISUALS.md`).
 
 ---
 
-## 🎮 Touch-Steuerung (neu)
+## 🎮 Touch-Steuerung — komplett (Details: docs/TOUCH.md)
 
 `Assets/Scripts/UI/TouchControls.cs` + `Core/VirtualInput.cs`:
 
-- Virtueller Stick links (Totzone 0,18, Radius 130 px), Buttons rechts im Pad-Diamant
+Zehn Bausteine, alle prozedural: `VirtualJoystick`, `TouchButton`, `TouchInputManager`,
+`TouchGestureDetector`, `TouchLayoutEditor`, `AntiGhosting`, `InputBuffer`,
+`TouchTutorial`, `TouchSettings` (+ Optionen-Sektion) und `TouchDebug` (F3).
+
 - Belegung: `□` leicht · `△` schwer · `○` Spezial 1 · `✕` Sprung · `BLOCK` (halten) · `S2` · `X-RAY`
-- Kreis-Grafiken werden prozedural erzeugt, `EventSystem` legt sich selbst an
+- Layouts: Standard, Fighting, Simple, LeftHanded — im Editor frei verschiebbar
+- Wischgesten werden in Numpad-Sequenzen übersetzt und vom vorhandenen `CommandInput` ausgewertet
 - `FighterInput` verodert Touch mit Tastatur/Gamepad — Charaktere merken nichts davon
-- Der `Bootstrapper` erzeugt das Layout automatisch auf Handhelds
+- Der `Bootstrapper` erzeugt alles automatisch auf Handhelds
   (`touchControlsOnDesktop = true` zum Testen am PC)
 
 Damit ist die letzte **Code**-Lücke für einen spielbaren APK geschlossen; ab hier

@@ -32,6 +32,17 @@ namespace PennerKombat
         [Tooltip("Blut und Gore-Effekte abschalten (Streams, Jugendschutz).")]
         public Toggle goreToggle;
 
+        [Header("Touch (docs/TOUCH.md §10)")]
+        public Slider joystickSizeSlider;
+        public Slider touchButtonSizeSlider;
+        public Slider touchOpacitySlider;
+        public Slider touchSensitivitySlider;
+        public Toggle vibrationToggle;
+        public Toggle gestureFeedbackToggle;
+        public Toggle leftHandedToggle;
+        public TMP_Dropdown touchLayoutDropdown;
+        public Button replayTutorialButton;
+
         [Header("Buttons")]
         public Button applyButton;
         public Button resetButton;
@@ -47,6 +58,7 @@ namespace PennerKombat
             BuildQualityDropdown();
             LoadIntoUI();
 
+            BuildTouchSection();
             applyButton?.onClick.AddListener(Apply);
             resetButton?.onClick.AddListener(ResetToDefaults);
             backButton?.onClick.AddListener(Back);
@@ -106,6 +118,64 @@ namespace PennerKombat
             if (qualityDropdown != null) qualityDropdown.value = Mathf.Clamp(d.qualityLevel, 0, QualitySettings.names.Length - 1);
         }
 
+        /// <summary>Regler der Touch-Steuerung verdrahten (alle Felder optional).</summary>
+        void BuildTouchSection()
+        {
+            var t = TouchSettings.Current;
+
+            Bind(joystickSizeSlider,      0.6f, 1.8f,  t.joystickSize,  v => { t.joystickSize = v;  t.Apply(); });
+            Bind(touchButtonSizeSlider,   0.6f, 1.8f,  t.buttonSize,    v => { t.buttonSize = v;    t.Apply(); });
+            Bind(touchOpacitySlider,      0.15f, 1f,   t.opacity,       v => { t.opacity = v;       t.Apply(); });
+            Bind(touchSensitivitySlider,  0.25f, 2f,   t.sensitivity,   v => { t.sensitivity = v;   t.Apply(); });
+
+            if (vibrationToggle != null)
+            {
+                vibrationToggle.isOn = t.vibration;
+                vibrationToggle.onValueChanged.AddListener(v => { t.vibration = v; t.Apply(); });
+            }
+            if (gestureFeedbackToggle != null)
+            {
+                gestureFeedbackToggle.isOn = t.gestureFeedback;
+                gestureFeedbackToggle.onValueChanged.AddListener(v => { t.gestureFeedback = v; t.Apply(); });
+            }
+            if (leftHandedToggle != null)
+            {
+                leftHandedToggle.isOn = t.leftHanded;
+                leftHandedToggle.onValueChanged.AddListener(v =>
+                {
+                    t.leftHanded = v;
+                    t.layout = v ? "LeftHanded" : "Standard";
+                    t.Save();
+                    TouchControls.Instance?.Rebuild();
+                });
+            }
+            if (touchLayoutDropdown != null)
+            {
+                touchLayoutDropdown.ClearOptions();
+                touchLayoutDropdown.AddOptions(new List<string> { "Standard", "Fighting", "Simple", "LeftHanded" });
+                int idx = Mathf.Max(0, touchLayoutDropdown.options.FindIndex(o => o.text == t.layout));
+                touchLayoutDropdown.value = idx;
+                touchLayoutDropdown.onValueChanged.AddListener(i =>
+                {
+                    t.layout = touchLayoutDropdown.options[i].text;
+                    t.leftHanded = t.layout == "LeftHanded";
+                    t.Save();
+                    TouchControls.Instance?.Rebuild();
+                });
+            }
+
+            replayTutorialButton?.onClick.AddListener(TouchTutorial.Replay);
+        }
+
+        static void Bind(Slider slider, float min, float max, float value, UnityEngine.Events.UnityAction<float> onChange)
+        {
+            if (slider == null) return;
+            slider.minValue = min;
+            slider.maxValue = max;
+            slider.value = value;
+            slider.onValueChanged.AddListener(onChange);
+        }
+
         public void Apply()
         {
             var d = SaveSystem.Instance.Data;
@@ -129,6 +199,7 @@ namespace PennerKombat
 #endif
             SaveSystem.Instance.ApplyOptions();
             SaveSystem.Instance.Save();
+            TouchSettings.Current.Save();
             AudioManager.Instance?.PlayRandomUI();
         }
 
@@ -144,6 +215,8 @@ namespace PennerKombat
             d.vsync = true;
             d.qualityLevel = Mathf.Clamp(2, 0, QualitySettings.names.Length - 1);
             LoadIntoUI();
+            TouchSettings.Current.ResetToDefaults();
+            TouchControls.Instance?.Rebuild();
             SaveSystem.Instance.ApplyOptions();
             SaveSystem.Instance.Save();
         }

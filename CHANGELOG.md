@@ -39,10 +39,15 @@
   (additiver Radial-Glow mit optionalem Puls).
 - **Android**: `Assets/Plugins/Android/AndroidManifest.xml` und `docs/BUILD_ANDROID.md`
   (Projektaufbau, Player Settings, IL2CPP/ARM64, Signierung, CI-Hinweise, Touch-Lücke).
-- **Touch-/On-Screen-Steuerung** (`UI/TouchControls.cs`, `Core/VirtualInput.cs`): virtueller Stick,
-  7 Buttons (leicht/schwer/Spezial 1+2/Sprung/Block/X-Ray), prozedurale Grafiken, eigenes
-  EventSystem; `FighterInput` verodert Touch mit Tastatur und Gamepad, der `Bootstrapper`
-  erzeugt das Layout auf Handhelds automatisch.
+- **Touch-Steuerung komplett** (`Core/VirtualInput.cs`, `UI/TouchControls.cs`, `UI/Touch/`):
+  `VirtualJoystick` (fest/dynamisch/Snap, Totzone, Empfindlichkeit), `TouchButton`
+  (Tap/Halten/Toggle, Vibration), `TouchInputManager` (EX-Combo Block+Spezial),
+  `TouchGestureDetector` (8 Richtungen → Numpad-Sequenz, die der bestehende `CommandInput`
+  auswertet), `TouchLayoutEditor` + `DragElement` (Drag & Drop, 4 Layout-Vorlagen),
+  `AntiGhosting`, `InputBuffer` (0,15 s), `TouchTutorial` (7 Schritte), `TouchSettings`
+  (JSON in PlayerPrefs) und `TouchDebug` (F3-Overlay). Alles prozedural, ohne Prefabs;
+  `FighterInput` verodert Touch mit Tastatur und Gamepad, das Optionsmenü bekommt eine
+  Touch-Sektion. Doku: `docs/TOUCH.md`.
 - **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping),
   `docs/STATUS.md` (Soll/Ist-Abgleich: was existiert, was wirklich noch fehlt).
 

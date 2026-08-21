@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -6,13 +7,14 @@ using TMPro;
 namespace PennerKombat
 {
     /// <summary>
-    /// On-Screen-Steuerung für Android/Touch: virtueller Stick links,
-    /// Buttons rechts (□ Leicht, △ Schwer, ○ Spezial 1, ✕ Sprung, Block, S2, X-Ray).
-    /// Baut sich komplett zur Laufzeit auf — keine Prefabs nötig — und schreibt
-    /// in <see cref="VirtualInput"/>, das <see cref="FighterInput"/> ausliest.
+    /// Baut das komplette Touch-Layout zur Laufzeit auf: virtueller Joystick
+    /// links, Aktionsbuttons rechts, dazu Gesten-Erkennung, Anti-Ghosting,
+    /// Eingabepuffer, Tutorial und Debug-Overlay.
     ///
-    /// Wird auf Touch-Plattformen automatisch vom <see cref="Bootstrapper"/>
-    /// erzeugt; am Desktop nur, wenn <c>forceOnDesktop</c> gesetzt ist.
+    /// Alle Grafiken sind prozedural — es wird kein Prefab und kein Sprite
+    /// benötigt. Layout, Größen und Deckkraft kommen aus
+    /// <see cref="TouchSettings"/>; der Layout-Editor kann Positionen
+    /// überschreiben. Belegung und Aufbau: docs/TOUCH.md.
     /// </summary>
     public class TouchControls : MonoBehaviour
     {
@@ -20,12 +22,24 @@ namespace PennerKombat
 
         [Header("Setup")]
         public int playerIndex = 0;
-        public bool forceOnDesktop = false;
-        [Range(0.3f, 1f)] public float opacity = 0.55f;
-        public float buttonSize = 120f;
-        public float stickRadius = 130f;
+        public bool showTutorial = true;
+        public bool createDebugOverlay = true;
 
         private Canvas canvas;
+        private RectTransform root;
+        private VirtualJoystick joystick;
+        private readonly List<TouchButton> buttons = new List<TouchButton>();
+
+        /// <summary>Beschreibung eines Buttons im Layout.</summary>
+        private struct Slot
+        {
+            public string id;
+            public VButton button;
+            public Vector2 pos;      // Offset vom rechten unteren Rand
+            public Color color;
+            public string label;
+            public bool hold;
+        }
 
         public static TouchControls Ensure(bool force = false)
         {
@@ -48,7 +62,18 @@ namespace PennerKombat
         void Start()
         {
             EnsureEventSystem();
+            AntiGhosting.Ensure();
+            InputBuffer.Ensure();
             Build();
+
+            var gestures = TouchGestureDetector.Ensure();
+            gestures.playerIndex = playerIndex;
+
+            TouchInputManager.Ensure().Register(joystick, buttons);
+            TouchSettings.Current.Apply();
+
+            if (showTutorial) TouchTutorial.Ensure();
+            if (createDebugOverlay) TouchDebug.Ensure();
         }
 
         void EnsureEventSystem()
@@ -59,82 +84,187 @@ namespace PennerKombat
             es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
         }
 
+        // ------------------------------------------------------------------
+        //  Aufbau
+        // ------------------------------------------------------------------
+
         void Build()
         {
-            canvas = gameObject.AddComponent<Canvas>();
+            canvas = gameObject.GetComponent<Canvas>() ?? gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 950;      // über HUD, unter Pause
-            var scaler = gameObject.AddComponent<CanvasScaler>();
+            canvas.sortingOrder = 950;
+
+            var scaler = gameObject.GetComponent<CanvasScaler>() ?? gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
-            gameObject.AddComponent<GraphicRaycaster>();
+            if (gameObject.GetComponent<GraphicRaycaster>() == null) gameObject.AddComponent<GraphicRaycaster>();
 
-            // --- Stick links unten ---
-            var stickRoot = NewRect("Stick", new Vector2(0f, 0f), new Vector2(220f, 220f),
-                                    new Vector2(stickRadius + 60f, stickRadius + 40f));
-            var bg = stickRoot.gameObject.AddComponent<Image>();
-            bg.color = PennerPalette.NightBlue.WithAlpha(opacity * 0.6f);
-            bg.sprite = CircleSprite();
-            var stick = stickRoot.gameObject.AddComponent<TouchStick>();
+            var rootGo = new GameObject("Layout", typeof(RectTransform));
+            rootGo.transform.SetParent(transform, false);
+            root = (RectTransform)rootGo.transform;
+            root.anchorMin = Vector2.zero; root.anchorMax = Vector2.one;
+            root.offsetMin = Vector2.zero; root.offsetMax = Vector2.zero;
 
-            var knobRect = NewRect("Knob", new Vector2(0.5f, 0.5f), new Vector2(90f, 90f), Vector2.zero, stickRoot);
-            var knob = knobRect.gameObject.AddComponent<Image>();
-            knob.color = PennerPalette.WarmOrange.WithAlpha(opacity);
-            knob.sprite = CircleSprite();
-            knob.raycastTarget = false;
+            var s = TouchSettings.Current;
+            bool mirror = s.leftHanded;
 
-            stick.Init(playerIndex, knobRect, stickRadius);
-
-            // --- Buttons rechts unten (Diamant-Layout wie am Pad) ---
-            AddButton("Leicht",  VButton.Light,     new Vector2(-260f, 150f), PennerPalette.Pure,      "□");
-            AddButton("Schwer",  VButton.Heavy,     new Vector2(-150f, 250f), PennerPalette.Gold,      "△");
-            AddButton("Spezial", VButton.Special1,  new Vector2(-150f,  60f), PennerPalette.BloodRed,  "○");
-            AddButton("Sprung",  VButton.Jump,      new Vector2(-40f,  150f), PennerPalette.NeonBlue,  "✕");
-
-            // --- Sekundärleiste ---
-            AddButton("Block",    VButton.Block,     new Vector2(-380f,  70f), PennerPalette.Earth,     "BLOCK", hold: true);
-            AddButton("Spezial2", VButton.Special2,  new Vector2(-40f,  270f), PennerPalette.PoisonGrn, "S2");
-            AddButton("X-Ray",    VButton.FatalBlow, new Vector2(-260f, 300f), PennerPalette.BloodRed,  "X-RAY");
+            BuildJoystick(mirror, s);
+            foreach (var slot in LayoutFor(s.layout))
+                BuildButton(slot, mirror, s);
         }
 
-        void AddButton(string name, VButton button, Vector2 offsetFromBottomRight,
-                       Color color, string label, bool hold = false)
+        void BuildJoystick(bool mirror, TouchSettings s)
         {
-            var rect = NewRect(name, new Vector2(1f, 0f), new Vector2(buttonSize, buttonSize), offsetFromBottomRight);
-            var img = rect.gameObject.AddComponent<Image>();
-            img.color = color.WithAlpha(opacity * 0.8f);
+            var anchor = new Vector2(mirror ? 1f : 0f, 0f);
+            var rt = NewRect("Joystick", anchor, new Vector2(260f, 260f),
+                             new Vector2(mirror ? -220f : 220f, 200f));
+
+            var bg = rt.gameObject.AddComponent<Image>();
+            bg.sprite = CircleSprite();
+            bg.color = PennerPalette.NightBlue.WithAlpha(s.opacity * 0.6f);
+
+            var knobRect = NewRect("Knob", new Vector2(0.5f, 0.5f), new Vector2(110f, 110f), Vector2.zero, rt);
+            var knob = knobRect.gameObject.AddComponent<Image>();
+            knob.sprite = CircleSprite();
+            knob.color = PennerPalette.WarmOrange.WithAlpha(s.opacity);
+            knob.raycastTarget = false;
+
+            joystick = rt.gameObject.AddComponent<VirtualJoystick>();
+            joystick.playerIndex = playerIndex;
+            joystick.background = bg;
+            joystick.handle = knobRect;
+            joystick.joystickRadius = 130f * s.joystickSize;
+            joystick.sensitivity = s.sensitivity;
+
+            var drag = rt.gameObject.AddComponent<DragElement>();
+            drag.elementId = "Joystick";
+            ApplySavedPosition(rt, "Joystick", s);
+        }
+
+        void BuildButton(Slot slot, bool mirror, TouchSettings s)
+        {
+            var anchor = new Vector2(mirror ? 0f : 1f, 0f);
+            Vector2 pos = mirror ? new Vector2(-slot.pos.x, slot.pos.y) : slot.pos;
+
+            var rt = NewRect(slot.id, anchor, new Vector2(140f, 140f), pos);
+
+            var img = rt.gameObject.AddComponent<Image>();
             img.sprite = CircleSprite();
+            img.color = slot.color.WithAlpha(s.opacity * 0.8f);
 
-            var txt = new GameObject("Label", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
-            txt.transform.SetParent(rect, false);
-            var tr = txt.rectTransform;
-            tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one;
-            tr.offsetMin = Vector2.zero; tr.offsetMax = Vector2.zero;
-            txt.text = label;
-            txt.alignment = TextAlignmentOptions.Center;
-            txt.fontSize = label.Length > 2 ? 26f : 46f;
-            txt.color = PennerPalette.NightBlue;
-            txt.raycastTarget = false;
+            var label = new GameObject("Label", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+            label.transform.SetParent(rt, false);
+            var lrt = label.rectTransform;
+            lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
+            lrt.offsetMin = Vector2.zero; lrt.offsetMax = Vector2.zero;
+            label.text = slot.label;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = slot.label.Length > 2 ? 26f : 50f;
+            label.color = PennerPalette.NightBlue;
+            label.raycastTarget = false;
 
-            var tb = rect.gameObject.AddComponent<TouchButton>();
-            tb.Init(playerIndex, button, hold, img, color, opacity);
+            var tb = rt.gameObject.AddComponent<TouchButton>();
+            tb.Init(playerIndex, slot.button, slot.hold, img, slot.color, s.opacity);
+            tb.isHoldable = slot.hold;
+            buttons.Add(tb);
+
+            var drag = rt.gameObject.AddComponent<DragElement>();
+            drag.elementId = slot.id;
+            ApplySavedPosition(rt, slot.id, s);
+        }
+
+        /// <summary>Vier Layout-Vorlagen aus der Spec (§5).</summary>
+        IEnumerable<Slot> LayoutFor(string layout)
+        {
+            var light   = new Slot { id = "Light",     button = VButton.Light,     label = "□",     color = PennerPalette.Pure };
+            var heavy   = new Slot { id = "Heavy",     button = VButton.Heavy,     label = "△",     color = PennerPalette.Gold };
+            var spec1   = new Slot { id = "Special1",  button = VButton.Special1,  label = "○",     color = PennerPalette.BloodRed };
+            var jump    = new Slot { id = "Jump",      button = VButton.Jump,      label = "✕",     color = PennerPalette.NeonBlue };
+            var block   = new Slot { id = "Block",     button = VButton.Block,     label = "BLOCK", color = PennerPalette.Earth,     hold = true };
+            var spec2   = new Slot { id = "Special2",  button = VButton.Special2,  label = "S2",    color = PennerPalette.PoisonGrn };
+            var xray    = new Slot { id = "FatalBlow", button = VButton.FatalBlow, label = "X-RAY", color = PennerPalette.BloodRed };
+
+            switch (layout)
+            {
+                case "Simple":      // nur die vier Grundtasten, größer verteilt
+                    light.pos = new Vector2(-300f, 170f);
+                    heavy.pos = new Vector2(-160f, 300f);
+                    jump.pos  = new Vector2(-160f, 60f);
+                    block.pos = new Vector2(-440f, 90f);
+                    return new[] { light, heavy, jump, block };
+
+                case "Fighting":    // enger Diamant für Kombos
+                    light.pos = new Vector2(-270f, 150f);
+                    heavy.pos = new Vector2(-165f, 245f);
+                    spec1.pos = new Vector2(-165f, 60f);
+                    jump.pos  = new Vector2(-60f,  150f);
+                    block.pos = new Vector2(-390f, 70f);
+                    spec2.pos = new Vector2(-60f,  265f);
+                    xray.pos  = new Vector2(-270f, 300f);
+                    return new[] { light, heavy, spec1, jump, block, spec2, xray };
+
+                default:            // Standard / LeftHanded (wird gespiegelt)
+                    light.pos = new Vector2(-280f, 160f);
+                    heavy.pos = new Vector2(-170f, 265f);
+                    spec1.pos = new Vector2(-170f, 65f);
+                    jump.pos  = new Vector2(-60f,  160f);
+                    block.pos = new Vector2(-410f, 80f);
+                    spec2.pos = new Vector2(-60f,  285f);
+                    xray.pos  = new Vector2(-280f, 320f);
+                    return new[] { light, heavy, spec1, jump, block, spec2, xray };
+            }
+        }
+
+        void ApplySavedPosition(RectTransform rt, string id, TouchSettings s)
+        {
+            if (s.TryGetPosition(id, out Vector2 pos)) rt.anchoredPosition = pos;
         }
 
         RectTransform NewRect(string name, Vector2 anchor, Vector2 size, Vector2 offset, Transform parent = null)
         {
             var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent != null ? parent : transform, false);
+            go.transform.SetParent(parent != null ? parent : root, false);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = rt.anchorMax = anchor;
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = size;
-            // Offset relativ zum Anker: bei rechtem Anker negative x-Werte
             rt.anchoredPosition = offset;
             return rt;
         }
 
-        // --- prozedurale Kreis-Sprite (kein Art-Asset nötig) ---
+        // ------------------------------------------------------------------
+        //  Steuerung von außen
+        // ------------------------------------------------------------------
+
+        /// <summary>Baut das Layout neu auf (nach Layout-Wechsel/Linkshänder).</summary>
+        public void Rebuild()
+        {
+            buttons.Clear();
+            joystick = null;
+            if (root != null) Destroy(root.gameObject);
+            Build();
+            TouchInputManager.Instance?.Register(joystick, buttons);
+        }
+
+        public void ApplyLayout(TouchSettings s)
+        {
+            joystick?.ApplySettings(s);
+            foreach (var b in buttons) b?.ApplySettings(s);
+        }
+
+        public void SetVisible(bool visible)
+        {
+            if (root != null) root.gameObject.SetActive(visible);
+            if (!visible) VirtualInput.Clear();
+        }
+
+        void OnDisable() => VirtualInput.Clear();
+
+        // ------------------------------------------------------------------
+        //  Prozedurale Kreis-Grafik
+        // ------------------------------------------------------------------
+
         private static Sprite circleSprite;
 
         static Sprite CircleSprite()
@@ -155,87 +285,5 @@ namespace PennerKombat
             circleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
             return circleSprite;
         }
-
-        void OnDisable() => VirtualInput.Clear();
-    }
-
-    /// <summary>Einzelner On-Screen-Button (Tap oder Halten).</summary>
-    public class TouchButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
-    {
-        private int player;
-        private VButton button;
-        private bool holdMode;
-        private Image image;
-        private Color baseColor;
-        private float opacity;
-
-        public void Init(int player, VButton button, bool holdMode, Image image, Color color, float opacity)
-        {
-            this.player = player;
-            this.button = button;
-            this.holdMode = holdMode;
-            this.image = image;
-            this.baseColor = color;
-            this.opacity = opacity;
-        }
-
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            VirtualInput.Press(player, button);
-            if (image != null) image.color = baseColor.WithAlpha(Mathf.Min(1f, opacity * 1.6f));
-        }
-
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            VirtualInput.Release(player, button);
-            if (image != null) image.color = baseColor.WithAlpha(opacity * 0.8f);
-        }
-
-        void OnDisable()
-        {
-            VirtualInput.Release(player, button);
-        }
-    }
-
-    /// <summary>Virtueller Analogstick: schreibt eine normalisierte Achse in VirtualInput.</summary>
-    public class TouchStick : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
-    {
-        private int player;
-        private RectTransform knob;
-        private RectTransform self;
-        private float radius;
-
-        public void Init(int player, RectTransform knob, float radius)
-        {
-            this.player = player;
-            this.knob = knob;
-            this.radius = radius;
-            self = (RectTransform)transform;
-        }
-
-        public void OnPointerDown(PointerEventData eventData) => OnDrag(eventData);
-
-        public void OnDrag(PointerEventData eventData)
-        {
-            if (self == null) return;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                self, eventData.position, eventData.pressEventCamera, out Vector2 local);
-
-            Vector2 clamped = Vector2.ClampMagnitude(local, radius);
-            if (knob != null) knob.anchoredPosition = clamped;
-
-            Vector2 axis = clamped / radius;
-            // kleine Totzone gegen Zittern
-            if (axis.magnitude < 0.18f) axis = Vector2.zero;
-            VirtualInput.SetAxis(player, axis);
-        }
-
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            if (knob != null) knob.anchoredPosition = Vector2.zero;
-            VirtualInput.SetAxis(player, Vector2.zero);
-        }
-
-        void OnDisable() => VirtualInput.SetAxis(player, Vector2.zero);
     }
 }
