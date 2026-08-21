@@ -19,6 +19,12 @@ namespace PennerKombat
         public bool createFatality = true;
         public bool createSaveSystem = true;
 
+        [Header("Touch")]
+        [Tooltip("On-Screen-Steuerung auf Handhelds erzeugen (Android/iOS).")]
+        public bool createTouchControls = true;
+        [Tooltip("Touch-Layout auch am Desktop zeigen (zum Testen).")]
+        public bool touchControlsOnDesktop = false;
+
         [Header("Visuals & VFX (docs/VISUALS.md)")]
         public bool createVfx = true;
         public bool createComboFeedback = true;
@@ -43,6 +49,7 @@ namespace PennerKombat
                 cc.transform.position = new Vector3(0f, 15f, -12f);
             }
             if (createSaveSystem && SaveSystem.Instance == null) SaveSystem.Ensure();
+            if (createTouchControls) TouchControls.Ensure(touchControlsOnDesktop);
             if (createFatalBlow) gameObject.AddComponent<FatalBlowSystem>();
             if (createFatality) gameObject.AddComponent<FatalitySystem>();
 

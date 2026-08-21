@@ -46,6 +46,11 @@ namespace PennerKombat
                 if (kbd != Vector3.zero) return kbd;
             }
 
+            // Touch / On-Screen-Stick (docs: Assets/Scripts/UI/TouchControls.cs)
+            Vector2 touch = VirtualInput.GetAxis(playerIndex);
+            if (touch.sqrMagnitude > 0.0001f)
+                return new Vector3(touch.x, 0f, touch.y);
+
             // Gamepad: Spieler 1 = Gamepad #1, Spieler 2 = Gamepad #2
             int pad = playerIndex;
             var gamepads = Gamepad.all;
@@ -61,31 +66,41 @@ namespace PennerKombat
 
         public bool GetLightAttack(int p) =>
             (p == 0 && Keyboard.current != null && Keyboard.current[lightAttack].wasPressedThisFrame)
-            || GamepadButton(p, gp => gp.buttonSouth.wasPressedThisFrame);
+            || GamepadButton(p, gp => gp.buttonSouth.wasPressedThisFrame)
+            || VirtualInput.WasPressed(p, VButton.Light);
 
         public bool GetHeavyAttack(int p) =>
             (p == 0 && Keyboard.current != null && Keyboard.current[heavyAttack].wasPressedThisFrame)
-            || GamepadButton(p, gp => gp.buttonEast.wasPressedThisFrame);
+            || GamepadButton(p, gp => gp.buttonEast.wasPressedThisFrame)
+            || VirtualInput.WasPressed(p, VButton.Heavy);
 
         public bool GetJump(int p) =>
             (p == 0 && Keyboard.current != null && Keyboard.current[jump].wasPressedThisFrame)
-            || GamepadButton(p, gp => gp.buttonNorth.wasPressedThisFrame);
+            || GamepadButton(p, gp => gp.buttonNorth.wasPressedThisFrame)
+            || VirtualInput.WasPressed(p, VButton.Jump);
 
         public bool GetBlock(int p) =>
             (p == 0 && Keyboard.current != null && (Keyboard.current[block].isPressed))
-            || GamepadHeld(p, gp => gp.leftShoulder.isPressed || gp.rightShoulder.isPressed);
+            || GamepadHeld(p, gp => gp.leftShoulder.isPressed || gp.rightShoulder.isPressed)
+            || VirtualInput.IsHeld(p, VButton.Block);
 
         public bool GetSpecial1(int p) =>
             (p == 0 && Keyboard.current != null && Keyboard.current[special1].wasPressedThisFrame)
-            || GamepadButton(p, gp => gp.buttonWest.wasPressedThisFrame);
+            || GamepadButton(p, gp => gp.buttonWest.wasPressedThisFrame)
+            || VirtualInput.WasPressed(p, VButton.Special1);
 
         public bool GetSpecial2(int p) =>
             (p == 0 && Keyboard.current != null && Keyboard.current[special2].wasPressedThisFrame)
-            || GamepadButton(p, gp => gp.rightShoulder.wasPressedThisFrame);
+            || GamepadButton(p, gp => gp.rightShoulder.wasPressedThisFrame)
+            || VirtualInput.WasPressed(p, VButton.Special2);
 
         public bool GetFatalBlow(int p) =>
             (p == 0 && Keyboard.current != null && Keyboard.current[fatalBlow].wasPressedThisFrame)
-            || GamepadButton(p, gp => gp.buttonWest.wasPressedThisFrame && gp.buttonEast.wasPressedThisFrame);
+            || GamepadButton(p, gp => gp.buttonWest.wasPressedThisFrame && gp.buttonEast.wasPressedThisFrame)
+            || VirtualInput.WasPressed(p, VButton.FatalBlow);
+
+        /// <summary>Löscht die Einmal-Flags der Touch-Eingabe am Frame-Ende.</summary>
+        void LateUpdate() => VirtualInput.EndFrame();
 
         // ---- Helfer ----
         bool GamepadButton(int p, System.Func<Gamepad, bool> test)

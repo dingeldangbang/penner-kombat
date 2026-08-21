@@ -39,7 +39,12 @@
   (additiver Radial-Glow mit optionalem Puls).
 - **Android**: `Assets/Plugins/Android/AndroidManifest.xml` und `docs/BUILD_ANDROID.md`
   (Projektaufbau, Player Settings, IL2CPP/ARM64, Signierung, CI-Hinweise, Touch-Lücke).
-- **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping).
+- **Touch-/On-Screen-Steuerung** (`UI/TouchControls.cs`, `Core/VirtualInput.cs`): virtueller Stick,
+  7 Buttons (leicht/schwer/Spezial 1+2/Sprung/Block/X-Ray), prozedurale Grafiken, eigenes
+  EventSystem; `FighterInput` verodert Touch mit Tastatur und Gamepad, der `Bootstrapper`
+  erzeugt das Layout auf Handhelds automatisch.
+- **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping),
+  `docs/STATUS.md` (Soll/Ist-Abgleich: was existiert, was wirklich noch fehlt).
 
 ## [1.3.0] — 2026-08-21
 ### Trophäen, Soundtrack, Fatalities, GitHub-Bereitstellung
