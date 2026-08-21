@@ -213,6 +213,15 @@ namespace PennerKombat
         void MatchEnd(string winner)
         {
             matchEnded = true;
+
+            // Statistik persistieren (docs: Assets/Scripts/Utils/SaveSystem.cs)
+            if (SaveSystem.Instance != null && player1 != null && player2 != null)
+            {
+                SaveSystem.Instance.RecordMatch(
+                    winner == player1.displayName, player1.fighterId, player2.fighterId);
+                SaveSystem.Instance.RecordCombo(Mathf.Max(player1.comboCount, player2.comboCount));
+            }
+
             if (uiManager != null) uiManager.ShowMatchResult(winner);
             if (audioManager != null) audioManager.PlayVictoryMusic();
             OnMatchEnded?.Invoke(winner);

@@ -379,6 +379,7 @@ namespace PennerKombat
             if (fatalBlowSound != null) AudioSource.PlayClipAtPoint(fatalBlowSound, transform.position);
             // X-Ray-Präsentation: Zeitlupe 0,5x, harter Shake, Röntgen-Blitz
             CameraShake.SlowMotion(0.5f, 0.8f);
+            SaveSystem.Instance?.RecordFatalBlow();
             PlayHitFeedback(target, target.transform.position + Vector3.up * 1.1f,
                             GameConstants.FatalBlowDamageMax, HitTier.FatalBlow);
             ScreenEffects.FlashColor(Color.white, 0.6f, 0.25f);
@@ -395,6 +396,8 @@ namespace PennerKombat
             if (target == null) return;
             // Fatality-Präsentation: 0,3x Zeitlupe, Blutfontäne, Linsen-Splatter
             CameraShake.SlowMotion(0.3f, 1.2f);
+            SaveSystem.Instance?.RecordFatality();
+            ScreenEffects.SetState(ScreenState.Fatality);
             VFXManager.Instance?.PlayHit(target.transform.position + Vector3.up * 1.1f,
                                          transform.forward, 100f, HitTier.Fatality, fighterId);
             target.TakeDamage(999f, transform.forward, this);

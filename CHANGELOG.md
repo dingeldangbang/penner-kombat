@@ -30,6 +30,15 @@
 - **Benannte Screen-States** (`ScreenState`): Dingeneldang, MojoLockout, Fatality, Fusel, Matrix,
   RatSwarm, Monochrome — inkl. URP-Profilen; Combo-Tabelle bis Stufe 21+ (Feuerwerk).
 - **Neue Partikeltypen**: Sludge, PulseGlow, Grease, Fire, Poison, Fireworks, Rainbow-Hits.
+- **SaveSystem** (`Assets/Scripts/Utils/SaveSystem.cs`): JSON-Speicherstand mit Match-Statistik,
+  Combo-/Schadensrekorden, Fatality-Zählern und Optionen; wird vom `GameManager` bei Matchende
+  und vom `FighterController` bei Fatality/X-Ray beschrieben.
+- **Optionsmenü** (`Assets/Scripts/UI/OptionsMenu.cs`): Audio, Auflösung, Qualität, VSync sowie
+  die VFX-Regler `intensity` und `gore` — alle Werte laufen über das SaveSystem.
+- **Shader**: `Assets/Shaders/Outline.shader` (Zwei-Pass-Silhouette) und `Glow.shader`
+  (additiver Radial-Glow mit optionalem Puls).
+- **Android**: `Assets/Plugins/Android/AndroidManifest.xml` und `docs/BUILD_ANDROID.md`
+  (Projektaufbau, Player Settings, IL2CPP/ARM64, Signierung, CI-Hinweise, Touch-Lücke).
 - **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping).
 
 ## [1.3.0] — 2026-08-21

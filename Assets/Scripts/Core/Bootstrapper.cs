@@ -17,6 +17,7 @@ namespace PennerKombat
         public bool createGameManager = true;
         public bool createFatalBlow = true;
         public bool createFatality = true;
+        public bool createSaveSystem = true;
 
         [Header("Visuals & VFX (docs/VISUALS.md)")]
         public bool createVfx = true;
@@ -41,6 +42,7 @@ namespace PennerKombat
                 var cc = camGo.AddComponent<CameraController>();
                 cc.transform.position = new Vector3(0f, 15f, -12f);
             }
+            if (createSaveSystem && SaveSystem.Instance == null) SaveSystem.Ensure();
             if (createFatalBlow) gameObject.AddComponent<FatalBlowSystem>();
             if (createFatality) gameObject.AddComponent<FatalitySystem>();
 
@@ -63,6 +65,9 @@ namespace PennerKombat
 
         void Start()
         {
+            // Gespeicherte Optionen (Lautstärke, Qualität, VFX-Regler) anwenden
+            SaveSystem.Instance?.ApplyOptions();
+
             // GameManager erst in Start, damit andere Singletons zuerst da sind
             if (createGameManager && GameManager.Instance == null)
             {

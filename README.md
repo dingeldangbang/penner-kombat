@@ -117,6 +117,7 @@ Assets/
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
+| [docs/BUILD_ANDROID.md](docs/BUILD_ANDROID.md) | Android-Build (APK/AAB): Setup, Player Settings, Signierung |
 | [docs/RELEASE.md](docs/RELEASE.md) | GitHub-Release-Anleitung |
 
 ---
