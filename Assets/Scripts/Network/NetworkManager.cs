@@ -17,10 +17,24 @@ namespace PennerKombat
         private string roomName;
         private bool isReady;
         private bool isHost;
+        private string localPlayerId;
+        private string lastRoomState;
+        private float lastPongTime;
 
         public string RoomName => roomName;
+        public string LocalPlayerId => localPlayerId;
+        public string LastRoomState => lastRoomState;
         public bool IsReady => isReady;
         public bool IsHost => isHost;
+
+        // --- Ereignisse für UI und Spiel (Protokoll: docs/SERVER.md) ---
+        public event System.Action<string> OnJoined;              // eigene Raum-ID
+        public event System.Action<string, string> OnPeerJoined;  // id, name
+        public event System.Action<string> OnPeerLeft;            // id
+        public event System.Action OnMatchStart;
+        public event System.Action<string> OnPeerUpdate;          // rohe JSON-Zeile
+        public event System.Action<string> OnPeerAction;          // Aktionsname
+        public event System.Action<string> OnServerError;
 
         void Awake()
         {
@@ -100,22 +114,98 @@ namespace PennerKombat
 
         void HandleMessage(string raw)
         {
-            // JSON-Parsing (z.B. Newtonsoft) hier einhängen.
-            // Beispielhafte Verarbeitung für gegnerischen Spielzustand.
-            if (raw.Contains("\"type\":\"start\""))
+            string type = Field(raw, "type");
+            switch (type)
             {
-                Debug.Log("Match gestartet (Netzwerk).");
-            }
-            else if (raw.Contains("\"type\":\"state\""))
-            {
-                // Gegnerposition/-HP anwenden
-            }
-            else
-            {
-                // Fallback: als Chat anzeigen
-                if (LobbySystem.Instance != null) LobbySystem.Instance.AddChat(raw);
+                case "welcome":
+                    localPlayerId = Field(raw, "player");
+                    break;
+
+                case "joined":
+                    roomName = Field(raw, "room");
+                    isHost = raw.Contains("\"host\":true");
+                    OnJoined?.Invoke(roomName);
+                    break;
+
+                case "peer_joined":
+                    OnPeerJoined?.Invoke(Field(raw, "player"), Field(raw, "name"));
+                    LobbySystem.Instance?.AddChat($"{Field(raw, "name")} ist beigetreten.");
+                    break;
+
+                case "peer_left":
+                    OnPeerLeft?.Invoke(Field(raw, "player"));
+                    LobbySystem.Instance?.AddChat($"{Field(raw, "name")} hat den Raum verlassen.");
+                    break;
+
+                case "room_state":
+                    lastRoomState = raw;
+                    break;
+
+                case "start":
+                    Debug.Log("Match gestartet (Netzwerk).");
+                    OnMatchStart?.Invoke();
+                    break;
+
+                case "update":
+                case "state":
+                    OnPeerUpdate?.Invoke(raw);
+                    break;
+
+                case "action":
+                    OnPeerAction?.Invoke(Field(raw, "action"));
+                    break;
+
+                case "chat":
+                    LobbySystem.Instance?.AddChat($"{Field(raw, "name")}: {Field(raw, "text")}");
+                    break;
+
+                case "error":
+                    string err = Field(raw, "error");
+                    Debug.LogWarning($"[Relay] Fehler: {err}");
+                    OnServerError?.Invoke(err);
+                    break;
+
+                case "pong":
+                    lastPongTime = Time.time;
+                    break;
             }
         }
+
+        /// <summary>Minimaler Feld-Extraktor — reicht für das flache Relay-Protokoll.</summary>
+        public static string Field(string json, string key)
+        {
+            if (string.IsNullOrEmpty(json)) return null;
+            string pattern = $"\"{key}\":";
+            int start = json.IndexOf(pattern, System.StringComparison.Ordinal);
+            if (start < 0) return null;
+            start += pattern.Length;
+            while (start < json.Length && json[start] == ' ') start++;
+            if (start >= json.Length) return null;
+
+            if (json[start] == '"')
+            {
+                start++;
+                int end = json.IndexOf('"', start);
+                return end < 0 ? null : json.Substring(start, end - start);
+            }
+
+            int stop = json.IndexOfAny(new[] { ',', '}' }, start);
+            return stop < 0 ? null : json.Substring(start, stop - start).Trim();
+        }
+
+        /// <summary>Chatnachricht in den Raum schicken.</summary>
+        public void SendChat(string text)
+            => Send($"{{\"type\":\"chat\",\"text\":\"{Escape(text)}\"}}");
+
+        /// <summary>Aktion (Angriff, Spezial, Sprung …) an die Gegenseite melden.</summary>
+        public void SendAction(string action)
+            => Send($"{{\"type\":\"action\",\"action\":\"{Escape(action)}\"}}");
+
+        /// <summary>Latenzmessung gegen den Relay.</summary>
+        public void SendPing() => Send($"{{\"type\":\"ping\",\"t\":{Time.time:F3}}}");
+
+        static string Escape(string s)
+            => string.IsNullOrEmpty(s) ? "" : s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
         /// <summary>Sendet eine Nachricht über den verbundenen Client.</summary>
         public void Send(string msg) => client?.Send(msg);

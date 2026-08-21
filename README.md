@@ -64,6 +64,7 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Mops-Kommando** `MopsKommandoSequence`: 180-Frame-Cinematic (Zeitlupe, Paula, Häufchen, kippende Arena)
 - **Arena-Props** `ArenaProp`: Bierkasten-Turm, Gasflasche (4 Treffer → Explosion), Wäscheleine (Stun), Mülltonne, Gerüst + Boden-Hazards
 - **Charakter-Shader** `Assets/Shaders/PennerCharacter.shader`: Grease, Pulse, Gold, Fire, Matrix, Rat + Treffer-Flash
+- **Relay-Server** `server/` (Node + `ws`): Räume, Nachrichtenspiegelung, Ready→Start, Heartbeat — `cd server && npm install && npm start`
 - **Optional URP** `UrpPostProcessingDriver` (Define `PK_URP`): Bloom, ACES, Vignette, CA, DoF, Film Grain
 
 ---
@@ -117,6 +118,7 @@ Assets/
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
+| [docs/SERVER.md](docs/SERVER.md) | Relay-Server: Start, Protokoll, Deployment, Grenzen |
 | [docs/CONTROLS.md](docs/CONTROLS.md) | Tastatur (P1/P2), Gamepad, KI-Stufen, Multiplayer-Modi |
 | [docs/TOUCH.md](docs/TOUCH.md) | Touch-Steuerung: Joystick, Buttons, Gesten, Layout-Editor, Optionen |
 | [docs/STATUS.md](docs/STATUS.md) | Soll/Ist: was im Repo steckt und was wirklich noch fehlt |

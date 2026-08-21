@@ -25,6 +25,7 @@ Skript erzeugen lässt.
 | **Fortschritt** | `Trophies/TrophyManager.cs` (**56** Trophäen), `TrophyNotificationUI.cs`, `Utils/SaveSystem.cs` |
 | **Training** | `Training/TrainingMode.cs`, `TutorialManager.cs` (10 Lektionen) |
 | **Netzwerk** | `Network/WebSocketClient.cs`, `NetworkManager.cs`, `LobbySystem.cs`, `LanDiscovery.cs`, `RoomCode.cs`, `QrCoupling.cs`, `MultiplayerConfig.cs` |
+| **Relay-Server** | `server/` (Node + `ws`): Räume, Spiegelung, Ready→Start, Heartbeat — **getestet, 18/18 grün** (`npm test`) |
 | **Test/Editor** | `Testing/TestRunner.cs`, `Editor/GameSetupWizard.cs` |
 | **Android** | `Assets/Plugins/Android/AndroidManifest.xml`, `docs/BUILD_ANDROID.md` |
 
@@ -47,7 +48,6 @@ Prefabs oder Sprites nötig (siehe `docs/VISUALS.md`).
 | 7 | **Audio** (31 Tracks, SFX, Voice) | Siehe `docs/SOUNDTRACK.md`; ohne Clips greifen die prozeduralen Fallback-Pings | 🟡 |
 | 8 | **Arena-Meshes** (Bierkästen, Wäscheleine, Neonschild) | `ArenaProp` funktioniert mit Platzhalter-Würfeln; Optik fehlt | 🟡 |
 | 9 | **Noise-Textur** für die Shader-Modi Fire/Matrix/Rat (`_NoiseTex`) | Ohne sie bleiben diese drei Effekte unsichtbar | 🟡 |
-| 10 | **Relay-Server / P2P-Endpunkt** — ohne ihn nur LAN-Discovery, keine echte Online-Partie | Serverseitige Komponente, gehört nicht ins Spiel-Repo | 🟡 |
 | 11 | **Unity-Lizenz für CI** (`UNITY_LICENSE`-Secret) | Nur damit lässt sich das APK automatisiert bauen | 🟢 |
 
 ---

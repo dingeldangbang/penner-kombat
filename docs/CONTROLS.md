@@ -120,7 +120,9 @@ Hosts verschwinden nach 8 s ohne Lebenszeichen aus der Liste.
 ### 4.4 Online-Relay
 `NetworkManager` + `WebSocketClient` verbinden sich mit dem in der
 Konfiguration hinterlegten Relay (`ws://…`). `HostRoom()`, `JoinHost(code)` und
-`LeaveRoom()` sind die Einstiegspunkte.
+`LeaveRoom()` sind die Einstiegspunkte; Ereignisse (`OnPeerJoined`,
+`OnMatchStart`, `OnPeerUpdate`, `OnPeerAction`) liefern die Gegenseite.
+Der passende Server liegt in `server/` — Start und Protokoll: [SERVER.md](SERVER.md).
 
 ### Konfiguration
 `MultiplayerConfig` (JSON in PlayerPrefs, Key `pk_mp_config`): Spielername,
@@ -133,8 +135,8 @@ KI-Stufe.
 
 | Punkt | Stand |
 |---|---|
-| **Relay-Server** | Es gibt nur den Client. Ein Server, der Räume verwaltet und Nachrichten spiegelt, existiert nicht — ohne ihn funktioniert nur LAN-Discovery + direkte Verbindung, sofern ein Endpunkt lauscht. |
-| **Direkter P2P-WebSocket** | Der Host meldet sich per Broadcast, öffnet aber selbst keinen WebSocket-Server. Für echtes Gerät-zu-Gerät fehlt entweder ein eingebetteter Server oder ein Relay. |
+| **Relay-Server** | ✅ ergänzt: `server/` (Node + `ws`), siehe [SERVER.md](SERVER.md). Ein Gerät im Netz startet ihn, beide Clients verbinden sich dorthin. |
+| **Direkter P2P-WebSocket** | Der Host öffnet weiterhin keinen eigenen Server im Spiel — es läuft immer über den Relay (lokal oder auf einem VPS). |
 | **Netcode/Rollback** | Zustandsabgleich ist simples State-Sending, keine Vorhersage, kein Rollback. Für ein Fighting Game über das Internet zu wenig. |
 | **QR-Encoder/Scanner** | Nur mit ZXing (Define `PK_ZXING`). |
 | **Split-Screen** | Zwei Spieler teilen sich eine Kamera; getrennte Viewports sind nicht umgesetzt. |

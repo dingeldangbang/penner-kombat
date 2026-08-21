@@ -48,6 +48,13 @@
   (JSON in PlayerPrefs) und `TouchDebug` (F3-Overlay). Alles prozedural, ohne Prefabs;
   `FighterInput` verodert Touch mit Tastatur und Gamepad, das Optionsmenü bekommt eine
   Touch-Sektion. Doku: `docs/TOUCH.md`.
+- **Relay-Server** (`server/`, Node ≥ 18 + `ws`): verwaltet Räume und spiegelt Nachrichten
+  zwischen den Spielern; Ready→`start`, Host-Übergabe beim Verlassen, Heartbeat gegen tote
+  Verbindungen, Aufräumen leerer Räume, HTTP-Endpunkte `/health` und `/rooms`.
+  Smoke-Test mit 18 Prüfungen (`npm test`) — alle grün. Doku: `docs/SERVER.md`.
+- **NetworkManager spricht das Protokoll**: Ereignisse `OnJoined`, `OnPeerJoined`, `OnPeerLeft`,
+  `OnMatchStart`, `OnPeerUpdate`, `OnPeerAction`, `OnServerError` sowie `SendChat`,
+  `SendAction` und `SendPing`; schlanker Feld-Extraktor statt String-Contains-Prüfungen.
 - **Tastatur für zwei Spieler**: `FighterInput` mit P1 (WASD + J/K/L/U/I/O/E/Y/H) und
   P2 (Pfeiltasten + Nummernblock), neue Aktionen EX, Interaktion und Med; Belegung frei
   umlegbar (`KeyboardLayoutUI`, Persistenz über `KeyBindings`).
