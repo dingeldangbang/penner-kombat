@@ -1,0 +1,49 @@
+# Unity-generiert
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+/MemoryCaptures/
+/[Rr]ecordings/
+
+# Asset-Store-Tools & Editor-Caches
+/[Aa]ssets/AssetStoreTools*
+/[Aa]ssets/Plugins/Editor/JetBrains*
+.vs/
+.idea/
+.DS_Store
+
+# Visual-Studio-/Rider-Projektdateien (Unity regeneriert sie)
+*.csproj
+*.sln
+*.user
+*.userprefs
+*.booproj
+*.svd
+*.pidb
+*.tmp
+*.unityproj
+*.orig
+
+# Build-Artefakte
+*.apk
+*.aab
+*.unitypackage
+*.app
+ExportedObj/
+
+# Unity-Meta zu obigen Artefakten
+*.apk.meta
+*.aab.meta
+*.unitypackage.meta
+*.app.meta
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Crash-Reports
+sysinfo.txt
+crashlytics-build.properties
