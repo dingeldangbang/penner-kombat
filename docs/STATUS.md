@@ -13,18 +13,18 @@ Skript erzeugen lässt.
 
 | Bereich | Dateien |
 |---|---|
-| **Core** | `Core/FighterController.cs` (abstrakt, virtual/protected), `FighterInput.cs` (Tastatur + Gamepad + **Touch**), `VirtualInput.cs`, `GameManager.cs`, `UIManager.cs`, `ArenaManager.cs`, `CameraController.cs`, `AudioManager.cs`, `Bootstrapper.cs`, `GameConstants.cs`, `HitboxManager.cs`, `ObjectPool.cs`, `Timer.cs` |
+| **Core** | `Core/FighterController.cs` (abstrakt, virtual/protected), `FighterInput.cs` (Tastatur P1+P2, Gamepad, Touch), `VirtualInput.cs`, `MedSystem.cs`, `GameManager.cs`, `UIManager.cs`, `ArenaManager.cs`, `CameraController.cs`, `AudioManager.cs`, `Bootstrapper.cs`, `GameConstants.cs`, `HitboxManager.cs`, `ObjectPool.cs`, `Timer.cs` |
 | **Kampf** | `Combat/CommandInput.cs` (Numpad-Notation), `MoveData.cs`, `MoveCatalog.cs`, `FatalBlowSystem.cs`, `FatalitySystem.cs` |
 | **Charaktere** | alle 9 in `Characters/` + Summons (`MopsController`, `Herta`, `RatController`) |
 | **Projektile** | Bottle, Coin, LuckyBag, Sludge, Spoon |
-| **KI** | `AI/AIController.cs` (nutzt Spezialbewegungen) |
+| **KI** | `AI/AIController.cs` — 6 Schwierigkeitsstufen, Combo-Ketten, Med-Nutzung |
 | **VFX** | `VFX/`: `PennerPalette`, `VFXManager`, `CameraShake`, `ScreenEffects`, `ComboSystem`, `ComboCounterUI`, `CharacterVisuals`, `CharacterShaderBinder`, `ArenaVisuals`, `ArenaProp`, `HudStatusBars`, `FloatingText`, `SignatureFx`, `MopsKommandoSequence`, `UrpPostProcessingDriver` |
 | **Shader** | `Shaders/PennerCharacter.shader`, `Outline.shader`, `Glow.shader` |
 | **UI** | `UI/MainMenu.cs`, `PauseMenu.cs`, `CharacterSelectUI.cs`, `CharacterSlotUI.cs`, `OptionsMenu.cs`, **`TouchControls.cs`** |
 | **Story** | `Story/StoryManager.cs`, `DialogueSystem.cs`, `ChapterData.cs`, `EndingSystem.cs` (8 Kapitel, 4 Enden) |
 | **Fortschritt** | `Trophies/TrophyManager.cs` (**56** Trophäen), `TrophyNotificationUI.cs`, `Utils/SaveSystem.cs` |
 | **Training** | `Training/TrainingMode.cs`, `TutorialManager.cs` (10 Lektionen) |
-| **Netzwerk** | `Network/WebSocketClient.cs`, `NetworkManager.cs`, `LobbySystem.cs` |
+| **Netzwerk** | `Network/WebSocketClient.cs`, `NetworkManager.cs`, `LobbySystem.cs`, `LanDiscovery.cs`, `RoomCode.cs`, `QrCoupling.cs`, `MultiplayerConfig.cs` |
 | **Test/Editor** | `Testing/TestRunner.cs`, `Editor/GameSetupWizard.cs` |
 | **Android** | `Assets/Plugins/Android/AndroidManifest.xml`, `docs/BUILD_ANDROID.md` |
 
@@ -47,7 +47,8 @@ Prefabs oder Sprites nötig (siehe `docs/VISUALS.md`).
 | 7 | **Audio** (31 Tracks, SFX, Voice) | Siehe `docs/SOUNDTRACK.md`; ohne Clips greifen die prozeduralen Fallback-Pings | 🟡 |
 | 8 | **Arena-Meshes** (Bierkästen, Wäscheleine, Neonschild) | `ArenaProp` funktioniert mit Platzhalter-Würfeln; Optik fehlt | 🟡 |
 | 9 | **Noise-Textur** für die Shader-Modi Fire/Matrix/Rat (`_NoiseTex`) | Ohne sie bleiben diese drei Effekte unsichtbar | 🟡 |
-| 10 | **Unity-Lizenz für CI** (`UNITY_LICENSE`-Secret) | Nur damit lässt sich das APK automatisiert bauen | 🟢 |
+| 10 | **Relay-Server / P2P-Endpunkt** — ohne ihn nur LAN-Discovery, keine echte Online-Partie | Serverseitige Komponente, gehört nicht ins Spiel-Repo | 🟡 |
+| 11 | **Unity-Lizenz für CI** (`UNITY_LICENSE`-Secret) | Nur damit lässt sich das APK automatisiert bauen | 🟢 |
 
 ---
 

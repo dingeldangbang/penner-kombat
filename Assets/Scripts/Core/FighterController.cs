@@ -95,6 +95,7 @@ namespace PennerKombat
             // Visuelle Signatur (Aura, Trail, Zustands-FX) — docs/VISUALS.md §2
             if (GetComponent<CharacterVisuals>() == null) gameObject.AddComponent<CharacterVisuals>();
             if (GetComponent<CharacterShaderBinder>() == null) gameObject.AddComponent<CharacterShaderBinder>();
+            if (GetComponent<MedSystem>() == null) gameObject.AddComponent<MedSystem>();
         }
 
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
@@ -424,6 +425,7 @@ namespace PennerKombat
             attackTimer = 0f;
             hitThisAttack.Clear();
             ResetFatalBlow();
+            GetComponent<MedSystem>()?.ResetForRound();
             gameObject.SetActive(true);
         }
 

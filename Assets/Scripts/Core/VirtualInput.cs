@@ -3,7 +3,7 @@ using UnityEngine;
 namespace PennerKombat
 {
     /// <summary>Virtuelle Tasten der Touch-/On-Screen-Steuerung.</summary>
-    public enum VButton { Light, Heavy, Jump, Block, Special1, Special2, FatalBlow }
+    public enum VButton { Light, Heavy, Jump, Block, Special1, Special2, FatalBlow, Ex, Interact, Med }
 
     /// <summary>
     /// Eingabequelle für Touch- und On-Screen-Controls. <see cref="FighterInput"/>
@@ -16,7 +16,7 @@ namespace PennerKombat
     public static class VirtualInput
     {
         public const int MaxPlayers = 2;
-        private const int ButtonCount = 7;
+        private const int ButtonCount = 10;
 
         private static readonly Vector2[] axis = new Vector2[MaxPlayers];
         private static readonly bool[,] pressed = new bool[MaxPlayers, ButtonCount];

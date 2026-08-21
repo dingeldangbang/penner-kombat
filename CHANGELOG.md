@@ -48,6 +48,20 @@
   (JSON in PlayerPrefs) und `TouchDebug` (F3-Overlay). Alles prozedural, ohne Prefabs;
   `FighterInput` verodert Touch mit Tastatur und Gamepad, das Optionsmenü bekommt eine
   Touch-Sektion. Doku: `docs/TOUCH.md`.
+- **Tastatur für zwei Spieler**: `FighterInput` mit P1 (WASD + J/K/L/U/I/O/E/Y/H) und
+  P2 (Pfeiltasten + Nummernblock), neue Aktionen EX, Interaktion und Med; Belegung frei
+  umlegbar (`KeyboardLayoutUI`, Persistenz über `KeyBindings`).
+- **Med-Kapsel** (`Core/MedSystem.cs`): 2 Ladungen, +25 HP, 1,2 s Anwendung, 8 s Cooldown,
+  Rundenreset; wird auch von der KI genutzt.
+- **KI mit sechs Schwierigkeitsstufen** (`AI/AIController.cs`): Sehr leicht bis Boss mit
+  Reaktionszeit, Block-, Combo- und Spezialchance sowie Schadensmultiplikator; dynamische
+  Combo-Ketten (3–13 Schritte) und Med-Nutzung unter 30 % HP.
+- **Multiplayer-Kopplung**: `Network/LanDiscovery.cs` (UDP-Broadcast + Thread-Listener),
+  `Network/RoomCode.cs` (Payload `PK://ip:port/raum`, 6-stelliger Code),
+  `Network/QrCoupling.cs` (Textcode; QR-Bild und Kamera-Scan mit Define `PK_ZXING`),
+  `Network/MultiplayerConfig.cs` (JSON in PlayerPrefs) und `UI/MultiplayerMenuUI.cs`
+  (Lokal / Kopplung / LAN / Online). `NetworkManager` bekommt `HostRoom`, `JoinHost`
+  und `LeaveRoom`. Doku: `docs/CONTROLS.md`.
 - **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping),
   `docs/STATUS.md` (Soll/Ist-Abgleich: was existiert, was wirklich noch fehlt).
 

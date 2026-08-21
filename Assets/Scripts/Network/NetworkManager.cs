@@ -16,9 +16,11 @@ namespace PennerKombat
 
         private string roomName;
         private bool isReady;
+        private bool isHost;
 
         public string RoomName => roomName;
         public bool IsReady => isReady;
+        public bool IsHost => isHost;
 
         void Awake()
         {
@@ -27,6 +29,10 @@ namespace PennerKombat
             DontDestroyOnLoad(gameObject);
 
             if (client == null) client = gameObject.AddComponent<WebSocketClient>();
+            // Name und Relay aus der Multiplayer-Konfiguration übernehmen
+            var cfg = MultiplayerConfig.Current;
+            if (!string.IsNullOrEmpty(cfg.playerName)) playerName = cfg.playerName;
+            if (!string.IsNullOrEmpty(cfg.relayServer)) client.serverUrl = cfg.relayServer;
             client.OnConnected += OnConnected;
             client.OnMessage += HandleMessage;
         }
@@ -45,6 +51,33 @@ namespace PennerKombat
             roomName = room;
             isReady = false;
             client.Connect();
+        }
+
+        /// <summary>Als Host einen Raum eröffnen und ihn im LAN bekanntmachen.</summary>
+        public RoomCode HostRoom()
+        {
+            var code = RoomCode.Create();
+            isHost = true;
+            LanDiscovery.Ensure().StartAdvertising(code.room);
+            JoinRoom(code.room);
+            return code;
+        }
+
+        /// <summary>Einem per Code/QR/LAN gefundenen Host beitreten.</summary>
+        public void JoinHost(RoomCode code)
+        {
+            isHost = false;
+            if (client != null) client.serverUrl = code.ToWebSocketUrl();
+            JoinRoom(code.room);
+        }
+
+        public void LeaveRoom()
+        {
+            LanDiscovery.Instance?.StopAdvertising();
+            Send($"{{\"type\":\"leave\",\"room\":\"{roomName}\",\"player\":\"{playerName}\"}}");
+            client?.Close();
+            roomName = null;
+            isHost = false;
         }
 
         void OnConnected()
