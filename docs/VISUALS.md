@@ -93,8 +93,14 @@ Weltraum-verankertes Label über dem Kämpfer:
 | 1–4 | — | 1,00× | 0,30 | Ping bei 3 | — |
 | 5–7 | 2 px | 1,05× | 0,37 | „Pling!" bei 5 | Rotblitz 5 % |
 | 8–10 | 5 px | 1,05–1,10× | 0,43 | „DING!" bei 8 | Rotblitz 10 % |
-| 11–15 | 8 px | 1,10× | 0,50 | „KOMBO!" | Staubwolke |
-| 16+ | 12 px | 1,15–1,25× | 0,60 | „KOMBO!" | EX-Impact-Burst |
+| 11–15 | 8 px | 1,10× | 0,60 | „KOMBO!" | Staubwolke |
+| 16–20 | 12 px | 1,15× | 0,70 | „KOMBO!" | EX-Impact-Burst |
+| 21+ | 12 px | 1,25× | 0,80 | „KOMBO!" | **Feuerwerk** (5 Bursts in Regenbogenfarben) |
+
+Mit aktivem `PK_URP` fährt `UrpPostProcessingDriver.SetCombo()` zusätzlich die
+komplette Profilzeile (Bloom 0,5→1,2 · CA 0,1→0,5 · Grain 0,05→0,10 ·
+Kontrast +15→+55 % · Sättigung +5→+45 %) und legt den DoF-Fokus auf den
+Combo-Kämpfer.
 
 Fehlen Audio-Clips, erzeugt `ComboSystem.ProceduralPing` den Ton zur Laufzeit
 (Sinus mit Hüllkurve, Tonhöhe 660 → 1320 Hz).
@@ -112,6 +118,64 @@ Fehlen Audio-Clips, erzeugt `ComboSystem.ProceduralPing` den Ton zur Laufzeit
 
 ---
 
+## 4.5 Signatur-Combos aller 9 Charaktere → `SignatureFx.cs`
+
+Jede Combo aus der Spec ist eine aufrufbare Inszenierung — die Charakterklassen
+rufen nur noch eine Zeile, Partikel/Kamera/Screen/Callout stecken in `SignatureFx`.
+
+| Charakter | Aufruf | Was passiert |
+|---|---|---|
+| Le Binde | `LeBinde_Grease(f, charges)` | Fettspritzer, Boden-Schmierfilm 8 s, goldener Aura-Burst |
+| | `LeBinde_Slip(def, atk)` | weiße Schleifspur + „ABGERUTSCHT" |
+| | `LeBinde_Flaschenhals(f, t, ex)` | Glassplitter (EX: 3 Bursts + Shake), Blutungs-DoT 5 s |
+| | `LeBinde_Reif(f)` | Cinematic-Zoom aufs Gesicht, Rotblitz, 6 s Funken-Buff, „…keuch" |
+| | `LeBinde_ReifImpact(f, t, dmg)` | Feuerball + EX-Impact + Schadenszahl |
+| | `LeBinde_Pfanne(f, t)` | Feuerball, Burn-DoT 3 s, „FETT VERBRANNT" |
+| Mell | `Mell_Doppelschicht(f, t, step)` | Schritt 1 weiß, Schritt 2 rot + „UNBLOCKBAR" |
+| | `Mell_Defi(f, t)` | 10 blaue Arcs, Weißblitz, „BUFF GEPURGT" |
+| | `Mell_SechzehnStunden(f, t)` | Regenbogen-Sweep, 11 Nachbilder im Kreis, 11 farbige Treffer, goldenes Finale + Feuerwerk |
+| Mojo Bob | `MojoBob_Gamble(f, p, chance)` | goldener Würfel dreht sich 0,8 s, dann Krit-Prozent |
+| | `MojoBob_GambleLost(f)` | Rotblitz, „MOJO WEG", Shake |
+| | `MojoBob_Loeffelsturm(f, crits)` | 17 Flugbahnen im Fächer, Goldblitz je Krit |
+| | `MojoBob_Dingeneldang(f, 8 s)` | Goldsäule, `ScreenState.Dingeneldang`, Krit-Puls alle 0,25 s, danach 15 s `MojoLockout` |
+| Dieter | `Dieter_Kanal`, `Dieter_Abflussreiniger` | Schlammfontäne / grüne Giftwolke + Buff-Glow |
+| Uschi | `Uschi_Heal`, `Uschi_Topfdeckel` | grüne Heilpartikel + HP-Zahl / blauer Schild-Flash |
+| TetraPak | `TetraPak_FuselAtem`, `_Trinken`, `_ZweiterWind` | Feuerstoß + `ScreenState.Fusel`, Trink-Unschärfe, weißer Glow |
+| Sigi | `Sigi_Hack(f, t, label)` | Arcs am Ziel, Label, `ScreenState.Matrix` |
+| Rolf | `Rolf_Ratten`, `Rolf_Gift` | Schwarm-Staub + `ScreenState.RatSwarm`, Giftwolke |
+| Kalle | `Kalle_Zug`, `Kalle_Reparatur` | Zug-Impact „KOMM HER", blauer Reparatur-Glow |
+
+## 4.6 Mops-Kommando — 180-Frame-Sequenz → `MopsKommandoSequence.cs`
+
+Exakt nach Spec §3.2 getaktet (unskalierte Zeit, 1 Frame = 1/60 s):
+
+| Frames | Umsetzung |
+|---|---|
+| 0–20 | Zeitlupe 0,1×, Kamera auf Paula (`CameraController.SetCinematic`), Staub |
+| 20–40 | Sprungbogen aus der Tasche, Skalierung 0,2 → 0,5, Landestaub |
+| 40–60 | Weg zum Gegner, alle 0,08 s ein Pfotenabdruck (verblasst nach 2 s) |
+| 60–80 | Auge-in-Auge: Kamera auf den Gegner, Gegner-Stun |
+| 80–100 | Häufchen mit Dampfpartikeln, Callout „…plumps" |
+| 100–120 | Debuff-Banner „FASSUNGSLOSIGKEIT" |
+| 120–150 | Zeitlupe 0,3×, alle `ArenaProp`s kippen (Gasflasche explodiert), Shake 9 px |
+| 150–180 | 6 Staubwolken, Neon-Panik-Flackern, zurück zur Kampfkamera |
+
+## 4.7 Arena-Props → `ArenaProp.cs` / `ArenaHazard.cs`
+
+| Prop | Verhalten laut Spec |
+|---|---|
+| Bierkasten-Turm | kippt, 14 % Schaden im Umkreis, hinterlässt **Glassplitter-Hazard** (2 % + 0,2 s Stolper-Stun, 12 s) |
+| Gasflasche | 4 Treffer → Explosion 25 % / 5 m, Feuerball, Brand-Hazard (4 %, 6 s) |
+| Wäscheleine | reißt, Unterhosen fallen (Rigidbody), 0,3 s Stun als Combo-Extender |
+| Mülltonne | kippt und rollt 1,2 s, 7 % Schaden im Rollpfad |
+| Paula-Napf | kosmetisch, „unheilvoller Ton" als Callout |
+| Baugerüst | kippbar, markiert die Stage-Fatality-Zone |
+| Neonschild | Grundflackern 1–2 Hz, `PanicNeon()` bei Chaos |
+| Pflastersteine | nasser Boden mit Reflexion (Setup-Wizard) |
+
+`ArenaVisuals.BuildYard()` stellt das komplette Set als Platzhalter-Geometrie auf —
+echte Meshes ersetzen später nur die Primitives, die `ArenaProp`-Logik bleibt.
+
 ## 5. Partikelsysteme → `VFXManager.cs`
 
 | System | Renderer | Farbe | Größe | Lebensdauer | Speed | Menge |
@@ -121,6 +185,14 @@ Fehlen Audio-Clips, erzeugt `ComboSystem.ProceduralPing` den Ton zur Laufzeit
 | `Shockwave` | Quad-Ring, additiv | Charakterfarbe → transparent | 0,5 m → 3,0 m | 0,15 s | — | 1 |
 | `GoldKrit` | Billboard, additiv | Gold → Weiß | 0,2–0,8 | 0,3–0,8 s | 5–15 m/s | 25 |
 | `Dust` | Billboard, alpha | Braun/Nachtblau | 0,3–1,2 | 0,6–1,6 s | 0,5–2,5 m/s | 12+ |
+| `Sludge` | Billboard, alpha | `#2F4F4F` → `#1A1A1A`, Gravity 0,9 | 0,3–0,6 | 2,0 s | 0,2–0,8 m/s | 12–26 |
+| `PulseGlow` | Billboard, additiv | `#FF0000` → `#FF4444` | 0,1–0,5 | 0,2–0,6 s | 0–2 m/s | 3–14 |
+| `Grease` | Billboard, alpha | `#FFD700` → `#8B8B00`, tropfend | 0,1–0,4 | 0,5–1,5 s | 0,5–2 m/s | 8+ |
+| `Fire` | Billboard, additiv | Gold → Orange → Rot, Auftrieb | 0,2–0,7 | 0,3–0,9 s | 2–6 m/s | 20–40 |
+| `Poison` | Billboard, alpha | Giftgrün, Noise-Turbulenz | 0,4–1,1 | 1,2–2,4 s | 0,1–0,7 m/s | 24 |
+
+Dazu: `PlayFireworks(pos, bursts)` für Combo 21+ und `PlayRainbowHit(pos, dir, i)`
+für die 11 Farbtreffer von „Sechzehn Stunden".
 
 Alle Systeme werden gepoolt (`GetPool`) und manuell emittiert — kein Instantiate-Spam.
 Globale Regler: `VFXManager.intensity` (0–2) und `gore` (Blut aus für Streams/Jugendschutz).
@@ -149,6 +221,22 @@ Globale Regler: `VFXManager.intensity` (0–2) und `gore` (Blut aus für Streams
 ### `ScreenEffects.cs` (Overlay-Canvas, ohne Package-Zwang)
 Vignette (prozedurale Textur, Basis 0,3), Farbblitz, Blut-Splatter auf der Linse,
 Puls-Rand, Blackout-Sequenz, Dauer-Tint (Lockout/Gift).
+
+### Benannte Bildschirm-Zustände → `ScreenState`
+`Normal` · `Dingeneldang` (Gold-Überbelichtung, goldener Rand, Bloom 2,0) ·
+`MojoLockout` (grauer Filter, Sättigung −45) · `Fatality` (Vignette 0,9, CA 0,8,
+Sättigung −20) · `Fusel` (oranger Filter + Trunkenheits-DoF) · `Matrix` (grüner
+Glitch) · `RatSwarm` (brauner Schleier) · `Monochrome` (Blackout/X-Ray).
+Aufruf: `ScreenEffects.SetState(ScreenState.Fatality)` — leitet bei aktivem
+`PK_URP` automatisch an den Post-Processing-Driver weiter.
+
+### Charakter-Shader → `Assets/Shaders/PennerCharacter.shader` + `CharacterShaderBinder.cs`
+Ein URP-Forward-Shader mit Rim-Light und sechs Signatur-Modi:
+`1 Grease` (öliger Wanderfilm) · `2 Pulse` (Herzschlag, Frequenz aus `Mell.Pulse`) ·
+`3 Gold` (Metallic-Blitz, Intensität aus Mojo-Punkten) · `4 Fire` (Flammen auf der
+Kleidung) · `5 Matrix` (fallende Zeichen) · `6 Rat` (Silhouetten).
+Dazu `_Flash` für die Überbelichtung beim Treffer — der Binder setzt alles per
+`MaterialPropertyBlock`, ohne Material-Instanzen zu erzeugen.
 
 ### `UrpPostProcessingDriver.cs` (optional, Define `PK_URP`)
 Setzt das volle URP-Profil: Bloom (Schwelle 0,8 · Intensität 0,5), ACES-Tonemapping,

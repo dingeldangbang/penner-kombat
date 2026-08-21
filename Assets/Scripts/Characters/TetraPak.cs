@@ -98,6 +98,8 @@ namespace PennerKombat
                 var e = h.GetComponent<FighterController>();
                 if (e == null || e == this) continue;
                 e.TakeDamage(6f, transform.forward, this);
+                SignatureFx.TetraPak_FuselAtem(this, e);
+                PlayHitFeedback(e, 6f, HitTier.Special);
                 StartCoroutine(Burn(e));
                 // LeBindes Fett brennt weg
                 if (e is LeBinde lb) lb.BurnOffGrease();
@@ -124,6 +126,7 @@ namespace PennerKombat
         {
             zweiterWindActive = true;
             currentHP = Mathf.Min(currentHP + zweiterWindBonus, maxHP);
+            SignatureFx.TetraPak_ZweiterWind(this);
             StartCoroutine(ZweiterWindBuff());
         }
 

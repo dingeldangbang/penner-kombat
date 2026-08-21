@@ -102,12 +102,14 @@ namespace PennerKombat
         public static void SetComboVignette(int combo)
         {
             Ensure();
-            float extra = 0f;
-            if (combo >= 16) extra = 0.30f;
-            else if (combo >= 11) extra = 0.20f;
-            else if (combo >= 8) extra = 0.13f;
-            else if (combo >= 5) extra = 0.07f;
-            Instance.vignetteTarget = Instance.vignetteBase + extra;
+            // Spec 4.3: Vignette 0,3 / 0,4 / 0,5 / 0,6 / 0,7 / 0,8
+            float v = combo >= 21 ? 0.80f
+                    : combo >= 16 ? 0.70f
+                    : combo >= 11 ? 0.60f
+                    : combo >= 8  ? 0.50f
+                    : combo >= 5  ? 0.40f
+                                  : 0.30f;
+            Instance.vignetteTarget = v;
         }
 
         /// <summary>Mells Puls-Rand: 0 = aus, 1 = maximal (roter Herzschlag).</summary>
@@ -127,6 +129,81 @@ namespace PennerKombat
         public static void ClearTint()
         {
             if (Instance != null) Instance.tint.color = Color.clear;
+        }
+
+        /// <summary>Benannte Bildschirm-Zustände aus der Spec (§4.2/§4.4).</summary>
+        public static void SetState(ScreenState state)
+        {
+            Ensure();
+            Instance.ApplyState(state);
+        }
+
+        void ApplyState(ScreenState state)
+        {
+            switch (state)
+            {
+                case ScreenState.Normal:
+                    tint.color = Color.clear;
+                    vignetteBase = 0.30f;
+                    break;
+
+                case ScreenState.Dingeneldang:      // goldene Überbelichtung, goldener Rand
+                    tint.color = PennerPalette.Gold.WithAlpha(0.16f);
+                    vignetteBase = 0.40f;
+                    FlashColor(PennerPalette.Gold, 0.7f, 0.3f);
+                    break;
+
+                case ScreenState.MojoLockout:       // grauer Filter, 15 s
+                    tint.color = new Color(0.35f, 0.35f, 0.38f, 0.28f);
+                    vignetteBase = 0.35f;
+                    break;
+
+                case ScreenState.Fatality:          // fast schwarze Vignette
+                    tint.color = PennerPalette.BloodRed.WithAlpha(0.12f);
+                    vignetteBase = 0.90f;
+                    break;
+
+                case ScreenState.Fusel:             // TetraPak: oranger Feuerfilter
+                    tint.color = PennerPalette.WarmOrange.WithAlpha(0.18f);
+                    break;
+
+                case ScreenState.Matrix:            // Sigi: grüner Hacker-Glitch
+                    tint.color = PennerPalette.Hex("39FF14").WithAlpha(0.12f);
+                    break;
+
+                case ScreenState.RatSwarm:          // Rolf: bräunlicher Schwarm-Schleier
+                    tint.color = PennerPalette.Earth.WithAlpha(0.14f);
+                    break;
+
+                case ScreenState.Monochrome:        // Blackout / X-Ray: entsättigt (Näherung)
+                    tint.color = new Color(0.5f, 0.5f, 0.52f, 0.55f);
+                    vignetteBase = 0.75f;
+                    break;
+            }
+            vignetteTarget = Mathf.Max(vignetteTarget, vignetteBase);
+#if PK_URP
+            UrpPostProcessingDriver.Instance?.SetState(state);
+#endif
+        }
+
+        /// <summary>Regenbogen-Farbrotation für Mells „Sechzehn Stunden" (Spec §4.4).</summary>
+        public static void RainbowSweep(float duration = 0.6f)
+        {
+            Ensure();
+            Instance.StartCoroutine(Instance.RainbowRoutine(duration));
+        }
+
+        IEnumerator RainbowRoutine(float duration)
+        {
+            float t = 0f;
+            while (t < duration)
+            {
+                t += Time.unscaledDeltaTime;
+                Color c = Color.HSVToRGB((t / duration) % 1f, 0.8f, 1f);
+                flash.color = c.WithAlpha(0.18f);
+                yield return null;
+            }
+            flash.color = Color.clear;
         }
 
         /// <summary>Blackout-Sequenz (Mell bei Puls 220): Schwarz + Elektro-Flackern.</summary>
@@ -166,6 +243,7 @@ namespace PennerKombat
 
         IEnumerator BlackoutRoutine(float seconds)
         {
+            ApplyState(ScreenState.Monochrome);
             tint.color = Color.black;
             float t = 0f;
             while (t < seconds)
@@ -179,7 +257,7 @@ namespace PennerKombat
                 yield return null;
             }
             flash.color = Color.clear;
-            tint.color = Color.clear;
+            ApplyState(ScreenState.Normal);
         }
 
         void Update()
@@ -248,5 +326,18 @@ namespace PennerKombat
             tex.Apply();
             return tex;
         }
+    }
+
+    /// <summary>Benannte Vollbild-Zustände (docs/VISUALS.md §4.2/§4.4).</summary>
+    public enum ScreenState
+    {
+        Normal,
+        Dingeneldang,
+        MojoLockout,
+        Fatality,
+        Fusel,
+        Matrix,
+        RatSwarm,
+        Monochrome
     }
 }

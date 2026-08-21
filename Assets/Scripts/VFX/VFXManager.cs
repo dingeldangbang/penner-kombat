@@ -152,6 +152,75 @@ namespace PennerKombat
             ScreenEffects.FlashColor(PennerPalette.NeonBlue, 0.25f, 0.1f);
         }
 
+        /// <summary>Schlamm/Pampe (Dieter, Mell) — #2F4F4F → #1A1A1A, sinkend, hinterlässt Pfütze.</summary>
+        public void PlaySludge(Vector3 position, Vector3 direction, int count = 12)
+        {
+            var ps = GetPool("sludge", () => BuildSludge());
+            Emit(ps, position, Quaternion.LookRotation(SafeDir(direction)), count);
+        }
+
+        /// <summary>Puls-Glow (Mell) — roter Herzschlag-Ring am Körper.</summary>
+        public void PlayPulseGlow(Vector3 position, float intensity01)
+        {
+            var ps = GetPool("pulseglow", () => BuildPulseGlow());
+            Emit(ps, position, Quaternion.identity, Mathf.RoundToInt(Mathf.Lerp(3f, 14f, intensity01)));
+        }
+
+        /// <summary>Fett-Tropfen (Le Bindes Schmier-Schlüppa) — gelb, tropfend.</summary>
+        public void PlayGrease(Vector3 position, int count = 8)
+        {
+            var ps = GetPool("grease", () => BuildGrease());
+            Emit(ps, position, Quaternion.identity, count);
+        }
+
+        /// <summary>Feuer/Burn (TetraPaks Fusel-Atem, Le Bindes Pfanne).</summary>
+        public void PlayFire(Vector3 position, Vector3 direction, int count = 20)
+        {
+            var ps = GetPool("fire", () => BuildFire());
+            Emit(ps, position, Quaternion.LookRotation(SafeDir(direction)), count);
+            ScreenEffects.FlashColor(PennerPalette.WarmOrange, 0.22f, 0.15f);
+        }
+
+        /// <summary>Gift-/Giftgaswolke (Rolf, TetraPak, Dieter).</summary>
+        public void PlayPoison(Vector3 position, float radius = 1.2f)
+        {
+            var ps = GetPool("poison", () => BuildPoison(radius));
+            Emit(ps, position, Quaternion.identity, 24);
+        }
+
+        /// <summary>Feuerwerk ab Combo 21+ (Spec 4.3): 80 Partikel in Regenbogenfarben.</summary>
+        public void PlayFireworks(Vector3 position, int bursts = 4)
+        {
+            StartCoroutine(FireworksRoutine(position, bursts));
+        }
+
+        IEnumerator FireworksRoutine(Vector3 position, int bursts)
+        {
+            for (int i = 0; i < bursts; i++)
+            {
+                Color c = Color.HSVToRGB((i * 0.27f) % 1f, 0.85f, 1f);
+                Spark(position + Random.insideUnitSphere * 1.5f + Vector3.up, Vector3.up, 20, 0.25f, c, PennerPalette.Pure);
+                yield return new WaitForSeconds(0.07f);
+            }
+        }
+
+        /// <summary>Ein Treffer aus Mells „Sechzehn Stunden" — jeder in eigener Farbe.</summary>
+        public void PlayRainbowHit(Vector3 position, Vector3 direction, int index)
+        {
+            // 11 feste Farben laut Spec (Rot, Orange, Gelb, Grün, Blau, Violett,
+            // Weiß, Schwarz, Magenta, Zyan, Gold)
+            Color[] wheel =
+            {
+                Color.red, PennerPalette.WarmOrange, Color.yellow, Color.green, Color.blue,
+                new Color(0.6f, 0.2f, 0.9f), Color.white, new Color(0.15f, 0.15f, 0.18f),
+                Color.magenta, Color.cyan, PennerPalette.Gold
+            };
+            Color c = wheel[Mathf.Abs(index) % wheel.Length];
+            Spark(position, direction, 14, 0.2f, c, PennerPalette.Pure);
+            Blood(position, direction, 3.5f, 3);
+            CameraShake.Shake(8f, 0.08f);
+        }
+
         /// <summary>Glassplitter (Le Bindes Flaschenhals).</summary>
         public void PlayGlass(Vector3 position, Vector3 direction)
         {
@@ -306,6 +375,113 @@ namespace PennerKombat
             var col = ps.colorOverLifetime;
             col.enabled = true;
             col.color = Gradient2(PennerPalette.Gold, PennerPalette.Pure.WithAlpha(0f));
+            return ps;
+        }
+
+        ParticleSystem BuildSludge()
+        {
+            var ps = NewSystem("Sludge", alphaBlend);
+            var main = ps.main;
+            main.startLifetime = 2.0f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.8f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.3f, 0.6f);
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                PennerPalette.Hex("2F4F4F"), PennerPalette.Hex("1A1A1A"));
+            main.gravityModifier = 0.9f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 25f;
+            shape.radius = 0.1f;
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            col.color = Gradient2(PennerPalette.Hex("2F4F4F"), PennerPalette.Hex("1A1A1A").WithAlpha(0f));
+            return ps;
+        }
+
+        ParticleSystem BuildPulseGlow()
+        {
+            var ps = NewSystem("PulseGlow", additive);
+            var main = ps.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, 2f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.5f);
+            main.startColor = new ParticleSystem.MinMaxGradient(Color.red, PennerPalette.Hex("FF4444"));
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.55f;
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            col.color = Gradient2(Color.red, PennerPalette.Hex("FF4444").WithAlpha(0f));
+            return ps;
+        }
+
+        ParticleSystem BuildGrease()
+        {
+            var ps = NewSystem("Grease", alphaBlend);
+            var main = ps.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.5f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.5f, 2f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.4f);
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                PennerPalette.Gold, PennerPalette.Hex("8B8B00"));
+            main.gravityModifier = 1.1f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Hemisphere;
+            shape.radius = 0.35f;
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            col.color = Gradient2(PennerPalette.Gold, PennerPalette.Hex("8B8B00").WithAlpha(0f));
+            return ps;
+        }
+
+        ParticleSystem BuildFire()
+        {
+            var ps = NewSystem("Fire", additive);
+            var main = ps.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.9f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(2f, 6f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.2f, 0.7f);
+            main.startColor = new ParticleSystem.MinMaxGradient(PennerPalette.Gold, PennerPalette.WarmOrange);
+            main.gravityModifier = -0.25f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 22f;
+            shape.radius = 0.12f;
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            col.color = Gradient2(PennerPalette.Gold, PennerPalette.BloodRed.WithAlpha(0f));
+            return ps;
+        }
+
+        ParticleSystem BuildPoison(float radius)
+        {
+            var ps = NewSystem("Poison", alphaBlend);
+            var main = ps.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 2.4f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.1f, 0.7f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.4f, 1.1f);
+            main.startColor = PennerPalette.PoisonGrn.WithAlpha(0.45f);
+            main.gravityModifier = -0.05f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = radius;
+
+            var noise = ps.noise;
+            noise.enabled = true;
+            noise.strength = 0.4f;
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            col.color = Gradient2(PennerPalette.PoisonGrn.WithAlpha(0.45f), PennerPalette.PoisonGrn.WithAlpha(0f));
             return ps;
         }
 

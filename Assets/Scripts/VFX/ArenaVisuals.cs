@@ -32,6 +32,10 @@ namespace PennerKombat
         public bool spawnAmbientParticles = true;
         public bool wetGroundReflections = true;
 
+        [Header("Props (Spec §3.1)")]
+        [Tooltip("Baut Bierkasten-Turm, Gasflasche, Wäscheleine, Napf, Mülltonne und Gerüst als Platzhalter.")]
+        public bool spawnPlaceholderProps = true;
+
         private float flickerPhase;
         private float nextGlitch;
 
@@ -56,6 +60,7 @@ namespace PennerKombat
             SetupEnvironment();
             SetupLights();
             if (spawnAmbientParticles) SetupParticles();
+            if (spawnPlaceholderProps && FindObjectOfType<ArenaProp>() == null) BuildYard();
         }
 
         void SetupEnvironment()
@@ -164,6 +169,70 @@ namespace PennerKombat
             return ps;
         }
 
+        /// <summary>
+        /// Baut das Prop-Set des Hinterhofs als Platzhalter-Geometrie mit
+        /// korrektem Verhalten (Spec §3.1). Echte Meshes ersetzen die Primitives
+        /// später einfach im Prefab — die <see cref="ArenaProp"/>-Komponente bleibt.
+        /// </summary>
+        public void BuildYard()
+        {
+            MakeProp("Bierkasten-Turm", ArenaProp.PropKind.BeerCrateTower,
+                     new Vector3(-6.5f, 0.9f, 2.5f), new Vector3(1.2f, 1.8f, 0.9f), PennerPalette.Earth);
+            MakeProp("Gasflasche", ArenaProp.PropKind.GasBottle,
+                     new Vector3(6.2f, 0.8f, 2.2f), new Vector3(0.5f, 1.6f, 0.5f), PennerPalette.BloodRed);
+            MakeProp("Mülltonne", ArenaProp.PropKind.TrashCan,
+                     new Vector3(4.5f, 0.6f, -2.5f), new Vector3(0.8f, 1.2f, 0.8f), PennerPalette.PoisonGrn);
+            MakeProp("Wäscheleine", ArenaProp.PropKind.LaundryLine,
+                     new Vector3(0f, 3.6f, 4.5f), new Vector3(9f, 0.05f, 0.05f), Color.white);
+            MakeProp("Paula-Napf", ArenaProp.PropKind.PaulaBowl,
+                     new Vector3(-3.5f, 0.12f, -3.2f), new Vector3(0.5f, 0.2f, 0.5f), PennerPalette.NeonBlue);
+            MakeProp("Baugerüst", ArenaProp.PropKind.Scaffold,
+                     new Vector3(-7.5f, 1.0f, -1.5f), new Vector3(0.2f, 2.0f, 3.0f), Color.gray);
+        }
+
+        ArenaProp MakeProp(string name, ArenaProp.PropKind kind, Vector3 pos, Vector3 scale, Color color)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "Prop_" + name;
+            go.transform.SetParent(transform, false);
+            go.transform.position = pos;
+            go.transform.localScale = scale;
+            if (kind == ArenaProp.PropKind.BeerCrateTower)
+                go.transform.rotation = Quaternion.Euler(0f, 0f, Random.Range(-6f, 6f));   // leicht schief
+
+            var mr = go.GetComponent<MeshRenderer>();
+            mr.material = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
+            mr.material.color = color;
+
+            var prop = go.AddComponent<ArenaProp>();
+            prop.kind = kind;
+            switch (kind)
+            {
+                case ArenaProp.PropKind.BeerCrateTower: prop.impactDamage = 14f; break;
+                case ArenaProp.PropKind.GasBottle:      prop.hitsToBreak = 4; prop.explosionDamage = 25f; prop.explosionRadius = 5f; break;
+                case ArenaProp.PropKind.TrashCan:       prop.impactDamage = 7f; break;
+                case ArenaProp.PropKind.LaundryLine:    prop.stunDuration = 0.3f; break;
+            }
+            return prop;
+        }
+
+        /// <summary>Neon flackert nach Chaos-Events wie bei einem Stromausfall.</summary>
+        public void PanicNeon(float seconds = 2f)
+        {
+            StartCoroutine(PanicNeonRoutine(seconds));
+        }
+
+        IEnumerator PanicNeonRoutine(float seconds)
+        {
+            float t = 0f;
+            while (t < seconds && neonSign != null)
+            {
+                t += Time.deltaTime;
+                neonSign.intensity = Random.value < 0.5f ? 0.15f : 2.6f;
+                yield return new WaitForSeconds(Random.Range(0.02f, 0.07f));
+            }
+        }
+
         void Update()
         {
             FlickerNeon();
@@ -209,7 +278,13 @@ namespace PennerKombat
         /// <summary>Kippt alle Props und wirbelt dabei Staub auf (Le Bindes Mops-Kommando).</summary>
         public void TrashTheYard()
         {
+            foreach (var prop in FindObjectsOfType<ArenaProp>())
+            {
+                if (prop.kind == ArenaProp.PropKind.GasBottle) prop.Explode(null);
+                else prop.Tilt();
+            }
             ArenaManager.Instance?.TiltAllProps();
+            PanicNeon(2.5f);
             for (int i = 0; i < 6; i++)
             {
                 Vector3 p = Extensions.RandomHorizontalPoint(Vector3.zero, 6f);

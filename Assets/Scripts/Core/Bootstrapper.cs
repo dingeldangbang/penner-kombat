@@ -54,6 +54,7 @@ namespace PennerKombat
             }
             if (createArenaVisuals && ArenaVisuals.Instance == null) ArenaVisuals.Ensure();
             if (createComboFeedback && HudStatusBars.Instance == null) HudStatusBars.Ensure();
+            if (createVfx && SignatureFx.Instance == null) SignatureFx.Ensure();
             CameraShake.Ensure();
 #if PK_URP
             UrpPostProcessingDriver.Ensure();

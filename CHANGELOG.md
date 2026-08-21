@@ -17,6 +17,19 @@
   REIF!-Glow, Flaschenhals-Glassplitter.
 - **Bootstrapper & Setup-Wizard** erzeugen die Visual-Schicht automatisch; `TestRunner`
   prüft sie mit drei neuen Checks.
+- **Signatur-Combos aller 9 Charaktere** (`SignatureFx`): Le Bindes Fett/Flaschenhals/REIF!/Pfanne,
+  Mells Doppelschicht/Defi/„Sechzehn Stunden" (11 Regenbogen-Nachbilder), Bobs Würfel-Wette,
+  Löffelsturm und Dingeneldang!, dazu Dieter, Uschi, TetraPak, Sigi, Rolf und Kalle.
+- **Mops-Kommando als 180-Frame-Sequenz** (`MopsKommandoSequence`): Zeitlupe, Paula, Pfotenabdrücke,
+  Häufchen, Debuff-Banner, kippende Arena, Staub — frame-genau nach Spec §3.2.
+- **Interaktive Arena-Props** (`ArenaProp`, `ArenaHazard`): Bierkasten-Turm, Gasflasche (4 Treffer →
+  Explosion), Wäscheleine (Stun), Mülltonne (rollt), Paula-Napf, Baugerüst; Glassplitter- und
+  Brand-Hazards am Boden. `ArenaVisuals.BuildYard()` stellt das Set auf.
+- **Charakter-Shader** `Assets/Shaders/PennerCharacter.shader` (Grease/Pulse/Gold/Fire/Matrix/Rat +
+  Treffer-Flash) mit `CharacterShaderBinder` (MaterialPropertyBlock, zustandsgesteuert).
+- **Benannte Screen-States** (`ScreenState`): Dingeneldang, MojoLockout, Fatality, Fusel, Matrix,
+  RatSwarm, Monochrome — inkl. URP-Profilen; Combo-Tabelle bis Stufe 21+ (Feuerwerk).
+- **Neue Partikeltypen**: Sludge, PulseGlow, Grease, Fire, Poison, Fireworks, Rainbow-Hits.
 - **Doku**: `docs/VISUALS.md` (vollständige Spezifikation inkl. Umsetzungs-Mapping).
 
 ## [1.3.0] — 2026-08-21

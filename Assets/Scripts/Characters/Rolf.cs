@@ -108,6 +108,7 @@ namespace PennerKombat
         {
             ratTimer = ratCooldown;
             var enemy = GetEnemy();
+            SignatureFx.Rolf_Ratten(this, ratCount);
             for (int i = 0; i < ratCount; i++)
             {
                 if (ratPrefab != null)
@@ -128,7 +129,12 @@ namespace PennerKombat
             foreach (var h in hits)
             {
                 var e = h.GetComponent<FighterController>();
-                if (e != null && e != this) e.TakeDamage(tailDamage, transform.forward, this);
+                if (e != null && e != this)
+                {
+                    e.TakeDamage(tailDamage, transform.forward, this);
+                    SignatureFx.Rolf_Gift(this, e.transform.position);
+                    PlayHitFeedback(e, tailDamage, HitTier.Special);
+                }
             }
         }
 

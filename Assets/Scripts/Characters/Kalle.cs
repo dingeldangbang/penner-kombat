@@ -83,6 +83,7 @@ namespace PennerKombat
                 if (e != null && e != this)
                 {
                     e.TakeDamage(grabDamage, transform.forward, this);
+                    SignatureFx.Kalle_Zug(this, e);
                     break;
                 }
             }
@@ -97,6 +98,8 @@ namespace PennerKombat
                 if (e != null && e != this)
                 {
                     e.TakeDamage(gasDamage, transform.forward, this);
+                    VFXManager.Instance?.PlayFire(e.transform.position + Vector3.up, transform.forward, 18);
+                    PlayHitFeedback(e, gasDamage, HitTier.Special);
                     if (e is LeBinde lb) lb.BurnOffGrease();
                 }
             }

@@ -110,8 +110,18 @@ namespace PennerKombat
 
             Vector3 pos = attacker.transform.position + Vector3.up * 1.6f;
             var vfx = VFXManager.Instance;
+#if PK_URP
+            UrpPostProcessingDriver.Instance?.SetCombo(combo);
+            UrpPostProcessingDriver.Instance?.FocusOn(attacker.transform);
+#endif
 
-            if (combo >= 16)
+            if (combo >= 21)
+            {
+                // Feuerwerk-Stufe (Spec 4.3)
+                CameraShake.Shake(12f, 0.18f);
+                vfx?.PlayFireworks(pos, 5);
+            }
+            else if (combo >= 16)
             {
                 CameraShake.Shake(12f, 0.15f);
                 if (vfx != null) { vfx.PlayHit(pos, attacker.transform.forward, 10f, HitTier.Ex, attacker.fighterId); }
@@ -133,7 +143,7 @@ namespace PennerKombat
             // --- Rotverschiebung ab 5 (Spec-Tabelle) ---
             if (combo >= 5)
             {
-                float amount = combo >= 16 ? 0.22f : combo >= 11 ? 0.16f : combo >= 8 ? 0.10f : 0.05f;
+                float amount = combo >= 21 ? 0.28f : combo >= 16 ? 0.22f : combo >= 11 ? 0.16f : combo >= 8 ? 0.10f : 0.05f;
                 ScreenEffects.FlashColor(PennerPalette.BloodRed, amount, 0.12f);
             }
 

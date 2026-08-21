@@ -92,14 +92,91 @@ namespace PennerKombat
             return comp;
         }
 
-        /// <summary>Combo-Stufe → Vignette 0,3…0,6 und leichte Rotverschiebung.</summary>
+        /// <summary>
+        /// Combo-Stufe → komplette Profil-Zeile aus Spec §4.3
+        /// (Bloom / Vignette / CA / Farbverschiebung / Grain).
+        /// </summary>
         public void SetCombo(int combo)
         {
-            if (vignette == null) return;
-            float v = combo >= 16 ? 0.60f : combo >= 11 ? 0.50f : combo >= 8 ? 0.42f : combo >= 5 ? 0.36f : 0.30f;
-            vignette.intensity.Override(v);
-            vignette.color.Override(Color.Lerp(Color.black, PennerPalette.BloodRed, Mathf.Clamp01(combo / 20f) * 0.6f));
-            if (color != null) color.saturation.Override(5f + Mathf.Clamp01(combo / 20f) * 15f);
+            float bl, vi, ca, gr, contrast, sat;
+            if (combo >= 21)      { bl = 1.2f; vi = 0.80f; ca = 0.50f; gr = 0.10f; contrast = 55f; sat = 45f; }
+            else if (combo >= 16) { bl = 1.0f; vi = 0.70f; ca = 0.40f; gr = 0.09f; contrast = 45f; sat = 35f; }
+            else if (combo >= 11) { bl = 0.8f; vi = 0.60f; ca = 0.30f; gr = 0.08f; contrast = 35f; sat = 25f; }
+            else if (combo >= 8)  { bl = 0.7f; vi = 0.50f; ca = 0.20f; gr = 0.07f; contrast = 25f; sat = 15f; }
+            else if (combo >= 5)  { bl = 0.6f; vi = 0.40f; ca = 0.15f; gr = 0.06f; contrast = 20f; sat = 10f; }
+            else                  { bl = 0.5f; vi = 0.30f; ca = 0.10f; gr = 0.05f; contrast = 15f; sat = 5f; }
+
+            bloom?.intensity.Override(bl);
+            vignette?.intensity.Override(vi);
+            vignette?.color.Override(Color.Lerp(Color.black, PennerPalette.BloodRed, Mathf.Clamp01(combo / 21f) * 0.7f));
+            chroma?.intensity.Override(ca);
+            grain?.intensity.Override(gr);
+            color?.contrast.Override(contrast);
+            color?.saturation.Override(sat);
+        }
+
+        /// <summary>Benannte Zustände (Fatality, Dingeneldang, Blackout …) aus Spec §4.2.</summary>
+        public void SetState(ScreenState state)
+        {
+            switch (state)
+            {
+                case ScreenState.Normal:
+                    BuildProfile();
+                    break;
+
+                case ScreenState.Fatality:
+                    bloom?.intensity.Override(1.2f);
+                    bloom?.tint.Override(PennerPalette.BloodRed);
+                    vignette?.intensity.Override(0.9f);
+                    chroma?.intensity.Override(0.8f);
+                    grain?.intensity.Override(0.15f);
+                    color?.contrast.Override(30f);
+                    color?.saturation.Override(-20f);
+                    break;
+
+                case ScreenState.Dingeneldang:
+                    bloom?.intensity.Override(2.0f);
+                    bloom?.tint.Override(PennerPalette.Gold);
+                    vignette?.intensity.Override(0.4f);
+                    vignette?.color.Override(PennerPalette.Gold);
+                    chroma?.intensity.Override(0.5f);
+                    grain?.intensity.Override(0.02f);
+                    color?.contrast.Override(50f);
+                    color?.saturation.Override(30f);
+                    break;
+
+                case ScreenState.MojoLockout:
+                    bloom?.intensity.Override(0.25f);
+                    color?.saturation.Override(-45f);
+                    break;
+
+                case ScreenState.Monochrome:
+                    color?.saturation.Override(-100f);
+                    vignette?.intensity.Override(0.85f);
+                    break;
+
+                case ScreenState.Fusel:
+                    color?.colorFilter.Override(Color.Lerp(Color.white, PennerPalette.WarmOrange, 0.35f));
+                    dof?.aperture.Override(1.2f);      // betrunkene Unschärfe
+                    break;
+
+                case ScreenState.Matrix:
+                    color?.colorFilter.Override(Color.Lerp(Color.white, PennerPalette.Hex("39FF14"), 0.3f));
+                    chroma?.intensity.Override(0.35f);
+                    break;
+
+                case ScreenState.RatSwarm:
+                    color?.colorFilter.Override(Color.Lerp(Color.white, PennerPalette.Earth, 0.25f));
+                    grain?.intensity.Override(0.12f);
+                    break;
+            }
+        }
+
+        /// <summary>Fokus auf einen bestimmten Kämpfer legen (Spec: DoF-Zeile).</summary>
+        public void FocusOn(Transform target)
+        {
+            if (target == null || Camera.main == null) return;
+            SetFocus(Vector3.Distance(Camera.main.transform.position, target.position));
         }
 
         /// <summary>Fatality/X-Ray: Chromatic Aberration auf 0,5 hochziehen.</summary>

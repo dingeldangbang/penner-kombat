@@ -160,8 +160,8 @@ namespace PennerKombat
                 {
                     enemy.BroadcastMessage("PurgeBuffs", SendMessageOptions.DontRequireReceiver);
                     enemy.TakeDamage(8f, transform.forward, this);
-                    // Defi: blaue Arcs + Überbelichtung des Gegners
-                    VFXManager.Instance?.PlayElectro(enemy.transform.position + Vector3.up * 1.1f);
+                    // Defi-Inszenierung (Spec §2.2.3)
+                    SignatureFx.Mell_Defi(this, enemy);
                     PlayHitFeedback(enemy, 8f, HitTier.Special);
                 }
             }
@@ -171,6 +171,7 @@ namespace PennerKombat
         public void SechzehnStunden() // nur bei Puls ≥ 160
         {
             if (pulse < 160f || IsBlackout) return;
+            SignatureFx.Mell_SechzehnStunden(this, GetEnemy());
             StartCoroutine(SechzehnStundenCoroutine());
         }
 

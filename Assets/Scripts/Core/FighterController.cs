@@ -94,6 +94,7 @@ namespace PennerKombat
 
             // Visuelle Signatur (Aura, Trail, Zustands-FX) — docs/VISUALS.md §2
             if (GetComponent<CharacterVisuals>() == null) gameObject.AddComponent<CharacterVisuals>();
+            if (GetComponent<CharacterShaderBinder>() == null) gameObject.AddComponent<CharacterShaderBinder>();
         }
 
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
@@ -277,6 +278,8 @@ namespace PennerKombat
 
             VFXManager.Instance?.PlayHit(impactPoint, dir, damage, tier, fighterId);
             ComboSystem.Instance?.RegisterHit(this, target, damage, tier);
+            target?.GetComponent<CharacterShaderBinder>()?.HitFlash(
+                tier >= HitTier.Ex ? 1f : tier == HitTier.Special ? 0.7f : 0.45f);
         }
 
         /// <summary>Kurzform: Trefferfeedback auf Höhe der Brust des Ziels.</summary>

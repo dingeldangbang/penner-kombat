@@ -108,9 +108,7 @@ namespace PennerKombat
         public void Flaschenhals(bool exVersion)
         {
             flaschenTimer = flaschenHalsCooldown;
-            // Glassplitter beim Abbrechen der Flasche
-            VFXManager.Instance?.PlayGlass(attackPoint != null ? attackPoint.position : transform.position,
-                                           transform.forward);
+            SignatureFx.LeBinde_Flaschenhals(this, GetEnemy(), exVersion);
             if (bottleProjectile != null)
             {
                 var go = Instantiate(bottleProjectile, attackPoint.position, transform.rotation);
@@ -129,12 +127,8 @@ namespace PennerKombat
                 var ctrl = mops.GetComponent<MopsController>();
                 if (ctrl != null) ctrl.Initialize(this, GetEnemy());
             }
-            // Mops-Kommando-Präsentation (Spec §4.4): 0,1x Zeitlupe, Staub,
-            // alle Props kippen.
-            if (ArenaVisuals.Instance != null) ArenaVisuals.Instance.TrashTheYard();
-            else CameraShake.SlowMotion(0.1f, 0.3f);
-            FloatingText.Show(transform.position + Vector3.up * 2.4f, "FASSUNGSLOSIGKEIT",
-                              PennerPalette.WarmOrange, 1.5f);
+            // Mops-Kommando: vollständige 180-Frame-Inszenierung (docs/VISUALS.md §3.2)
+            MopsKommandoSequence.Play(this, GetEnemy());
 
             // Herta einsetzen (Trophäe)
             Herta herta = FindObjectOfType<Herta>();
@@ -164,9 +158,7 @@ namespace PennerKombat
         {
             // Buff: nächster Treffer +80% Schaden
             reifTimer = 6f;
-            // Roter Glow für 6 s + Lachen
-            GetComponent<CharacterVisuals>()?.BuffFlash(PennerPalette.BloodRed, 6f);
-            FloatingText.Show(transform.position + Vector3.up * 2.4f, "REIF!", PennerPalette.BloodRed);
+            SignatureFx.LeBinde_Reif(this);
         }
         void ReifExpire()
         {
@@ -181,7 +173,10 @@ namespace PennerKombat
             {
                 var enemy = c.GetComponent<FighterController>();
                 if (enemy != null && enemy != this)
+                {
                     enemy.TakeDamage(panDamage, transform.forward, this);
+                    SignatureFx.LeBinde_Pfanne(this, enemy);
+                }
             }
         }
 

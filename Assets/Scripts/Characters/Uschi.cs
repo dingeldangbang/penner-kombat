@@ -43,6 +43,7 @@ namespace PennerKombat
         System.Collections.IEnumerator TopfdeckelBuff()
         {
             blockReductionBonus = 0.5f;
+            SignatureFx.Uschi_Topfdeckel(this);
             yield return new WaitForSeconds(8f);
             blockReductionBonus = 0f;
         }
@@ -81,7 +82,11 @@ namespace PennerKombat
             foreach (var h in hits)
             {
                 var e = h.GetComponent<FighterController>();
-                if (e != null && e != this) e.TakeDamage(8f, transform.forward, this);
+                if (e != null && e != this)
+                {
+                    e.TakeDamage(8f, transform.forward, this);
+                    PlayHitFeedback(e, 8f, HitTier.Special);
+                }
             }
         }
 
@@ -95,6 +100,7 @@ namespace PennerKombat
         {
             gurkeTimer = gurkeCooldown;
             currentHP = Mathf.Min(currentHP + gurkeHeal, maxHP);
+            SignatureFx.Uschi_Heal(this, gurkeHeal, false);
             if (gurkeSound != null) AudioSource.PlayClipAtPoint(gurkeSound, transform.position);
         }
     }

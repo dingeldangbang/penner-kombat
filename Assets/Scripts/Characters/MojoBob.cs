@@ -196,6 +196,7 @@ namespace PennerKombat
                 yield return new WaitForSeconds(0.03f);
             }
             AddMojo(crits);
+            SignatureFx.MojoBob_Loeffelsturm(this, crits);
         }
 
         // ---- Special 4: Fünfzig Cent ----
@@ -219,12 +220,8 @@ namespace PennerKombat
             currentCritChance = 1f;
             if (dingeneldangSound != null) AudioSource.PlayClipAtPoint(dingeneldangSound, transform.position);
 
-            // Super-Mode-Präsentation: goldene Lichtsäule + Aura-Burst
-            GetComponent<CharacterVisuals>()?.BuffFlash(PennerPalette.Gold, 1.0f);
-            VFXManager.Instance?.PlayHit(transform.position + Vector3.up, Vector3.up, 20f,
-                                         HitTier.Critical, fighterId);
-            ScreenEffects.FlashColor(PennerPalette.Gold, 0.5f, 0.35f);
-            FloatingText.Show(transform.position + Vector3.up * 2.6f, "DINGENELDANG!", PennerPalette.Gold, 2f);
+            // Super-Mode-Inszenierung inkl. Lockout-Filter (Spec §2.3.3)
+            SignatureFx.MojoBob_Dingeneldang(this, superModeTimer);
         }
 
         void EndSuperMode()
@@ -233,8 +230,7 @@ namespace PennerKombat
             currentCritChance = baseCritChance;
             isLockedOut = true;
             lockoutTimer = 15f;
-            // 15 s Lockout: grauer Filter für den lokalen Spieler
-            if (!isAI) ScreenEffects.SetTint(new Color(0.35f, 0.35f, 0.38f, 0.28f));
+            if (!isAI) ScreenEffects.SetState(ScreenState.MojoLockout);
         }
 
         // ---- Wette ----
@@ -246,6 +242,7 @@ namespace PennerKombat
             isGambling = true;
             gambleHitCrit = false;
             gambleTimer = gambleDuration;
+            SignatureFx.MojoBob_Gamble(this, points, currentCritChance);
         }
 
         void EndGamble(bool hitCrit)
@@ -256,6 +253,7 @@ namespace PennerKombat
                 // Das Glück nimmt es persönlich: Mojo verloren + 10% HP
                 currentHP -= maxHP * 0.1f;
                 if (currentHP < 0f) currentHP = 0f;
+                SignatureFx.MojoBob_GambleLost(this);
                 if (loseSound != null) AudioSource.PlayClipAtPoint(loseSound, transform.position);
                 if (currentHP <= 0f) Die();
             }

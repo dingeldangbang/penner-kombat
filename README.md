@@ -60,6 +60,10 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Arena-Look** `ArenaVisuals`: Laternen-Spotlights, Mondlicht, flackerndes Neonschild, Mücken/Staub/Rauch, nasses Pflaster
 - **Charakter-Auren** `CharacterVisuals`: Le Bindes Fettglanz, Mells pulsabhängiges Flackern, Bobs Gold-Staub je Mojo-Punkt
 - **Status-HUD** `HudStatusBars`: Mojo-Punkte, Puls-Balken (schlägt im Takt), Schmier-Schlüppa, Fatal-Blow
+- **Signatur-Combos** `SignatureFx`: jede Spezial-Combo aller 9 Charaktere als fertige Inszenierung
+- **Mops-Kommando** `MopsKommandoSequence`: 180-Frame-Cinematic (Zeitlupe, Paula, Häufchen, kippende Arena)
+- **Arena-Props** `ArenaProp`: Bierkasten-Turm, Gasflasche (4 Treffer → Explosion), Wäscheleine (Stun), Mülltonne, Gerüst + Boden-Hazards
+- **Charakter-Shader** `Assets/Shaders/PennerCharacter.shader`: Grease, Pulse, Gold, Fire, Matrix, Rat + Treffer-Flash
 - **Optional URP** `UrpPostProcessingDriver` (Define `PK_URP`): Bloom, ACES, Vignette, CA, DoF, Film Grain
 
 ---
