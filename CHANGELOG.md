@@ -48,6 +48,14 @@
   (JSON in PlayerPrefs) und `TouchDebug` (F3-Overlay). Alles prozedural, ohne Prefabs;
   `FighterInput` verodert Touch mit Tastatur und Gamepad, das Optionsmenü bekommt eine
   Touch-Sektion. Doku: `docs/TOUCH.md`.
+- **Extras-Paket** (`docs/EXTRAS.md`): `ArenaDestruction` (5 Zerstörungsstufen mit Trümmern,
+  Feuer und düsterer werdendem Licht), `MusicSync` (Beat-Events, combo-getriebenes Tempo,
+  Ducking und Cut bei Fatalities), `RagdollController` (Ragdoll bzw. Bruchstücke beim K.o.),
+  `DamageVisuals` (Wunden, Blutlachen, Blässe bei wenig HP), `ParrySystem` (Konter im
+  0,16-s-Fenster mit Bestrafungsbonus), `WeaponSystem` (5 aufhebbare Waffen mit Effekten),
+  `PowerUpSystem` (8 Power-Ups), `AllySummon` (Mercedes 190e mit drei Atzen, Punker-Crowd),
+  `CrowdReactions` (Zuschauer wippen im Takt, reagieren auf Combos), `BossController`
+  (3 Phasen mit Tempo- und Schwierigkeitssprung).
 - **3D-Kampfraum**: `CameraController` mit vier Modi (Dynamic/Follow/TopDown/Cinematic) und
   Kamerafahrten; kamerarelative 360°-Bewegung, geglättete Drehung, Strafe beim Blocken und
   **Ausweichrolle mit 0,2 s Unverwundbarkeit**; `Combat/Hitbox3D.cs` (Sphere/Box/Capsule/Cone

@@ -51,6 +51,15 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Bootstrap**: `Bootstrapper` erzeugt alle Manager automatisch
 - **Editor-Wizard**: `Tools → Penner Kombat → Setup-Szene erzeugen`
 
+### Extras — „nix für Pussys"
+- **Arena-Zerstörung** in 5 Stufen (Trümmer, Feuer, düsterer werdendes Licht)
+- **Beat-Sync** `MusicSync`: Combo treibt Tempo und Pitch der 808-Beats, Ducking/Cut bei Fatalities
+- **Ragdoll** beim K.o., **Wunden + Blutlachen**, **Konter/Parry** mit Bestrafungsfenster
+- **Waffen** (Schraubenzieher, Maulschlüssel, Rohrzange, Kochlöffel, Rattengift) zum Aufheben
+- **Power-Ups** (Bier, Med, Speed, Schild, Feuer, Eis, Pfand, Todeskuss)
+- **Verbündete**: Mercedes 190e mit drei Atzen, Punker-Crowd „Kantenkanten Nackenschelle"
+- **Zuschauer**, die im Takt wippen und auf Combos reagieren · **Bosse** mit 3 Phasen
+
 ### 3D-Kampfraum
 - **Kamera** `CameraController`: Dynamic / Follow / TopDown / Cinematic + Kamerafahrten
 - **360°-Bewegung**: kamerarelativ, geglättete Drehung, Strafe beim Blocken, **Ausweichrolle mit i-Frames**
@@ -126,6 +135,7 @@ Assets/
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
+| [docs/EXTRAS.md](docs/EXTRAS.md) | Arena-Zerstörung, Waffen, Power-Ups, Konter, Ragdoll, Bosse, Crowd, Beat-Sync |
 | [docs/3D.md](docs/3D.md) | 3D-Kampfraum: Kameramodi, 360°-Bewegung, Rolle, 3D-Hitboxen, Arena-Objekte |
 | [docs/SERVER.md](docs/SERVER.md) | Relay-Server: Start, Protokoll, Deployment, Grenzen |
 | [docs/CONTROLS.md](docs/CONTROLS.md) | Tastatur (P1/P2), Gamepad, KI-Stufen, Multiplayer-Modi |

@@ -123,6 +123,11 @@ namespace PennerKombat
             if (GetComponent<AnimationsController3D>() == null) gameObject.AddComponent<AnimationsController3D>();
             if (GetComponent<ComboTrail3D>() == null) gameObject.AddComponent<ComboTrail3D>();
             if (GetComponent<ArenaInteraction>() == null) gameObject.AddComponent<ArenaInteraction>();
+            // Extras: Wunden, Ragdoll, Konter, Waffenhand (docs/EXTRAS.md)
+            if (GetComponent<DamageVisuals>() == null) gameObject.AddComponent<DamageVisuals>();
+            if (GetComponent<RagdollController>() == null) gameObject.AddComponent<RagdollController>();
+            if (GetComponent<ParrySystem>() == null) gameObject.AddComponent<ParrySystem>();
+            if (GetComponent<WeaponHolder>() == null) gameObject.AddComponent<WeaponHolder>();
         }
 
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
@@ -331,6 +336,15 @@ namespace PennerKombat
         public virtual void StartAttack(bool heavy)
         {
             if (isAttacking || isBlocking) return;
+
+            // Waffe in der Hand? Dann schlägt sie zu (docs/EXTRAS.md §6)
+            var weapon = GetComponent<WeaponHolder>();
+            if (weapon != null && weapon.HasWeapon && weapon.Strike())
+            {
+                attackTimer = heavy ? heavyCooldown : lightCooldown;
+                if (anim != null) anim.SetTrigger(heavy ? "HeavyAttack" : "LightAttack");
+                return;
+            }
             isAttacking = true;
             isHeavy = heavy;
             hitThisAttack.Clear();
@@ -358,6 +372,10 @@ namespace PennerKombat
 
                 float dmg = isHeavy ? heavyDamage : lightDamage;
                 dmg = ResolveDamage(enemy, dmg);
+                // Bestrafungsfenster nach erfolgreichem Konter
+                var parry = GetComponent<ParrySystem>();
+                if (parry != null) dmg *= parry.DamageMultiplier;
+                ArenaDestruction.Instance?.RegisterDamage(enemy.transform.position, dmg);
                 enemy.TakeDamage(dmg, transform.forward, this);
 
                 // Combo
@@ -430,6 +448,8 @@ namespace PennerKombat
                 if (blockSound != null) AudioSource.PlayClipAtPoint(blockSound, transform.position);
                 VFXManager.Instance?.PlayBlock(transform.position + Vector3.up * 1.1f, knockbackDir);
                 StartCoroutine(BlockStun(0.15f));
+                // Perfektes Timing? Dann Konter statt reinem Block
+                GetComponent<ParrySystem>()?.TryParry(attacker);
                 OnBlocked(attacker);
                 return;
             }
@@ -519,6 +539,8 @@ namespace PennerKombat
             CameraShake.SlowMotion(0.3f, 1.2f);
             SaveSystem.Instance?.RecordFatality();
             ScreenEffects.SetState(ScreenState.Fatality);
+            MusicSync.Instance?.CutAndResume(1.6f);
+            CrowdReactions.Instance?.React(CrowdMood.Entsetzt, 5f);
             VFXManager.Instance?.PlayHit(target.transform.position + Vector3.up * 1.1f,
                                          transform.forward, 100f, HitTier.Fatality, fighterId);
             target.TakeDamage(999f, transform.forward, this);
@@ -550,6 +572,9 @@ namespace PennerKombat
             rollCdTimer = 0f;
             invulnerableTimer = 0f;
             GetComponent<MedSystem>()?.ResetForRound();
+            GetComponent<DamageVisuals>()?.Clear();
+            GetComponent<RagdollController>()?.Deactivate();
+            GetComponent<WeaponHolder>()?.Drop();
             gameObject.SetActive(true);
         }
 

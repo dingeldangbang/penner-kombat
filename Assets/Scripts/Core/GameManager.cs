@@ -210,6 +210,14 @@ namespace PennerKombat
             }
         }
 
+        /// <summary>Arena und Extras für die nächste Runde säubern.</summary>
+        void ResetExtras()
+        {
+            ArenaDestruction.Instance?.ResetArena();
+            PowerUpSystem.Instance?.ClearAll();
+            MusicSync.Instance?.ResetTempo();
+        }
+
         void MatchEnd(string winner)
         {
             matchEnded = true;
@@ -222,6 +230,7 @@ namespace PennerKombat
                 SaveSystem.Instance.RecordCombo(Mathf.Max(player1.comboCount, player2.comboCount));
             }
 
+            ResetExtras();
             if (uiManager != null) uiManager.ShowMatchResult(winner);
             if (audioManager != null) audioManager.PlayVictoryMusic();
             OnMatchEnded?.Invoke(winner);

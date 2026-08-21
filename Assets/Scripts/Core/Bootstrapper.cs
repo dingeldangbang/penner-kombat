@@ -19,6 +19,15 @@ namespace PennerKombat
         public bool createFatality = true;
         public bool createSaveSystem = true;
 
+        [Header("Extras (docs/EXTRAS.md)")]
+        public bool createMusicSync = true;
+        public bool createArenaDestruction = true;
+        public bool createPowerUps = true;
+        public bool createCrowd = true;
+        public bool createAllies = true;
+        [Tooltip("Waffen (Schraubenzieher, Rohrzange …) im Hof verteilen.")]
+        public bool spawnWeapons = true;
+
         [Header("Touch")]
         [Tooltip("On-Screen-Steuerung auf Handhelds erzeugen (Android/iOS).")]
         public bool createTouchControls = true;
@@ -69,10 +78,28 @@ namespace PennerKombat
             if (createComboFeedback && HudStatusBars.Instance == null) HudStatusBars.Ensure();
             if (createVfx && SignatureFx.Instance == null) SignatureFx.Ensure();
             if (createVfx && ComboExplosion3D.Instance == null) ComboExplosion3D.Ensure();
+            if (createMusicSync && MusicSync.Instance == null) MusicSync.Ensure();
+            if (createArenaDestruction && ArenaDestruction.Instance == null) ArenaDestruction.Ensure();
+            if (createPowerUps && PowerUpSystem.Instance == null) PowerUpSystem.Ensure();
+            if (createCrowd && CrowdReactions.Instance == null) CrowdReactions.Ensure();
+            if (createAllies && AllySummon.Instance == null) AllySummon.Ensure();
+            if (spawnWeapons) SpawnArsenal();
             CameraShake.Ensure();
 #if PK_URP
             UrpPostProcessingDriver.Ensure();
 #endif
+        }
+
+        /// <summary>Verteilt das Standard-Arsenal im Hinterhof.</summary>
+        void SpawnArsenal()
+        {
+            var arsenal = WeaponPickup.Arsenal;
+            for (int i = 0; i < arsenal.Length; i++)
+            {
+                float angle = (360f / arsenal.Length) * i * Mathf.Deg2Rad;
+                Vector3 pos = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 6.5f;
+                WeaponPickup.Spawn(arsenal[i], pos);
+            }
         }
 
         void Start()
