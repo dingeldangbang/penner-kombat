@@ -50,7 +50,8 @@ Was dabei automatisch gesetzt wird:
 |---|---|
 | Charaktererkennung | über den Dateinamen (`GuessCharacterId`) |
 | Charakterskript | `LeBinde`, `Mell`, `MojoBob`, … je nach ID, mit Balance-Werten aus der Datenbank |
-| Größe | auf 1,80 m normiert, Füße auf y = 0, x/z zentriert |
+| Größe | auf die **Statur** des Charakters normiert (Hager 1,90 m · Normal 1,80 m · Breit 1,82 m · Adipös 1,74 m), Füße auf y = 0, x/z zentriert |
+| Masse & Hitbox | aus der Statur: Adipös 1,45× Masse und 1,35× Angriffs-Hitbox, Hager 0,85× / 0,85× |
 | Rigidbody | Masse 1, Rotation gesperrt, Interpolation, Continuous |
 | CapsuleCollider | Höhe und Radius aus den **echten Modellmaßen** |
 | AttackPoint | Reihenfolge: **Kind namens `AttackPoint` im Modell** > rechter Handknochen (Humanoid-Avatar oder Namen wie `mixamorig:RightHand`, `Hand_R`) > Fallback vor dem Körper (mit Warnung) |

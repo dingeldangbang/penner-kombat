@@ -1,6 +1,13 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Statur als Balance-Größe
+- **`FighterConfig.stature`** (`Hager`, `Normal`, `Breit`, `Adipoes`) plus zentrale `StatureTable`
+  für Höhe, Kapselradius, Masse und Hitbox-Faktor — eine Quelle für alle Systeme.
+- Standard-Roster belegt: Le Binde adipös, Mell und Sigi hager, Dieter/TetraPak/Kalle breit.
+- Wirkt auf Platzhalter-Kapseln (Maße, Proportionen, AttackPoint-Position) **und** auf importierte
+  Modelle (Zielhöhe, Masse, Mindest-Radius, Angriffs-Hitbox).
+
 ### Ragdoll-Automatik
 - **`Editor/FighterRagdollBuilder.cs`**: erzeugt aus einem Humanoid-Rig ein komplettes Ragdoll
   (12 Knochen: Hüfte, Spine, Chest, Kopf, Ober-/Unterarme, Ober-/Unterschenkel) mit Rigidbodies,

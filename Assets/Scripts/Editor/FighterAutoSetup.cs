@@ -136,18 +136,21 @@ namespace PennerKombat.Editor
                 model.transform.localRotation = Quaternion.identity;
 
                 // 2. Auf Kämpfergröße normieren (1,80 m, Füße auf y = 0, mittig)
-                Bounds bounds = NormalizeToFighterSize(model.transform, root.transform, cfg.id);
+                Bounds bounds = NormalizeToFighterSize(model.transform, root.transform, cfg.id,
+                                                       StatureTable.Height(cfg.stature));
 
                 // 3. Physik nach den echten Maßen
                 var rb = root.AddComponent<Rigidbody>();
-                rb.mass = 1f;
+                rb.mass = StatureTable.Mass(cfg.stature);
                 rb.constraints = RigidbodyConstraints.FreezeRotation;
                 rb.interpolation = RigidbodyInterpolation.Interpolate;
                 rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
                 var capsule = root.AddComponent<CapsuleCollider>();
                 float height = Mathf.Max(0.5f, bounds.size.y);
-                float radius = Mathf.Clamp(Mathf.Max(bounds.size.x, bounds.size.z) * 0.5f, 0.2f, height * 0.35f);
+                // Modellmaße gewinnen, aber die Statur setzt eine sinnvolle Untergrenze
+                float radius = Mathf.Clamp(Mathf.Max(bounds.size.x, bounds.size.z) * 0.5f,
+                                           StatureTable.Radius(cfg.stature) * 0.8f, height * 0.35f);
                 capsule.height = height;
                 capsule.radius = radius;
                 capsule.center = new Vector3(0f, height * 0.5f, 0f);
@@ -189,7 +192,8 @@ namespace PennerKombat.Editor
                 fighter.heavyDamage = cfg.heavyDamage;
                 fighter.attackRange = cfg.attackRange;
                 fighter.attackPoint = attackPoint;
-                fighter.attackBoxSize = new Vector3(radius * 2.2f, height * 0.5f, cfg.attackRange);
+                fighter.attackBoxSize = new Vector3(radius * 2.2f, height * 0.5f, cfg.attackRange)
+                                      * StatureTable.HitboxScale(cfg.stature);
                 fighter.enemyLayer = FighterFactory.DefaultEnemyMask();
 
                 // 6. Animator von der Modellwurzel hochziehen …
@@ -251,7 +255,7 @@ namespace PennerKombat.Editor
         /// Skaliert das Modell auf <see cref="GlbLibrary.TargetHeight"/>, stellt es
         /// auf den Boden und zentriert es. Liefert die Maße nach der Skalierung.
         /// </summary>
-        static Bounds NormalizeToFighterSize(Transform model, Transform root, string id)
+        static Bounds NormalizeToFighterSize(Transform model, Transform root, string id, float targetHeight)
         {
             var renderers = model.GetComponentsInChildren<Renderer>(true);
             if (renderers.Length == 0) return new Bounds(Vector3.zero, new Vector3(0.8f, 1.8f, 0.8f));
@@ -262,7 +266,7 @@ namespace PennerKombat.Editor
             float manual = GlbLibrary.GetScale(id);
             float scale = manual > 0.0001f
                 ? manual
-                : (bounds.size.y > 0.0001f ? GlbLibrary.TargetHeight / bounds.size.y : 1f);
+                : (bounds.size.y > 0.0001f ? targetHeight / bounds.size.y : 1f);
             model.localScale = Vector3.one * scale;
 
             bounds = renderers[0].bounds;

@@ -44,14 +44,17 @@ namespace PennerKombat
             var root = new GameObject($"Fighter_{cfg.id}");
             root.transform.SetPositionAndRotation(position, rotation);
 
-            // --- Physik ---
+            // --- Physik (Maße nach Statur, docs/DESIGN.md) ---
+            float height = StatureTable.Height(cfg.stature);
+            float radius = StatureTable.Radius(cfg.stature);
+
             var body = root.AddComponent<CapsuleCollider>();
-            body.height = 1.8f;
-            body.radius = 0.4f;
-            body.center = new Vector3(0f, 0.9f, 0f);
+            body.height = height;
+            body.radius = radius;
+            body.center = new Vector3(0f, height * 0.5f, 0f);
 
             var rb = root.AddComponent<Rigidbody>();
-            rb.mass = 1f;
+            rb.mass = StatureTable.Mass(cfg.stature);
             rb.useGravity = true;
             rb.constraints = RigidbodyConstraints.FreezeRotation;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -69,23 +72,24 @@ namespace PennerKombat
             var visual = new GameObject("Visual");
             visual.transform.SetParent(root.transform, false);
 
-            AddPart(visual.transform, PrimitiveType.Capsule, new Vector3(0f, 0.9f, 0f),
-                    Vector3.zero, new Vector3(0.8f, 0.6f, 0.8f), main, "Torso");
-            AddPart(visual.transform, PrimitiveType.Sphere, new Vector3(0f, 1.75f, 0f),
-                    Vector3.zero, new Vector3(0.45f, 0.45f, 0.45f), accent, "Kopf");
+            float torsoWidth = radius * 2f;
+            AddPart(visual.transform, PrimitiveType.Capsule, new Vector3(0f, height * 0.5f, 0f),
+                    Vector3.zero, new Vector3(torsoWidth, height * 0.33f, torsoWidth), main, "Torso");
+            AddPart(visual.transform, PrimitiveType.Sphere, new Vector3(0f, height * 0.97f, 0f),
+                    Vector3.zero, Vector3.one * 0.45f, accent, "Kopf");
             // Nase = Blickrichtung, damit man sofort sieht, wohin die Kapsel schaut
-            AddPart(visual.transform, PrimitiveType.Cube, new Vector3(0f, 1.72f, 0.26f),
+            AddPart(visual.transform, PrimitiveType.Cube, new Vector3(0f, height * 0.955f, 0.26f),
                     Vector3.zero, new Vector3(0.12f, 0.12f, 0.18f), PennerPalette.Gold, "Nase");
             // Schultern
-            AddPart(visual.transform, PrimitiveType.Cube, new Vector3(-0.42f, 1.35f, 0f),
+            AddPart(visual.transform, PrimitiveType.Cube, new Vector3(-(radius + 0.02f), height * 0.75f, 0f),
                     Vector3.zero, new Vector3(0.2f, 0.5f, 0.2f), accent, "ArmL");
-            AddPart(visual.transform, PrimitiveType.Cube, new Vector3(0.42f, 1.35f, 0f),
+            AddPart(visual.transform, PrimitiveType.Cube, new Vector3(radius + 0.02f, height * 0.75f, 0f),
                     Vector3.zero, new Vector3(0.2f, 0.5f, 0.2f), accent, "ArmR");
 
             // --- Angriffs-Punkt (Hitbox-Ursprung) ---
             var attackPoint = new GameObject("AttackPoint");
             attackPoint.transform.SetParent(root.transform, false);
-            attackPoint.transform.localPosition = new Vector3(0f, 1.1f, 0.9f);
+            attackPoint.transform.localPosition = new Vector3(0f, height * 0.61f, radius + 0.5f);
 
             // --- Charakter-Skript ---
             var fighter = (FighterController)root.AddComponent(TypeFor(cfg.id));
@@ -97,6 +101,7 @@ namespace PennerKombat
             fighter.heavyDamage = cfg.heavyDamage;
             fighter.attackRange = cfg.attackRange;
             fighter.attackPoint = attackPoint.transform;
+            fighter.attackBoxSize = new Vector3(1.5f, 1.5f, 2f) * StatureTable.HitboxScale(cfg.stature);
             fighter.enemyLayer = DefaultEnemyMask();
 
             return root;

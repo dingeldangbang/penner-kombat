@@ -44,15 +44,15 @@ namespace PennerKombat
 
             var defaults = new[]
             {
-                (GameConstants.CharLeBinde, "Le Binde", 130f, 4.2f, 11f, 18f, 2.8f),
-                (GameConstants.CharMell, "Mell", 85f, 6.5f, 7f, 12f, 2.0f),
-                (GameConstants.CharMojoBob, "Mojo Bob", 100f, 4.8f, 9f, 14f, 3.5f),
-                (GameConstants.CharDieter, "Dieter", 110f, 4.5f, 10f, 16f, 2.5f),
-                (GameConstants.CharUschi, "Uschi", 95f, 5.2f, 8f, 13f, 2.2f),
-                (GameConstants.CharTetraPak, "TetraPak", 115f, 4.0f, 9f, 15f, 2.7f),
-                (GameConstants.CharSigi, "Sigi", 90f, 5.5f, 7f, 11f, 2.3f),
-                (GameConstants.CharRolf, "Rolf", 105f, 4.7f, 8f, 14f, 2.6f),
-                (GameConstants.CharKalle, "Kalle", 120f, 4.3f, 10f, 17f, 2.4f),
+                (GameConstants.CharLeBinde, "Le Binde", 130f, 4.2f, 11f, 18f, 2.8f, Stature.Adipoes),
+                (GameConstants.CharMell, "Mell", 85f, 6.5f, 7f, 12f, 2.0f, Stature.Hager),
+                (GameConstants.CharMojoBob, "Mojo Bob", 100f, 4.8f, 9f, 14f, 3.5f, Stature.Normal),
+                (GameConstants.CharDieter, "Dieter", 110f, 4.5f, 10f, 16f, 2.5f, Stature.Breit),
+                (GameConstants.CharUschi, "Uschi", 95f, 5.2f, 8f, 13f, 2.2f, Stature.Normal),
+                (GameConstants.CharTetraPak, "TetraPak", 115f, 4.0f, 9f, 15f, 2.7f, Stature.Breit),
+                (GameConstants.CharSigi, "Sigi", 90f, 5.5f, 7f, 11f, 2.3f, Stature.Hager),
+                (GameConstants.CharRolf, "Rolf", 105f, 4.7f, 8f, 14f, 2.6f, Stature.Normal),
+                (GameConstants.CharKalle, "Kalle", 120f, 4.3f, 10f, 17f, 2.4f, Stature.Breit),
             };
 
             fighters.Clear();
@@ -66,6 +66,7 @@ namespace PennerKombat
                 cfg.lightDamage = d.Item5;
                 cfg.heavyDamage = d.Item6;
                 cfg.attackRange = d.Item7;
+                cfg.stature = d.Item8;
                 fighters.Add(cfg);
             }
         }
