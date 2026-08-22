@@ -159,6 +159,11 @@ namespace PennerKombat
 
             if (uiManager != null) uiManager.SetNames(player1.displayName, player2.displayName);
 
+            // Zugewiesene GLB-Modelle nachladen (docs/MODELLE.md) — asynchron,
+            // der Kampf startet sofort mit der Kapsel.
+            GlbModelLoader.ApplyTo(player1);
+            GlbModelLoader.ApplyTo(player2);
+
             // Events verdrahten
             player1.OnDeath += OnFighterDeath;
             player2.OnDeath += OnFighterDeath;

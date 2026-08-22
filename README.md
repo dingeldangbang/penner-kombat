@@ -120,7 +120,10 @@ Assets/
    verlangt: zulassen.
 3. Menü **`Tools → Penner Kombat → ▶ Alles einrichten und spielen`** —
    erzeugt Szene, Boden, Wände, HUD, FighterDatabase, 9 Platzhalter-Kämpfer und startet Play.
-4. Kämpfen: **P1 = WASD · J leicht · K schwer · Shift Block · Space Sprung · F4 Frame-Daten.**
+4. Kämpfen: **P1 = WASD · J leicht · K schwer · Shift Block · Space Sprung · F4 Frame-Daten · F7 Modelle.**
+5. Echte Modelle: `.glb` in den Modell-Ordner legen und über
+   `Tools → Penner Kombat → GLB → …` oder im Spiel mit **F7** zuweisen
+   (**[docs/MODELLE.md](docs/MODELLE.md)**).
 
 Ohne Modelle sind die Kämpfer Kapseln — Bewegung, Hitboxen, Combos, KI, Runden,
 HUD und alle Effekte laufen trotzdem vollständig.
@@ -138,6 +141,7 @@ HUD und alle Effekte laufen trotzdem vollständig.
 | [docs/TROPHIES.md](docs/TROPHIES.md) | Alle 56 Trophäen |
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
+| [docs/MODELLE.md](docs/MODELLE.md) | **GLB-Import**: Editor-Menü (Prefabs) und F7-Menü im Spiel, Skalierung, Grenzen |
 | [docs/SPIELEN.md](docs/SPIELEN.md) | **Vom Repo zum laufenden Kampf** — MVP-Anleitung, Steuerung, Fehlerbehebung |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
 | [docs/EXTRAS.md](docs/EXTRAS.md) | Arena-Zerstörung, Waffen, Power-Ups, Konter, Ragdoll, Bosse, Crowd, Beat-Sync |

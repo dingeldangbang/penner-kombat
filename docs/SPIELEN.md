@@ -37,6 +37,7 @@ danach `Assets/Scenes/Arena.unity` öffnen und ▶ drücken.
 | Fatal Blow | Y | Numpad + |
 | Med-Kapsel | H | Numpad Enter |
 | Frame-Daten-Overlay | **F4** | — |
+| Modell-Menü (GLB) | **F7** | — |
 | Touch-Debug | F3 | — |
 
 Vollständige Liste inklusive Umbelegung: [`CONTROLS.md`](CONTROLS.md).
@@ -94,6 +95,10 @@ Vollständige Liste inklusive Umbelegung: [`CONTROLS.md`](CONTROLS.md).
 ---
 
 ## 6. Danach: echte Modelle einsetzen
+
+**Schnellweg GLB:** `.glb`-Dateien in `Assets/Models/Fighters` legen und
+`Tools → Penner Kombat → GLB → Modelle zu Kämpfer-Prefabs machen` — oder im laufenden Spiel
+mit **F7** zuweisen. Details: **[MODELLE.md](MODELLE.md)**.
 
 Der Platzhalter greift **nur**, wenn `FighterConfig.prefab` leer ist oder auf ein `PK_*`-Prefab zeigt.
 Sobald du ein echtes Modell hast:

@@ -71,7 +71,7 @@ namespace PennerKombat
                              new Vector2(1600f, 30f), 20, TextAlignmentOptions.Center, "Hinweis");
             hint.color = new Color(1f, 1f, 1f, 0.55f);
             hint.text = "P1: WASD · J leicht · K schwer · Shift Block · Space Sprung · U/I Spezial · H Med   |   "
-                      + "P2: Pfeile · Num1/2 · Num3 Block · Num0 Sprung   |   F4 Frame-Daten";
+                      + "P2: Pfeile · Num1/2 · Num3 Block · Num0 Sprung   |   F4 Frame-Daten · F7 Modelle";
 
             // --- Ergebnis-Panel ---
             var panel = new GameObject("ResultPanel", typeof(RectTransform), typeof(Image));

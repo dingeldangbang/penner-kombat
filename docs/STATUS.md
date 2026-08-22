@@ -42,7 +42,7 @@ Prefabs oder Sprites nötig (siehe `docs/VISUALS.md`).
 | # | Fehlt | Warum kein Skript hilft | Priorität |
 |---|---|---|---|
 | ~~1~~ | ~~**Unity-Projekt selbst**~~ | **erledigt**: `Packages/manifest.json` + `ProjectSettings/` liegen im Repo | ✅ |
-| 2 | **Charakter-Modelle + Rigs** (9×) | Art-Asset; Proportionen stehen in `docs/DESIGN.md` | 🔴 |
+| 2 | **Charakter-Modelle + Rigs** (9×) | Art-Asset; Proportionen in `docs/DESIGN.md`. **Einbau ist jetzt ein Menüpunkt**: GLB-Import via `Tools → Penner Kombat → GLB` oder F7 im Spiel (`docs/MODELLE.md`) | 🔴 |
 | 3 | **Animationen** (Idle, Walk, Attacks, Block, Jump, HitReact, Death, Specials, Fatality) | Art-Asset; Frame-Daten liegen in `docs/MOVESETS.md` | 🔴 |
 | 4 | **Animator-Controller** mit den Parametern `Walk`, `Block`, `Jump`, `LightAttack`, `HeavyAttack`, `HitReact`, `Death` | Muss im Editor verdrahtet werden — Namen sind im Code fix | 🔴 |
 | ~~5~~ | ~~**Charakter-Prefabs**~~ | **erledigt für Platzhalter**: `FighterFactory` baut sie zur Laufzeit, `PkQuickStart` als Prefabs. Echte Modell-Prefabs fehlen weiterhin | 🟡 |

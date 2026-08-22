@@ -1,6 +1,24 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### GLB-Modellimport über Menüs
+- **`Utils/GlbLibrary.cs`**: findet `.glb`/`.gltf` in `persistentDataPath/Models`,
+  `StreamingAssets/Models` und `<Projekt>/Models`, ordnet Modelle Charakteren zu
+  (PlayerPrefs `pk_model_<id>` inkl. Skalierung, Drehung, Höhenversatz), Auto-Zuordnung
+  über Dateinamen.
+- **`Core/GlbModelLoader.cs`**: lädt Modelle zur Laufzeit (glTFast, abgesichert über
+  `#if PK_GLTFAST`), normiert sie auf 1,80 m, stellt sie auf den Boden, dreht sie nach vorn,
+  blendet die Kapsel aus und kann im laufenden Kampf austauschen (`RefreshAll`).
+- **`UI/ModelMenuUI.cs`** (Taste **F7**): prozedurales Menü mit allen neun Charakteren,
+  Modellwechsel per `<`/`>`, Größe ±5 %, 90°-Drehung, Leeren, Auto-Zuordnen, Übernehmen,
+  Ordner zeigen.
+- **`Editor/GlbImportWizard.cs`**: `Tools → Penner Kombat → GLB → …` — glTFast per Package
+  Manager installieren, Modell-Ordner anlegen, aus GLB fertige Kämpfer-Prefabs bauen
+  (Physik, Charakterskript, AttackPoint, Animator-Übernahme) und in die FighterDatabase
+  eintragen, zurück zu Platzhaltern.
+- **`PkProjectSetup`** setzt/entfernt das Define `PK_GLTFAST` automatisch.
+- **Neue Doku** `docs/MODELLE.md`.
+
 ### Spielbar ohne Handarbeit (MVP)
 - **Unity-Projektdateien ergänzt**: `Packages/manifest.json` (URP, Input System, TMP, uGUI),
   `ProjectSettings/ProjectVersion.txt` und `TagManager.asset` (Tags `Ground`/`Fighter`/

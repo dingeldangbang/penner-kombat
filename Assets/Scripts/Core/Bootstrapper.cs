@@ -24,6 +24,8 @@ namespace PennerKombat
         public bool createGround = true;
         [Tooltip("Frame-Daten-Overlay bereitstellen (im Spiel mit F4 einblenden).")]
         public bool createFrameDataOverlay = true;
+        [Tooltip("GLB-Modell-Menü bereitstellen (im Spiel mit F7 einblenden, docs/MODELLE.md).")]
+        public bool createModelMenu = true;
 
         [Header("Extras (docs/EXTRAS.md)")]
         public bool createMusicSync = true;
@@ -67,6 +69,11 @@ namespace PennerKombat
             if (createGround) EnsureGround();
             if (createHud) HudBuilder.Ensure();
             if (createFrameDataOverlay) FrameDataOverlay.Ensure();
+            if (createModelMenu)
+            {
+                GlbModelLoader.Ensure();
+                ModelMenuUI.Ensure();
+            }
             if (createTouchControls && TouchControls.Ensure(touchControlsOnDesktop) != null)
             {
                 AntiGhosting.Ensure();

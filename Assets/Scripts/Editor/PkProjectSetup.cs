@@ -39,6 +39,7 @@ namespace PennerKombat.Editor
             foreach (var tag in RequiredTags) EnsureTag(tag);
             foreach (var layer in RequiredLayers) EnsureLayer(layer);
             EnsureUrpDefine();
+            EnsureGltfastDefine();
             CheckTmp(silent);
             CheckInputHandler();
 
@@ -101,6 +102,27 @@ namespace PennerKombat.Editor
                 defines = string.IsNullOrEmpty(defines) ? "PK_URP" : defines + ";PK_URP";
                 PlayerSettings.SetScriptingDefineSymbols(group, defines);
                 Debug.Log($"[Penner Kombat] Define PK_URP gesetzt für {group.TargetName}.");
+            }
+        }
+
+        /// <summary>Setzt PK_GLTFAST, sobald glTFast installiert ist (GLB-Import).</summary>
+        static void EnsureGltfastDefine()
+        {
+            bool installed = System.AppDomain.CurrentDomain.GetAssemblies()
+                .Any(a => a.GetName().Name == "glTFast");
+
+            foreach (var group in new[] { NamedBuildTarget.Standalone, NamedBuildTarget.Android })
+            {
+                string defines = PlayerSettings.GetScriptingDefineSymbols(group);
+                var list = defines.Split(';').Where(d => !string.IsNullOrEmpty(d)).ToList();
+                bool has = list.Contains("PK_GLTFAST");
+
+                if (installed && !has) list.Add("PK_GLTFAST");
+                else if (!installed && has) list.Remove("PK_GLTFAST");
+                else continue;
+
+                PlayerSettings.SetScriptingDefineSymbols(group, string.Join(";", list));
+                Debug.Log($"[Penner Kombat] Define PK_GLTFAST {(installed ? "gesetzt" : "entfernt")} für {group.TargetName}.");
             }
         }
 
