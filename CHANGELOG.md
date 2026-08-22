@@ -1,6 +1,15 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Werkzeuge zur Absicherung
+- **`Tools/check_symbols.py`**: statische Referenzprüfung ohne Unity — findet Aufrufe auf
+  projekteigene Typen, deren Mitglied es nicht gibt, unbekannte generische Typparameter und
+  fehlende Basisklassen. Läuft aktuell sauber über 120 Dateien / 171 Typen.
+- **`Tools/check_braces.py`** + **`Tools/check.sh`**: Klammer-/String-Bilanz und Sammellauf.
+- **`Editor/PkReadinessCheck.cs`**: Menü *✔ Spielbereitschaft prüfen* — acht Prüfungen
+  (Render-Pipeline, Input System, Active Input Handling, TMP, Tags, Layer, Datenbank, Szene,
+  glTFast) mit konkretem Menüpfad zur Behebung und Urteil „SPIELBEREIT" oder nicht.
+
 ### Statur als Balance-Größe
 - **`FighterConfig.stature`** (`Hager`, `Normal`, `Breit`, `Adipoes`) plus zentrale `StatureTable`
   für Höhe, Kapselradius, Masse und Hitbox-Faktor — eine Quelle für alle Systeme.

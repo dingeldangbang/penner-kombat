@@ -81,6 +81,15 @@ Vollständige Liste inklusive Umbelegung: [`CONTROLS.md`](CONTROLS.md).
 
 ---
 
+## 4b. Vorher prüfen: `Tools → Penner Kombat → ✔ Spielbereitschaft prüfen`
+
+Ein Menüpunkt, ein Fenster, acht Prüfungen: Render-Pipeline, Input System, *Active Input
+Handling*, TMP-Ressourcen, Tags, Layer, FighterDatabase, Szene, Bootstrapper und glTFast.
+Jeder Befund kommt mit dem Menüpfad, der ihn behebt. Am Ende steht entweder
+„▶ SPIELBEREIT" oder was noch fehlt.
+
+---
+
 ## 5. Wenn etwas nicht läuft
 
 | Symptom | Ursache | Lösung |
