@@ -28,6 +28,8 @@ namespace PennerKombat
         public bool createModelMenu = true;
         [Tooltip("Hauptmenü + Charakterauswahl zeigen (aus = sofort ins Testduell).")]
         public bool createFrontEnd = true;
+        [Tooltip("Auf Handhelds Bildrate, Schatten und Effekte an die Geräteklasse anpassen.")]
+        public bool createMobileTuning = true;
 
         [Header("Extras (docs/EXTRAS.md)")]
         public bool createMusicSync = true;
@@ -77,6 +79,7 @@ namespace PennerKombat
                 ModelMenuUI.Ensure();
             }
             if (createFrontEnd) FrontEnd.Ensure();
+            if (createMobileTuning) MobileTuning.Ensure();
             if (createTouchControls && TouchControls.Ensure(touchControlsOnDesktop) != null)
             {
                 AntiGhosting.Ensure();

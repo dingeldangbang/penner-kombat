@@ -1,6 +1,18 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Handy als Hauptplattform
+- **`Editor/PkBuildPreparer.cs`**: bereitet Builds automatisch vor — im Batchmode (CI) ohne
+  Zutun. Legt die Arena-Szene an und trägt sie in die **Build Settings** ein (ohne das baut
+  Unity ein leeres Spiel), setzt Paketname, min. Android 7, IL2CPP, ARM64+ARMv7, Vulkan/GLES3,
+  Querformat, Vollbild sowie WebGL-Kompression und gedeckelte Qualitätseinstellungen.
+- **`Core/MobileTuning.cs`**: stuft das Gerät nach RAM und Kernen ein (Schwach/Mittel/Stark) und
+  passt Bildrate, Schatten, Auflösungsskalierung und teure Extras an; Bildschirm schläft im
+  Kampf nicht ein.
+- **`FrontEnd`** zeigt auf Handhelds Touch-Hinweise statt Tastenbelegung.
+- **Neue Doku `docs/HANDY.md`**: WebGL gegen APK abgewogen, Einrichtung in fünf Schritten,
+  Touch-Verhalten, Leistungsstufen, Sideload-Anleitung und die Grenzen.
+
 ### Bauen und spielen ohne eigenen Unity-Rechner
 - **`docs/ci/unity-activation.yml`**: erzeugt die Unity-Aktivierungsdatei (`.alf`) direkt auf
   GitHubs Runnern — kein lokales Unity, kein Docker nötig.

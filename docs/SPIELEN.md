@@ -81,6 +81,9 @@ da hilft auch ein gepatchtes Big Sur nichts. Der Editor läuft dort schlicht nic
 Beides braucht **kein Unity auf deinem Rechner** — nur ein kostenloses Unity-Konto.
 Die Lizenzdatei erzeugt GitHub selbst (`unity-activation.yml`).
 
+Wenn das Handy die Hauptplattform ist: **[HANDY.md](HANDY.md)** — dort steht der
+komplette Weg vom Repo bis zum installierten APK, inklusive Touch und Leistungsstufen.
+
 ---
 
 ## 2. Steuerung im MVP

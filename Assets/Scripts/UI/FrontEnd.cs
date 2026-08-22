@@ -170,7 +170,9 @@ namespace PennerKombat
             var hint = Label(mainPanel.transform, new Vector2(0.5f, 0.06f), Vector2.zero,
                              new Vector2(1600f, 40f), 20, TextAlignmentOptions.Center);
             hint.color = new Color(1f, 1f, 1f, 0.55f);
-            hint.text = "F1 Menü · F4 Frame-Daten · F7 Modelle · P1: WASD J K Shift Space · P2: Pfeile Num1 Num2 Num3 Num0";
+            hint.text = Application.isMobilePlatform
+                ? "Tippen zum Wählen · im Kampf: Joystick links, Buttons rechts · Layout in den Optionen verschiebbar"
+                : "F1 Menü · F4 Frame-Daten · F7 Modelle · P1: WASD J K Shift Space · P2: Pfeile Num1 Num2 Num3 Num0";
         }
 
         void BuildSelect()

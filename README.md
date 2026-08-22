@@ -141,6 +141,7 @@ HUD und alle Effekte laufen trotzdem vollständig.
 | [docs/TROPHIES.md](docs/TROPHIES.md) | Alle 56 Trophäen |
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
+| [docs/HANDY.md](docs/HANDY.md) | **Auf dem Handy spielen**: APK oder WebGL aus der CI, Touch, Leistungsstufen |
 | [docs/MODELLE.md](docs/MODELLE.md) | **GLB-Import**: Editor-Menü (Prefabs) und F7-Menü im Spiel, Skalierung, Grenzen |
 | [docs/SPIELEN.md](docs/SPIELEN.md) | **Vom Repo zum laufenden Kampf** — MVP-Anleitung, Steuerung, Fehlerbehebung |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
