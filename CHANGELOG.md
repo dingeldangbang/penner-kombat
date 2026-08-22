@@ -1,6 +1,15 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Bauen und spielen ohne eigenen Unity-Rechner
+- **`docs/ci/unity-activation.yml`**: erzeugt die Unity-Aktivierungsdatei (`.alf`) direkt auf
+  GitHubs Runnern — kein lokales Unity, kein Docker nötig.
+- **`docs/ci/webgl-pages.yml`**: baut die WebGL-Fassung und veröffentlicht sie auf GitHub Pages;
+  spielbar im Browser auf Handy, Tablet oder fremdem Rechner.
+- `docs/ci/README.md` beschreibt den kompletten Weg ohne lokalen Editor sowie die Grenzen der
+  WebGL-Fassung (kein UDP → keine LAN-Erkennung, Relay funktioniert; kein Multithreading).
+- `docs/SPIELEN.md` §1d: was zu tun ist, wenn der eigene Rechner keine Metal-GPU hat.
+
 ### macOS-Hinweise
 - `docs/SPIELEN.md` und `docs/BUILD_ANDROID.md` halten fest, dass **macOS Big Sur 11.x genügt**
   (Unity 2022.3 LTS: Mojave 10.14+ auf Intel, Big Sur 11.0+ auf Apple Silicon), inklusive

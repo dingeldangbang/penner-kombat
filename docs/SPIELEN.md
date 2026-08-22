@@ -66,6 +66,23 @@ das Projekt lässt sich anschließend über *Add project from disk* eintragen.
 
 ---
 
+## 1d. Wenn der eigene Rechner zu alt ist
+
+Unity 2022.3 verlangt eine **Metal-fähige GPU**. Macs von 2011 und älter haben keine —
+da hilft auch ein gepatchtes Big Sur nichts. Der Editor läuft dort schlicht nicht.
+
+**Der Ausweg: bauen lassen, woanders spielen.**
+
+| Weg | Ergebnis | Anleitung |
+|---|---|---|
+| **WebGL auf GitHub Pages** | Link im Browser, Handy oder Rechner, keine Installation | [`ci/README.md`](ci/README.md) → `webgl-pages.yml` |
+| **Android-APK aus der CI** | `.apk` aufs Handy | [`ci/README.md`](ci/README.md) → `android-build.yml` |
+
+Beides braucht **kein Unity auf deinem Rechner** — nur ein kostenloses Unity-Konto.
+Die Lizenzdatei erzeugt GitHub selbst (`unity-activation.yml`).
+
+---
+
 ## 2. Steuerung im MVP
 
 | Aktion | Spieler 1 | Spieler 2 |

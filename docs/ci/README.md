@@ -47,18 +47,24 @@ Baut mit [`game-ci/unity-builder`](https://game.ci) ein installierbares APK auf
 GitHubs Servern. **Damit brauchst du kein Unity auf dem eigenen Rechner** — nur
 eine (kostenlose) Unity-Lizenz.
 
-### Schritt 1 — Lizenzdatei erzeugen
+### Schritt 1 — Lizenzdatei erzeugen (ohne Unity auf dem eigenen Rechner)
 
-Die kostenlose *Personal*-Lizenz reicht. Anleitung von game-ci, kurz gefasst:
+Die kostenlose *Personal*-Lizenz reicht. Die Aktivierungsdatei erzeugt GitHub selbst:
 
 ```bash
-# Einmalig lokal, mit Docker:
-docker run -it --rm unityci/editor:ubuntu-2022.3.62f1-android-3 \
-  unity-editor -quit -batchmode -nographics -logFile /dev/stdout -createManualActivationFile
+mkdir -p .github/workflows
+cp docs/ci/unity-activation.yml .github/workflows/unity-activation.yml
+git add .github/workflows/unity-activation.yml
+git commit -m "ci: Unity-Aktivierung"
+git push
 ```
 
-Die entstandene `.alf`-Datei auf https://license.unity3d.com/manual hochladen,
-die zurückgegebene `.ulf`-Datei öffnen und den **kompletten Inhalt** kopieren.
+1. **Actions → „Unity-Lizenz anfordern (.alf)" → Run workflow**
+2. Artefakt herunterladen, entpacken → `Unity_v2022.x.alf`
+3. Datei auf <https://license.unity3d.com/manual> hochladen, *Unity Personal* wählen
+4. Die zurückgegebene `.ulf`-Datei im Texteditor öffnen, **kompletten Inhalt** kopieren
+
+*Wer Docker zur Hand hat, kann die `.alf` auch lokal erzeugen — nötig ist es nicht.*
 
 ### Schritt 2 — Secrets anlegen
 
@@ -97,3 +103,45 @@ git push
 
 > **Erwartungsmanagement:** Der erste Lauf schlägt mit hoher Wahrscheinlichkeit fehl.
 > Das Log der Action ist dann die Liste, die wir abarbeiten — genau dafür ist er da.
+
+
+---
+
+## `webgl-pages.yml` — im Browser spielen, ganz ohne Installation
+
+Der schnellste Weg zum Spielen, wenn der eigene Rechner Unity nicht packt:
+GitHub baut die WebGL-Version und veröffentlicht sie auf GitHub Pages.
+
+```bash
+mkdir -p .github/workflows
+cp docs/ci/webgl-pages.yml .github/workflows/webgl-pages.yml
+git add .github/workflows/webgl-pages.yml
+git commit -m "ci: WebGL auf GitHub Pages"
+git push
+```
+
+Einmalig: **Settings → Pages → Source = „GitHub Actions"**.
+Dann **Actions → „WebGL bauen …" → Run workflow**.
+
+Ergebnis: `https://dingeldangbang.github.io/penner-kombat/` — läuft auf Handy,
+Tablet und jedem Rechner mit aktuellem Browser. Kein APK, kein Sideload, kein Store.
+
+**Grenzen der WebGL-Fassung:**
+
+| Punkt | Auswirkung |
+|---|---|
+| Kein Multithreading | etwas weniger Bilder pro Sekunde als nativ |
+| Kein UDP | LAN-Erkennung fällt weg; der WebSocket-Relay funktioniert |
+| Ladezeit | erster Aufruf lädt einige MB |
+| Touch | funktioniert, die On-Screen-Steuerung erscheint auf Handhelds |
+| Browser | Chrome/Edge/Firefox aktuell, Safari 15+ |
+
+---
+
+## Kein tauglicher Rechner? Der komplette Weg ohne lokales Unity
+
+1. `unity-activation.yml` aktivieren → `.alf` erzeugen → `.ulf` holen → Secret `UNITY_LICENSE` setzen
+2. `webgl-pages.yml` aktivieren → Pages-Quelle auf „GitHub Actions" stellen → Run workflow
+3. Im Browser spielen. Für ein Handy-APK zusätzlich `android-build.yml` aktivieren.
+
+Alles, was du dafür brauchst, ist ein Browser und ein kostenloses Unity-Konto.
