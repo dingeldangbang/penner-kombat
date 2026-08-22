@@ -147,6 +147,32 @@ namespace PennerKombat
             if (GetComponent<WeaponHolder>() == null) gameObject.AddComponent<WeaponHolder>();
         }
 
+        // --- Animator-Zugriff, der fremde Controller nicht anmeckert ---
+        // Fehlt ein Parameter (z.B. bei einem importierten Modell mit eigenem
+        // Controller), passiert schlicht nichts, statt die Konsole zuzumüllen.
+        protected void AnimTrigger(string name)
+        {
+            if (HasAnimParam(name, AnimatorControllerParameterType.Trigger)) anim.SetTrigger(name);
+        }
+
+        protected void AnimBool(string name, bool value)
+        {
+            if (HasAnimParam(name, AnimatorControllerParameterType.Bool)) anim.SetBool(name, value);
+        }
+
+        protected void AnimFloat(string name, float value)
+        {
+            if (HasAnimParam(name, AnimatorControllerParameterType.Float)) anim.SetFloat(name, value);
+        }
+
+        bool HasAnimParam(string name, AnimatorControllerParameterType type)
+        {
+            if (anim == null || anim.runtimeAnimatorController == null) return false;
+            foreach (var p in anim.parameters)
+                if (p.type == type && p.name == name) return true;
+            return false;
+        }
+
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
 
         protected void TickMoveCooldowns()
@@ -209,7 +235,7 @@ namespace PennerKombat
             }
 
             Move(moveDir);
-            if (anim != null) anim.SetBool("Block", isBlocking);
+            AnimBool("Block", isBlocking);
         }
 
         /// <summary>Hook für Charakter-Spezialeingaben. Wird in Unterklassen überschrieben.</summary>
@@ -265,14 +291,14 @@ namespace PennerKombat
 
                 if (anim != null)
                 {
-                    anim.SetBool("Walk", true);
-                    anim.SetFloat("MoveSpeed", dir.magnitude * speed);
+                    AnimBool("Walk", true);
+                    AnimFloat("MoveSpeed", dir.magnitude * speed);
                 }
             }
             else if (anim != null)
             {
-                anim.SetBool("Walk", false);
-                anim.SetFloat("MoveSpeed", 0f);
+                AnimBool("Walk", false);
+                AnimFloat("MoveSpeed", 0f);
             }
         }
 
@@ -297,7 +323,7 @@ namespace PennerKombat
             invulnerableTimer = rollInvulnerable;
             isBlocking = false;
 
-            if (anim != null) anim.SetTrigger("Roll");
+            AnimTrigger("Roll");
             transform.rotation = Quaternion.LookRotation(rollDirection);
             VFXManager.Instance?.PlayDust(transform.position, 0.7f);
             return true;
@@ -346,7 +372,7 @@ namespace PennerKombat
             if (horizontal.sqrMagnitude < 0.5f) horizontal = transform.forward * 1.5f;
             rb.velocity = new Vector3(horizontal.x, jumpForce, horizontal.z);
             isGrounded = false;
-            if (anim != null) { anim.SetTrigger("Jump"); anim.SetBool("IsGrounded", false); }
+            AnimTrigger("Jump"); AnimBool("IsGrounded", false);
         }
 
         /// <summary>Öffentlicher Angriffsstart (KI- und Trigger-API).</summary>
@@ -359,14 +385,14 @@ namespace PennerKombat
             if (weapon != null && weapon.HasWeapon && weapon.Strike())
             {
                 attackTimer = heavy ? heavyCooldown : lightCooldown;
-                if (anim != null) anim.SetTrigger(heavy ? "HeavyAttack" : "LightAttack");
+                AnimTrigger(heavy ? "HeavyAttack" : "LightAttack");
                 return;
             }
             isAttacking = true;
             isHeavy = heavy;
             hitThisAttack.Clear();
             attackTimer = heavy ? heavyCooldown : lightCooldown;
-            if (anim != null) anim.SetTrigger(heavy ? "HeavyAttack" : "LightAttack");
+            AnimTrigger(heavy ? "HeavyAttack" : "LightAttack");
             Invoke(nameof(EnableHitbox), 0.12f);
             Invoke(nameof(DisableHitbox), 0.35f);
         }
@@ -479,7 +505,7 @@ namespace PennerKombat
             rb.AddForce(kb, ForceMode.Impulse);
 
             stunTimer = 0.2f;
-            if (anim != null) anim.SetTrigger("HitReact");
+            AnimTrigger("HitReact");
 
             // Fatal-Blow-Leiste füllt sich beim KASSIEREN von Schaden
             AddFatalBlow(GameConstants.FatalBlowChargePerHitTaken);
@@ -566,7 +592,7 @@ namespace PennerKombat
         // --- Tod / Runde ---
         public virtual void Die()
         {
-            if (anim != null) anim.SetTrigger("Death");
+            AnimTrigger("Death");
             VFXManager.Instance?.PlayHit(transform.position + Vector3.up, Vector3.up, 30f,
                                          HitTier.Heavy, fighterId);
             ComboSystem.Instance?.ResetAll();

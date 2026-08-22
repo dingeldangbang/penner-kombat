@@ -167,15 +167,22 @@ namespace PennerKombat.Editor
                 fighter.attackBoxSize = new Vector3(radius * 2.2f, height * 0.5f, cfg.attackRange);
                 fighter.enemyLayer = FighterFactory.DefaultEnemyMask();
 
-                // 6. Animator von der Modellwurzel hochziehen
+                // 6. Animator von der Modellwurzel hochziehen …
                 var modelAnimator = model.GetComponentInChildren<Animator>();
+                var animator = root.AddComponent<Animator>();
                 if (modelAnimator != null)
                 {
-                    var animator = root.AddComponent<Animator>();
                     animator.runtimeAnimatorController = modelAnimator.runtimeAnimatorController;
                     animator.avatar = modelAnimator.avatar;
-                    animator.applyRootMotion = false;
                     Object.DestroyImmediate(modelAnimator);
+                }
+                animator.applyRootMotion = false;
+
+                // … und einen passenden Controller bauen, falls das Modell keinen mitbringt.
+                if (animator.runtimeAnimatorController == null)
+                {
+                    var clips = FighterAnimatorBuilder.CollectClips(AssetDatabase.GetAssetPath(modelAsset));
+                    animator.runtimeAnimatorController = FighterAnimatorBuilder.Build(cfg.id, clips);
                 }
 
                 // 7. Tag und Layer

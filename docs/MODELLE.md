@@ -55,7 +55,7 @@ Was dabei automatisch gesetzt wird:
 | CapsuleCollider | Höhe und Radius aus den **echten Modellmaßen** |
 | AttackPoint | am **rechten Handknochen**, wenn ein Rig da ist (Humanoid-Avatar oder Namen wie `mixamorig:RightHand`, `Hand_R`) — sonst vor dem Körper |
 | Hitbox-Größe | aus Radius, Höhe und `attackRange` des Charakters |
-| Animator | Controller + Avatar vom Modell auf die Prefab-Wurzel gezogen |
+| Animator | Controller + Avatar vom Modell auf die Prefab-Wurzel gezogen; fehlt ein Controller, wird einer **generiert** und mit passenden Clips bestückt (§4) |
 | Tag / Layer | `Fighter` |
 | Ablage | `Assets/Prefabs/Fighters/PK_<id>.prefab`, wird bei erneutem Import **aktualisiert**, nicht dupliziert |
 | Eintrag | automatisch in `Assets/Resources/FighterDatabase.asset` |
@@ -109,21 +109,47 @@ der Collider bleibt die Kapsel. Genau so war der Code von Anfang an gebaut.
 
 ---
 
-## 4. Animationen
+## 4. Animationen — Controller wird mitgebaut
 
-Ein GLB **kann** Animationen mitbringen (z. B. Mixamo-Export). Dann gilt:
+Beim Auto-Setup entsteht **automatisch** ein Animator-Controller unter
+`Assets/Animations/Controllers/PK_<id>.controller` — mit exakt den Parametern, die der
+Kampfcode ansteuert:
 
-- Im Editor-Weg (A) wird ein vorhandener `Animator` mit Controller und Avatar auf die
-  Prefab-Wurzel übernommen.
-- `AnimationsController3D` setzt nur Parameter, die im Controller wirklich existieren:
-  `Walk`, `Block`, `Jump`, `LightAttack`, `HeavyAttack`, `HitReact`, `Death`, `Roll`, `Special`.
-- Fehlt ein Parameter, passiert nichts — das Modell steht dann in T-Pose oder Idle, der Kampf
-  läuft trotzdem.
+| Typ | Parameter |
+|---|---|
+| Float | `MoveSpeed`, `Direction` |
+| Int | `ComboCount`, `SpecialIndex` |
+| Bool | `IsGrounded`, `Walk`, `Block` |
+| Trigger | `LightAttack`, `HeavyAttack`, `Jump`, `Roll`, `HitReact`, `Death`, `Special` |
 
-Für saubere Kampfanimationen braucht es einen Animator-Controller mit genau diesen Namen.
-Das ist Editor-Arbeit und lässt sich nicht sinnvoll erraten.
+Zustandsmaschine: `Idle ⇄ Walk`, `Block` als Haltezustand, alle Aktionen als
+Any-State-Übergang mit Rückkehr nach Idle (Death bleibt liegen).
 
----
+**Clips werden über Schlüsselwörter im Namen zugeordnet** — passend zu dem, was Mixamo & Co.
+exportieren:
+
+| Zustand | erkannte Wörter |
+|---|---|
+| Idle | idle, stand, breathing |
+| Walk | walk, run, jog, strafe |
+| LightAttack | punch, jab, light, hook, cross |
+| HeavyAttack | heavy, kick, smash, slam, strong |
+| Block | block, guard, defend |
+| Jump | jump, hop, leap |
+| Roll | roll, dodge, evade, dive |
+| HitReact | hit, impact, react, hurt, stagger |
+| Death | death, dying, die, falling back |
+| Special | special, combo, spell, cast, taunt |
+
+Gesucht wird in zwei Quellen: **im Modell selbst** (GLB/FBX mit eingebetteten Clips) und in
+**`Assets/Animations`** (dort einfach alle Mixamo-Downloads reinwerfen). `T-Pose`-Clips werden
+übersprungen, jeder Clip wird nur einmal vergeben.
+
+Nachträglich neu bauen: `Tools → Penner Kombat → GLB → Animator-Controller für alle Kämpfer bauen`.
+
+Bringt das Modell bereits einen eigenen Controller mit, bleibt der unangetastet.
+Und falls dort Parameter fehlen: `FighterController` prüft seit dieser Version jeden
+Parameter vor dem Setzen — es gibt also keine Warnungsflut in der Konsole.
 
 ## 5. Grenzen — ehrlich
 

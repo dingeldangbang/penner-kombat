@@ -1,6 +1,19 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Animator-Controller aus Clips generieren
+- **`Editor/FighterAnimatorBuilder.cs`**: baut pro Charakter einen Animator-Controller
+  (`Assets/Animations/Controllers/PK_<id>.controller`) mit allen Parametern, die der Kampfcode
+  ansteuert, und der Zustandsmaschine `Idle ⇄ Walk`, `Block`-Halten sowie Any-State-Aktionen
+  (`LightAttack`, `HeavyAttack`, `Jump`, `Roll`, `HitReact`, `Death`, `Special`).
+- **Clip-Zuordnung über Schlüsselwörter** im Dateinamen (Mixamo-tauglich: „Punching",
+  „Falling Back Death", „Standing Melee Attack …"); Quellen sind das Modell selbst und
+  `Assets/Animations`. T-Pose-Clips werden übersprungen.
+- Der Auto-Setup-Wächter hängt den generierten Controller direkt an das Kämpfer-Prefab;
+  Menü zum Neubauen: *GLB → Animator-Controller für alle Kämpfer bauen*.
+- **`FighterController`** prüft Animator-Parameter jetzt vor dem Setzen (`AnimTrigger`,
+  `AnimBool`, `AnimFloat`) — fremde Controller lösen keine Warnungsflut mehr aus.
+
 ### Modelle automatisch spielfertig machen
 - **`Editor/FighterAutoSetup.cs`**: baut aus einem Modell einen kompletten Kämpfer —
   Charakterskript nach ID, Balance-Werte aus der Datenbank, Rigidbody, CapsuleCollider aus
