@@ -196,6 +196,7 @@ namespace PennerKombat
                 yield return new WaitForSeconds(0.03f);
             }
             AddMojo(crits);
+            SignatureFx.MojoBob_Loeffelsturm(this, crits);
         }
 
         // ---- Special 4: Fünfzig Cent ----
@@ -218,6 +219,9 @@ namespace PennerKombat
             superModeTimer = 8f;
             currentCritChance = 1f;
             if (dingeneldangSound != null) AudioSource.PlayClipAtPoint(dingeneldangSound, transform.position);
+
+            // Super-Mode-Inszenierung inkl. Lockout-Filter (Spec §2.3.3)
+            SignatureFx.MojoBob_Dingeneldang(this, superModeTimer);
         }
 
         void EndSuperMode()
@@ -226,6 +230,7 @@ namespace PennerKombat
             currentCritChance = baseCritChance;
             isLockedOut = true;
             lockoutTimer = 15f;
+            if (!isAI) ScreenEffects.SetState(ScreenState.MojoLockout);
         }
 
         // ---- Wette ----
@@ -237,6 +242,7 @@ namespace PennerKombat
             isGambling = true;
             gambleHitCrit = false;
             gambleTimer = gambleDuration;
+            SignatureFx.MojoBob_Gamble(this, points, currentCritChance);
         }
 
         void EndGamble(bool hitCrit)
@@ -247,6 +253,7 @@ namespace PennerKombat
                 // Das Glück nimmt es persönlich: Mojo verloren + 10% HP
                 currentHP -= maxHP * 0.1f;
                 if (currentHP < 0f) currentHP = 0f;
+                SignatureFx.MojoBob_GambleLost(this);
                 if (loseSound != null) AudioSource.PlayClipAtPoint(loseSound, transform.position);
                 if (currentHP <= 0f) Die();
             }
@@ -263,6 +270,11 @@ namespace PennerKombat
         {
             if (critSound != null) AudioSource.PlayClipAtPoint(critSound, transform.position);
             RecordCrit(true);
+
+            // Krit-Präsentation (docs/VISUALS.md §4.4): Goldblitz, Sterne,
+            // 2 Frames Freeze und der „DINGENELDANG!"-Schriftzug.
+            PlayHitFeedback(target, 12f * critMultiplier, HitTier.Critical);
+            FloatingText.Show(transform.position + Vector3.up * 2.4f, "DINGENELDANG!", PennerPalette.Gold);
 
             // Trophäe: 7 Krit-Treffer in einer Combo
             if (TrophyManager.Instance != null && comboCount >= 7)

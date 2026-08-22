@@ -44,6 +44,11 @@ namespace PennerKombat
         public Vector3 attackBoxSize = new Vector3(1.5f, 1.5f, 2f);
         public LayerMask enemyLayer;
 
+        [Header("Balance")]
+        [Tooltip("An: Werte aus der FighterDatabase werden beim Spawnen NICHT übernommen "
+               + "(für Prefabs mit absichtlich abweichenden Werten).")]
+        public bool ignoreConfigBalance;
+
         [Header("References")]
         public GameObject hitEffectPrefab;
         public GameObject blockEffectPrefab;
@@ -51,6 +56,18 @@ namespace PennerKombat
         public AudioClip blockSound;
         public AudioClip hurtSound;
         public AudioClip fatalBlowSound;
+
+        [Header("3D-Bewegung (docs/3D.md §3)")]
+        [Tooltip("Bewegung relativ zur Kamera statt zu den Weltachsen.")]
+        public bool cameraRelativeMovement = true;
+        public float runSpeedMultiplier = 1.6f;
+        public float strafeSpeed = 4f;
+        public float turnSpeed = 12f;
+        [Header("Ausweichrolle")]
+        public float rollDistance = 3.2f;
+        public float rollDuration = 0.32f;
+        public float rollInvulnerable = 0.2f;
+        public float rollCooldown = 0.8f;
 
         [Header("Physics")]
         public float gravity = GameConstants.DefaultGravity;
@@ -67,6 +84,17 @@ namespace PennerKombat
         protected bool isHeavy;
         protected float lastHitTime;
         protected HashSet<FighterController> hitThisAttack = new HashSet<FighterController>();
+
+        // 3D-Bewegung
+        protected bool isRolling;
+        protected float rollTimer;
+        protected float rollCdTimer;
+        protected Vector3 rollDirection;
+        protected float invulnerableTimer;
+
+        /// <summary>True, während der Kämpfer unverwundbar ist (Rolle, Cinematic).</summary>
+        public bool IsInvulnerable => invulnerableTimer > 0f;
+        public bool IsRolling => isRolling;
 
         // Fatal Blow (X-Ray) Leiste
         [HideInInspector] public float fatalBlowMeter;
@@ -85,12 +113,105 @@ namespace PennerKombat
         protected virtual void Awake()
         {
             rb = GetComponent<Rigidbody>();
+            if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.FreezeRotation;
             anim = GetComponent<Animator>();
             currentHP = maxHP;
 
+            // --- Spielbarkeit ohne Handarbeit (docs/SPIELEN.md) ---
+            // Leerer LayerMask hieße: kein Angriff trifft jemals. Deshalb Fallback.
+            if (enemyLayer.value == 0) enemyLayer = FighterFactory.DefaultEnemyMask();
+            if (GetComponent<Collider>() == null)
+            {
+                var cap = gameObject.AddComponent<CapsuleCollider>();
+                cap.height = 1.8f; cap.radius = 0.4f; cap.center = new Vector3(0f, 0.9f, 0f);
+            }
+            if (attackPoint == null)
+            {
+                var ap = new GameObject("AttackPoint");
+                ap.transform.SetParent(transform, false);
+                ap.transform.localPosition = new Vector3(0f, 1.1f, 0.9f);
+                attackPoint = ap.transform;
+            }
+
             commandInput = GetComponent<CommandInput>();
             if (commandInput == null) commandInput = gameObject.AddComponent<CommandInput>();
+
+            // Visuelle Signatur (Aura, Trail, Zustands-FX) — docs/VISUALS.md §2
+            if (GetComponent<CharacterVisuals>() == null) gameObject.AddComponent<CharacterVisuals>();
+            if (GetComponent<CharacterShaderBinder>() == null) gameObject.AddComponent<CharacterShaderBinder>();
+            if (GetComponent<MedSystem>() == null) gameObject.AddComponent<MedSystem>();
+            // 3D-Schicht: Animator-Brücke, Combo-Trail, Arena-Interaktion
+            if (GetComponent<AnimationsController3D>() == null) gameObject.AddComponent<AnimationsController3D>();
+            if (GetComponent<ComboTrail3D>() == null) gameObject.AddComponent<ComboTrail3D>();
+            if (GetComponent<ArenaInteraction>() == null) gameObject.AddComponent<ArenaInteraction>();
+            // Extras: Wunden, Ragdoll, Konter, Waffenhand (docs/EXTRAS.md)
+            if (GetComponent<DamageVisuals>() == null) gameObject.AddComponent<DamageVisuals>();
+            if (GetComponent<RagdollController>() == null) gameObject.AddComponent<RagdollController>();
+            if (GetComponent<ParrySystem>() == null) gameObject.AddComponent<ParrySystem>();
+            if (GetComponent<WeaponHolder>() == null) gameObject.AddComponent<WeaponHolder>();
+        }
+
+        /// <summary>
+        /// Überträgt die Balance-Werte aus der <see cref="FighterDatabase"/> auf
+        /// diesen Kämpfer. Wichtig für **handgebaute Prefabs**: die behalten sonst
+        /// die Werte, die zufällig im Inspector standen, statt der Datenbank zu folgen.
+        /// Prefabs mit bewusst abweichenden Werten setzen <see cref="ignoreConfigBalance"/>.
+        /// </summary>
+        public virtual void ApplyConfig(FighterConfig config)
+        {
+            if (config == null || ignoreConfigBalance) return;
+
+            fighterId = config.id;
+            displayName = config.displayName;
+            maxHP = config.maxHP;
+            moveSpeed = config.moveSpeed;
+            lightDamage = config.lightDamage;
+            heavyDamage = config.heavyDamage;
+            attackRange = config.attackRange;
+            currentHP = maxHP;
+        }
+
+        /// <summary>
+        /// Bricht einen laufenden Angriff ab (Konter, Fatal Blow, Rundenende).
+        /// Anders als ein simples Zurücksetzen räumt das auch die Trefferliste auf,
+        /// sonst zählt der nächste Schlag denselben Gegner nicht mehr.
+        /// </summary>
+        public virtual void InterruptAttack()
+        {
+            if (!isAttacking) return;
+            CancelInvoke(nameof(EnableHitbox));
+            CancelInvoke(nameof(DisableHitbox));
+            isAttacking = false;
+            attackTimer = 0f;
+            hitThisAttack.Clear();
+            AnimTrigger("Interrupt");
+        }
+
+        // --- Animator-Zugriff, der fremde Controller nicht anmeckert ---
+        // Fehlt ein Parameter (z.B. bei einem importierten Modell mit eigenem
+        // Controller), passiert schlicht nichts, statt die Konsole zuzumüllen.
+        protected void AnimTrigger(string name)
+        {
+            if (HasAnimParam(name, AnimatorControllerParameterType.Trigger)) anim.SetTrigger(name);
+        }
+
+        protected void AnimBool(string name, bool value)
+        {
+            if (HasAnimParam(name, AnimatorControllerParameterType.Bool)) anim.SetBool(name, value);
+        }
+
+        protected void AnimFloat(string name, float value)
+        {
+            if (HasAnimParam(name, AnimatorControllerParameterType.Float)) anim.SetFloat(name, value);
+        }
+
+        bool HasAnimParam(string name, AnimatorControllerParameterType type)
+        {
+            if (anim == null || anim.runtimeAnimatorController == null) return false;
+            foreach (var p in anim.parameters)
+                if (p.type == type && p.name == name) return true;
+            return false;
         }
 
         private readonly Dictionary<string, float> moveCooldowns = new Dictionary<string, float>();
@@ -113,6 +234,14 @@ namespace PennerKombat
         {
             TickMoveCooldowns();
             if (attackTimer > 0) attackTimer -= Time.deltaTime;
+            if (invulnerableTimer > 0f) invulnerableTimer -= Time.deltaTime;
+            if (rollCdTimer > 0f) rollCdTimer -= Time.deltaTime;
+
+            if (isRolling)
+            {
+                TickRoll();
+                return;
+            }
             if (stunTimer > 0)
             {
                 stunTimer -= Time.deltaTime;
@@ -128,6 +257,9 @@ namespace PennerKombat
 
                 if (FighterInput.Instance.GetJump(playerIndex) && isGrounded)
                     Jump();
+                // Ausweichrolle: EX-Taste + Richtung (Standard O bzw. Num 6)
+                if (FighterInput.Instance.GetEx(playerIndex) && isGrounded && !isAttacking)
+                    StartRoll(moveDir);
                 if (FighterInput.Instance.GetLightAttack(playerIndex) && attackTimer <= 0 && !isBlocking)
                     StartAttack(false);
                 if (FighterInput.Instance.GetHeavyAttack(playerIndex) && attackTimer <= 0 && !isBlocking)
@@ -144,7 +276,7 @@ namespace PennerKombat
             }
 
             Move(moveDir);
-            if (anim != null) anim.SetBool("Block", isBlocking);
+            AnimBool("Block", isBlocking);
         }
 
         /// <summary>Hook für Charakter-Spezialeingaben. Wird in Unterklassen überschrieben.</summary>
@@ -167,17 +299,88 @@ namespace PennerKombat
             // Sigis Root-Zugriff invertiert die Bewegung
             if (GetComponent<InputHack>() is { } hack && hack.Active)
                 dir = -dir;
-            if (isBlocking) dir *= GameConstants.BlockMoveScale;
+
+            // 360°: Eingabe relativ zur Kamera interpretieren
+            if (cameraRelativeMovement && dir.sqrMagnitude > 0.001f)
+                dir = CameraController.ToWorld(new Vector2(dir.x, dir.z));
+
+            float speed = moveSpeed;
+            if (isBlocking) { dir *= GameConstants.BlockMoveScale; speed = strafeSpeed; }
+
             // TetraPaks "Kater" verlangsamt
             if (GetComponent<SlowDebuff>() is { } slow && slow.IsActive)
                 dir *= slow.speedScale;
-            rb.velocity = new Vector3(dir.x * moveSpeed, rb.velocity.y, dir.z * moveSpeed);
+
+            rb.velocity = new Vector3(dir.x * speed, rb.velocity.y, dir.z * speed);
+
             if (dir.sqrMagnitude > 0.001f)
             {
-                transform.rotation = Quaternion.LookRotation(dir);
-                if (anim != null) anim.SetBool("Walk", true);
+                // Beim Blocken zum Gegner schauen (Strafe), sonst in Laufrichtung drehen
+                Vector3 face = dir.normalized;
+                if (isBlocking)
+                {
+                    var foe = GetEnemy();
+                    if (foe != null)
+                    {
+                        Vector3 toFoe = foe.transform.position - transform.position;
+                        toFoe.y = 0f;
+                        if (toFoe.sqrMagnitude > 0.001f) face = toFoe.normalized;
+                    }
+                }
+                transform.rotation = Quaternion.Slerp(transform.rotation,
+                    Quaternion.LookRotation(face), turnSpeed * Time.deltaTime);
+
+                if (anim != null)
+                {
+                    AnimBool("Walk", true);
+                    AnimFloat("MoveSpeed", dir.magnitude * speed);
+                }
             }
-            else if (anim != null) anim.SetBool("Walk", false);
+            else if (anim != null)
+            {
+                AnimBool("Walk", false);
+                AnimFloat("MoveSpeed", 0f);
+            }
+        }
+
+        // ==================================================================
+        //  Ausweichrolle (3D)
+        // ==================================================================
+
+        /// <summary>Rolle in die angegebene Richtung; ohne Richtung nach hinten.</summary>
+        public virtual bool StartRoll(Vector3 inputDir)
+        {
+            if (isRolling || rollCdTimer > 0f || IsStuck() || stunTimer > 0f) return false;
+
+            Vector3 dir = inputDir;
+            if (cameraRelativeMovement && dir.sqrMagnitude > 0.001f)
+                dir = CameraController.ToWorld(new Vector2(dir.x, dir.z));
+            if (dir.sqrMagnitude < 0.001f) dir = -transform.forward;
+
+            rollDirection = dir.normalized;
+            isRolling = true;
+            rollTimer = rollDuration;
+            rollCdTimer = rollCooldown;
+            invulnerableTimer = rollInvulnerable;
+            isBlocking = false;
+
+            AnimTrigger("Roll");
+            transform.rotation = Quaternion.LookRotation(rollDirection);
+            VFXManager.Instance?.PlayDust(transform.position, 0.7f);
+            return true;
+        }
+
+        void TickRoll()
+        {
+            rollTimer -= Time.deltaTime;
+            float speed = rollDistance / Mathf.Max(0.01f, rollDuration);
+            rb.velocity = new Vector3(rollDirection.x * speed, rb.velocity.y, rollDirection.z * speed);
+
+            if (rollTimer <= 0f)
+            {
+                isRolling = false;
+                rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+            }
         }
 
         /// <summary>Empfänger für Mells "Pampe"-Sludge (broadcastet vom Projektil).</summary>
@@ -205,20 +408,32 @@ namespace PennerKombat
         public virtual void Jump()
         {
             if (!isGrounded || IsStuck()) return;
-            rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
+            // 3D-Sprung: behält horizontalen Schwung, leichter Vorwärtsanteil
+            Vector3 horizontal = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+            if (horizontal.sqrMagnitude < 0.5f) horizontal = transform.forward * 1.5f;
+            rb.velocity = new Vector3(horizontal.x, jumpForce, horizontal.z);
             isGrounded = false;
-            if (anim != null) anim.SetTrigger("Jump");
+            AnimTrigger("Jump"); AnimBool("IsGrounded", false);
         }
 
         /// <summary>Öffentlicher Angriffsstart (KI- und Trigger-API).</summary>
         public virtual void StartAttack(bool heavy)
         {
             if (isAttacking || isBlocking) return;
+
+            // Waffe in der Hand? Dann schlägt sie zu (docs/EXTRAS.md §6)
+            var weapon = GetComponent<WeaponHolder>();
+            if (weapon != null && weapon.HasWeapon && weapon.Strike())
+            {
+                attackTimer = heavy ? heavyCooldown : lightCooldown;
+                AnimTrigger(heavy ? "HeavyAttack" : "LightAttack");
+                return;
+            }
             isAttacking = true;
             isHeavy = heavy;
             hitThisAttack.Clear();
             attackTimer = heavy ? heavyCooldown : lightCooldown;
-            if (anim != null) anim.SetTrigger(heavy ? "HeavyAttack" : "LightAttack");
+            AnimTrigger(heavy ? "HeavyAttack" : "LightAttack");
             Invoke(nameof(EnableHitbox), 0.12f);
             Invoke(nameof(DisableHitbox), 0.35f);
         }
@@ -241,6 +456,10 @@ namespace PennerKombat
 
                 float dmg = isHeavy ? heavyDamage : lightDamage;
                 dmg = ResolveDamage(enemy, dmg);
+                // Bestrafungsfenster nach erfolgreichem Konter
+                var parry = GetComponent<ParrySystem>();
+                if (parry != null) dmg *= parry.DamageMultiplier;
+                ArenaDestruction.Instance?.RegisterDamage(enemy.transform.position, dmg);
                 enemy.TakeDamage(dmg, transform.forward, this);
 
                 // Combo
@@ -251,10 +470,39 @@ namespace PennerKombat
                 OnDamageDealt?.Invoke(this, enemy, dmg);
                 OnDealtHit(enemy, dmg);
 
+                // --- Visuelles Trefferfeedback (docs/VISUALS.md §4) ---
+                Vector3 impact = c.ClosestPoint(attackPoint != null ? attackPoint.position : transform.position);
+                PlayHitFeedback(enemy, impact, dmg, isHeavy ? HitTier.Heavy : HitTier.Light);
+
                 if (hitEffectPrefab != null)
                     Instantiate(hitEffectPrefab, c.ClosestPoint(transform.position), Quaternion.identity);
                 if (hitSound != null) AudioSource.PlayClipAtPoint(hitSound, transform.position);
             }
+        }
+
+        /// <summary>
+        /// Spielt Partikel, Screen-Shake, Hitstop und Combo-Eskalation für einen
+        /// gelandeten Treffer. Unterklassen rufen das für Spezials/EX/Krits mit
+        /// der passenden <see cref="HitTier"/> auf.
+        /// </summary>
+        public void PlayHitFeedback(FighterController target, Vector3 impactPoint, float damage, HitTier tier)
+        {
+            Vector3 dir = target != null
+                ? (target.transform.position - transform.position).normalized
+                : transform.forward;
+
+            VFXManager.Instance?.PlayHit(impactPoint, dir, damage, tier, fighterId);
+            ComboSystem.Instance?.RegisterHit(this, target, damage, tier);
+            target?.GetComponent<CharacterShaderBinder>()?.HitFlash(
+                tier >= HitTier.Ex ? 1f : tier == HitTier.Special ? 0.7f : 0.45f);
+        }
+
+        /// <summary>Kurzform: Trefferfeedback auf Höhe der Brust des Ziels.</summary>
+        public void PlayHitFeedback(FighterController target, float damage, HitTier tier)
+        {
+            Vector3 p = target != null ? target.transform.position + Vector3.up * 1.1f
+                                       : transform.position + transform.forward;
+            PlayHitFeedback(target, p, damage, tier);
         }
 
         /// <summary>Krit-/Buff-Anpassung des Schadens. Wird in Unterklassen (MojoBob) überschrieben.</summary>
@@ -268,13 +516,24 @@ namespace PennerKombat
         // --- Schaden ---
         public virtual void TakeDamage(float damage, Vector3 knockbackDir, FighterController attacker)
         {
+            // Unverwundbar (Ausweichrolle, Cinematic): Treffer verpufft sichtbar
+            if (invulnerableTimer > 0f)
+            {
+                FloatingText.Show(transform.position + Vector3.up * 2.2f, "AUSGEWICHEN",
+                                  PennerPalette.NeonBlue, 0.7f);
+                return;
+            }
+
             if (isBlocking)
             {
                 damage *= Mathf.Max(0.05f, GameConstants.BlockDamageReduction - blockReductionBonus);
                 if (blockEffectPrefab != null)
                     Instantiate(blockEffectPrefab, transform.position + Vector3.up, Quaternion.identity);
                 if (blockSound != null) AudioSource.PlayClipAtPoint(blockSound, transform.position);
+                VFXManager.Instance?.PlayBlock(transform.position + Vector3.up * 1.1f, knockbackDir);
                 StartCoroutine(BlockStun(0.15f));
+                // Perfektes Timing? Dann Konter statt reinem Block
+                GetComponent<ParrySystem>()?.TryParry(attacker);
                 OnBlocked(attacker);
                 return;
             }
@@ -287,7 +546,7 @@ namespace PennerKombat
             rb.AddForce(kb, ForceMode.Impulse);
 
             stunTimer = 0.2f;
-            if (anim != null) anim.SetTrigger("HitReact");
+            AnimTrigger("HitReact");
 
             // Fatal-Blow-Leiste füllt sich beim KASSIEREN von Schaden
             AddFatalBlow(GameConstants.FatalBlowChargePerHitTaken);
@@ -343,6 +602,12 @@ namespace PennerKombat
         {
             if (!fatalBlowReady || target == null) return false;
             if (fatalBlowSound != null) AudioSource.PlayClipAtPoint(fatalBlowSound, transform.position);
+            // X-Ray-Präsentation: Zeitlupe 0,5x, harter Shake, Röntgen-Blitz
+            CameraShake.SlowMotion(0.5f, 0.8f);
+            SaveSystem.Instance?.RecordFatalBlow();
+            PlayHitFeedback(target, target.transform.position + Vector3.up * 1.1f,
+                            GameConstants.FatalBlowDamageMax, HitTier.FatalBlow);
+            ScreenEffects.FlashColor(Color.white, 0.6f, 0.25f);
             ResetFatalBlow();
             return true;
         }
@@ -353,13 +618,25 @@ namespace PennerKombat
         /// </summary>
         public virtual void PerformFatality(FighterController target, string fatalityId)
         {
-            if (target != null) target.TakeDamage(999f, transform.forward, this);
+            if (target == null) return;
+            // Fatality-Präsentation: 0,3x Zeitlupe, Blutfontäne, Linsen-Splatter
+            CameraShake.SlowMotion(0.3f, 1.2f);
+            SaveSystem.Instance?.RecordFatality();
+            ScreenEffects.SetState(ScreenState.Fatality);
+            MusicSync.Instance?.CutAndResume(1.6f);
+            CrowdReactions.Instance?.React(CrowdMood.Entsetzt, 5f);
+            VFXManager.Instance?.PlayHit(target.transform.position + Vector3.up * 1.1f,
+                                         transform.forward, 100f, HitTier.Fatality, fighterId);
+            target.TakeDamage(999f, transform.forward, this);
         }
 
         // --- Tod / Runde ---
         public virtual void Die()
         {
-            if (anim != null) anim.SetTrigger("Death");
+            AnimTrigger("Death");
+            VFXManager.Instance?.PlayHit(transform.position + Vector3.up, Vector3.up, 30f,
+                                         HitTier.Heavy, fighterId);
+            ComboSystem.Instance?.ResetAll();
             OnDeath?.Invoke(this);
             gameObject.SetActive(false);
         }
@@ -374,6 +651,14 @@ namespace PennerKombat
             attackTimer = 0f;
             hitThisAttack.Clear();
             ResetFatalBlow();
+            isRolling = false;
+            rollTimer = 0f;
+            rollCdTimer = 0f;
+            invulnerableTimer = 0f;
+            GetComponent<MedSystem>()?.ResetForRound();
+            GetComponent<DamageVisuals>()?.Clear();
+            GetComponent<RagdollController>()?.Deactivate();
+            GetComponent<WeaponHolder>()?.Drop();
             gameObject.SetActive(true);
         }
 

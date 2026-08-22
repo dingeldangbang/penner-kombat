@@ -28,9 +28,34 @@ namespace PennerKombat
             yield return TestPhysicsRoundTrip();
             yield return TestSingletonPresence();
             yield return TestAIComponent();
+            yield return TestVisualLayer();
 
             foreach (var r in results)
                 Debug.Log($"[Test] {(r.passed ? "✅" : "❌")} {r.name}: {r.message}");
+        }
+
+        IEnumerator TestVisualLayer()
+        {
+            // VFX-Schicht (docs/VISUALS.md) muss vom Bootstrapper stehen
+            bool ok = VFXManager.Instance != null
+                      && ComboSystem.Instance != null
+                      && ScreenEffects.Instance != null
+                      && CameraShake.Instance != null;
+            results.Add(("VFX-Schicht", ok,
+                ok ? "VFX, Combo, ScreenEffects und CameraShake aktiv" : "VFX-Singletons fehlen (Bootstrapper?)"));
+
+            // Palette-Sanity: jede Charakter-ID hat eine Signaturfarbe
+            bool palette = true;
+            foreach (var id in GameConstants.AllCharacterIds)
+                if (PennerPalette.ForCharacter(id).a <= 0f) palette = false;
+            results.Add(("Farbpalette", palette, palette ? "9 Signaturfarben" : "Signaturfarbe fehlt"));
+
+            // Combo-Stufen laut Spec: weiß < 5, gold < 10, rot ab 10
+            bool tiers = PennerPalette.ForCombo(1) == PennerPalette.Pure
+                      && PennerPalette.ForCombo(6) == PennerPalette.Gold
+                      && PennerPalette.ForCombo(12) != PennerPalette.Pure;
+            results.Add(("Combo-Stufen", tiers, tiers ? "1-4 / 5-9 / 10+ korrekt" : "Combo-Farbstufen falsch"));
+            yield return null;
         }
 
         IEnumerator TestDatabase()

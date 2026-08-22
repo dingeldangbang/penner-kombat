@@ -14,6 +14,10 @@ namespace PennerKombat
         public static GameManager Instance;
 
         [Header("Match Settings")]
+        [Tooltip("Beim Start sofort ein Testduell beginnen. Das Frontend (Menü) schaltet das ab.")]
+        public bool autoStart = true;
+        [Tooltip("Schwierigkeit für KI-Gegner (docs/CONTROLS.md).")]
+        public AIDifficulty aiDifficulty = AIDifficulty.Medium;
         public int bestOfRounds = GameConstants.DefaultBestOfRounds;
         public float roundTime = GameConstants.DefaultRoundTime;
 
@@ -52,21 +56,67 @@ namespace PennerKombat
 
         void Start()
         {
+            EnsureDependencies();
+
             // Standard: Le Binde (Spieler) vs. Mojo Bob (KI) für schnellen Test.
-            if (player1 == null && !matchEnded)
-                StartVersusFight(0, 2);
+            // Liegt ein Menü in der Szene, übernimmt das den Start.
+            if (autoStart && !FrontEnd.SuppressAutoStart && player1 == null && !matchEnded)
+                StartVersusFight(0, 2, p2IsAI: true);
+        }
+
+        /// <summary>
+        /// Sorgt dafür, dass ein Match auch dann startet, wenn in der Szene
+        /// nichts von Hand verdrahtet wurde: Datenbank, Spawn-Punkte, HUD,
+        /// Kamera, Arena und Audio werden bei Bedarf selbst erzeugt.
+        /// (docs/SPIELEN.md)
+        /// </summary>
+        public void EnsureDependencies()
+        {
+            if (database == null)
+            {
+                database = Resources.Load<FighterDatabase>("FighterDatabase");
+                if (database == null)
+                {
+                    database = ScriptableObject.CreateInstance<FighterDatabase>();
+                    Debug.Log("[Penner Kombat] Keine FighterDatabase gefunden — Standard-Roster wird zur Laufzeit erzeugt.");
+                }
+            }
+            if (database.fighters.Count == 0) database.EnsureDefaultRoster();
+
+            if (spawnPoint1 == null)
+            {
+                var go = new GameObject("SpawnPoint1");
+                go.transform.position = new Vector3(-4f, 0.1f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                spawnPoint1 = go.transform;
+            }
+            if (spawnPoint2 == null)
+            {
+                var go = new GameObject("SpawnPoint2");
+                go.transform.position = new Vector3(4f, 0.1f, 0f);
+                go.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
+                spawnPoint2 = go.transform;
+            }
+
+            if (uiManager == null) uiManager = UIManager.Instance != null ? UIManager.Instance : HudBuilder.Ensure();
+            if (cameraController == null) cameraController = CameraController.Instance;
+            if (arenaManager == null) arenaManager = ArenaManager.Instance;
+            if (audioManager == null) audioManager = AudioManager.Instance;
         }
 
         // ===== Öffentliche Einstiegspunkte =====
 
-        public void StartVersusFight(int p1Index, int p2Index)
+        public void StartVersusFight(int p1Index, int p2Index) => StartVersusFight(p1Index, p2Index, false);
+
+        /// <summary>Versus-Match starten. <paramref name="p2IsAI"/> = Gegner ist ein Bot.</summary>
+        public void StartVersusFight(int p1Index, int p2Index, bool p2IsAI)
         {
             isStoryMatch = false;
             currentRound = 1;
             player1Wins = 0;
             player2Wins = 0;
             matchEnded = false;
-            SpawnFighters(p1Index, p2Index, isAI: false);
+            SpawnFighters(p1Index, p2Index, isAI: p2IsAI);
             StartNewRound();
         }
 
@@ -92,6 +142,7 @@ namespace PennerKombat
 
         void SpawnFighters(int p1Idx, int p2Idx, bool isAI)
         {
+            EnsureDependencies();
             if (database == null || database.fighters.Count == 0)
             {
                 Debug.LogError("GameManager: keine FighterDatabase konfiguriert.");
@@ -104,15 +155,22 @@ namespace PennerKombat
             if (player1 != null) Destroy(player1.gameObject);
             if (player2 != null) Destroy(player2.gameObject);
 
-            GameObject p1Obj = Instantiate(d1.prefab, spawnPoint1.position, spawnPoint1.rotation);
+            GameObject p1Obj = SpawnOne(d1, spawnPoint1);
             player1 = p1Obj.GetComponent<FighterController>();
             player1.playerIndex = 0;
             player1.isAI = false;
 
-            GameObject p2Obj = Instantiate(d2.prefab, spawnPoint2.position, spawnPoint2.rotation);
+            GameObject p2Obj = SpawnOne(d2, spawnPoint2);
             player2 = p2Obj.GetComponent<FighterController>();
             player2.playerIndex = 1;
             player2.isAI = isAI;
+
+            if (uiManager != null) uiManager.SetNames(player1.displayName, player2.displayName);
+
+            // Zugewiesene GLB-Modelle nachladen (docs/MODELLE.md) — asynchron,
+            // der Kampf startet sofort mit der Kapsel.
+            GlbModelLoader.ApplyTo(player1);
+            GlbModelLoader.ApplyTo(player2);
 
             // Events verdrahten
             player1.OnDeath += OnFighterDeath;
@@ -122,7 +180,10 @@ namespace PennerKombat
 
             // AI anhängen, falls KI-gesteuert
             if (player2.isAI && player2.GetComponent<AIController>() == null)
-                player2.gameObject.AddComponent<AIController>();
+            {
+                var ai = player2.gameObject.AddComponent<AIController>();
+                ai.ApplyDifficulty(aiDifficulty);
+            }
 
             if (cameraController != null)
             {
@@ -131,6 +192,32 @@ namespace PennerKombat
             }
 
             OnFightersSpawned?.Invoke(player1, player2);
+        }
+
+        /// <summary>
+        /// Spawnt einen Kämpfer: echtes Prefab, falls hinterlegt — sonst den
+        /// prozeduralen Platzhalter aus <see cref="FighterFactory"/>.
+        /// </summary>
+        GameObject SpawnOne(FighterConfig cfg, Transform spawn)
+        {
+            if (cfg.prefab != null)
+            {
+                var go = Instantiate(cfg.prefab, spawn.position, spawn.rotation);
+                var fighter = go.GetComponent<FighterController>();
+                if (fighter == null)
+                {
+                    Debug.LogWarning($"[Penner Kombat] Prefab von '{cfg.id}' hat keinen FighterController — "
+                                   + "es wird stattdessen ein Platzhalter erzeugt.");
+                    Destroy(go);
+                }
+                else
+                {
+                    // Auch handgebaute Prefabs folgen der Datenbank (Balance an einer Stelle)
+                    fighter.ApplyConfig(cfg);
+                    return go;
+                }
+            }
+            return FighterFactory.CreatePlaceholder(cfg, spawn.position, spawn.rotation);
         }
 
         void StartNewRound()
@@ -210,9 +297,27 @@ namespace PennerKombat
             }
         }
 
+        /// <summary>Arena und Extras für die nächste Runde säubern.</summary>
+        void ResetExtras()
+        {
+            ArenaDestruction.Instance?.ResetArena();
+            PowerUpSystem.Instance?.ClearAll();
+            MusicSync.Instance?.ResetTempo();
+        }
+
         void MatchEnd(string winner)
         {
             matchEnded = true;
+
+            // Statistik persistieren (docs: Assets/Scripts/Utils/SaveSystem.cs)
+            if (SaveSystem.Instance != null && player1 != null && player2 != null)
+            {
+                SaveSystem.Instance.RecordMatch(
+                    winner == player1.displayName, player1.fighterId, player2.fighterId);
+                SaveSystem.Instance.RecordCombo(Mathf.Max(player1.comboCount, player2.comboCount));
+            }
+
+            ResetExtras();
             if (uiManager != null) uiManager.ShowMatchResult(winner);
             if (audioManager != null) audioManager.PlayVictoryMusic();
             OnMatchEnded?.Invoke(winner);
@@ -229,6 +334,12 @@ namespace PennerKombat
             if (roundActive) RoundEnd();
         }
 
-        public void RestartMatch() => StartVersusFight(0, 2);
+        public void RestartMatch()
+        {
+            int p1 = database != null ? database.GetIndexById(player1 != null ? player1.fighterId : "le_binde") : 0;
+            int p2 = database != null ? database.GetIndexById(player2 != null ? player2.fighterId : "mojo_bob") : 2;
+            bool ai = player2 == null || player2.isAI;
+            StartVersusFight(p1, p2, ai);
+        }
     }
 }

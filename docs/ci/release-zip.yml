@@ -1,0 +1,53 @@
+name: Release-ZIP anhängen
+
+# → Diese Datei nach .github/workflows/release-zip.yml kopieren (siehe docs/ci/README.md).
+#
+# Erzeugt aus einem Tag einen Quellcode-Snapshot (penner-kombat-release.zip)
+# und hängt ihn an das zugehörige GitHub-Release an.
+#
+# - läuft automatisch, wenn ein Tag v*.*.* gepusht wird
+# - kann manuell für einen beliebigen bestehenden Tag gestartet werden
+#   (Actions → "Release-ZIP anhängen" → Run workflow → Tag eintragen)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag, an dessen Release das ZIP gehängt wird (z. B. v1.3.0)'
+        required: true
+        default: 'v1.3.0'
+
+permissions:
+  contents: write
+
+jobs:
+  attach-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tag bestimmen
+        id: tag
+        run: echo "tag=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Repo auschecken (Tag)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: ZIP erzeugen (ohne .git)
+        run: |
+          git archive --format=zip \
+            --prefix=penner-kombat/ \
+            -o penner-kombat-release.zip \
+            "${{ steps.tag.outputs.tag }}"
+          unzip -l penner-kombat-release.zip | tail -3
+
+      - name: An Release anhängen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.tag.outputs.tag }}" \
+            penner-kombat-release.zip --clobber

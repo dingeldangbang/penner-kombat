@@ -95,6 +95,9 @@ namespace PennerKombat
             if (IsBlackout) yield break;
             IsBlackout = true;
             if (blackoutSound != null) AudioSource.PlayClipAtPoint(blackoutSound, transform.position);
+            // Blackout-Präsentation: Schwarzbild + elektrisches Flackern (3 s)
+            if (!isAI) ScreenEffects.Blackout(3f);
+            VFXManager.Instance?.PlayElectro(transform.position + Vector3.up, 6);
             yield return new WaitForSeconds(3f);
             pulse = 60f;
             IsBlackout = false;
@@ -157,6 +160,9 @@ namespace PennerKombat
                 {
                     enemy.BroadcastMessage("PurgeBuffs", SendMessageOptions.DontRequireReceiver);
                     enemy.TakeDamage(8f, transform.forward, this);
+                    // Defi-Inszenierung (Spec §2.2.3)
+                    SignatureFx.Mell_Defi(this, enemy);
+                    PlayHitFeedback(enemy, 8f, HitTier.Special);
                 }
             }
             pulse += 20f;
@@ -165,6 +171,7 @@ namespace PennerKombat
         public void SechzehnStunden() // nur bei Puls ≥ 160
         {
             if (pulse < 160f || IsBlackout) return;
+            SignatureFx.Mell_SechzehnStunden(this, GetEnemy());
             StartCoroutine(SechzehnStundenCoroutine());
         }
 

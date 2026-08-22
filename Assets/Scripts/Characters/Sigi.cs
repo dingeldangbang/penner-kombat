@@ -113,6 +113,7 @@ namespace PennerKombat
             var hack = enemy.gameObject.GetComponent<InputHack>();
             if (hack == null) hack = enemy.gameObject.AddComponent<InputHack>();
             hack.Enable(rootAccessDuration);
+            SignatureFx.Sigi_Hack(this, enemy, "ROOT-ZUGRIFF");
             yield return new WaitForSeconds(rootAccessDuration);
             hack.Disable();
         }

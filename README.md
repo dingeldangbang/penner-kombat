@@ -51,6 +51,39 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Bootstrap**: `Bootstrapper` erzeugt alle Manager automatisch
 - **Editor-Wizard**: `Tools → Penner Kombat → Setup-Szene erzeugen`
 
+### Extras — „nix für Pussys"
+- **Arena-Zerstörung** in 5 Stufen (Trümmer, Feuer, düsterer werdendes Licht)
+- **Beat-Sync** `MusicSync`: Combo treibt Tempo und Pitch der 808-Beats, Ducking/Cut bei Fatalities
+- **Ragdoll** beim K.o., **Wunden + Blutlachen**, **Konter/Parry** mit Bestrafungsfenster
+- **Waffen** (Schraubenzieher, Maulschlüssel, Rohrzange, Kochlöffel, Rattengift) zum Aufheben
+- **Power-Ups** (Bier, Med, Speed, Schild, Feuer, Eis, Pfand, Todeskuss)
+- **Verbündete**: Mercedes 190e mit drei Atzen, Punker-Crowd „Kantenkanten Nackenschelle"
+- **Zuschauer**, die im Takt wippen und auf Combos reagieren · **Bosse** mit 3 Phasen
+
+### 3D-Kampfraum
+- **Kamera** `CameraController`: Dynamic / Follow / TopDown / Cinematic + Kamerafahrten
+- **360°-Bewegung**: kamerarelativ, geglättete Drehung, Strafe beim Blocken, **Ausweichrolle mit i-Frames**
+- **3D-Hitboxen** `Hitbox3D`: Sphere, Box, Capsule, **Cone** (Winkeltest) mit Gizmos
+- **Arena-Objekte** `ArenaObject3D`: werfen, sprengen, Trampolin, Falle — Interaktion per `E`
+- **Räumliche Effekte**: `ComboTrail3D` (LineRenderer-Spur), `ComboExplosion3D` (Druckwelle + Rückstoß)
+- **Netzwerk** `NetworkSync3D`: 20 Hz Positions-/Rotations-Sync mit Interpolation
+
+### Visuals & Effekte (Cover-Look)
+- **Farbpalette** `PennerPalette`: Blutrot/Nachtblau/Laternen-Orange/Gold/Neonblau — direkt vom Cover abgeleitet
+- **Treffer-VFX** `VFXManager`: Funken, Blut (schadensskaliert), Schockwellen, Goldsterne, Staub — **prozedural, ohne Art-Assets**
+- **Combo-Feedback** `ComboSystem` + `ComboCounterUI`: Zähler 1–4 weiß / 5–9 gold / 10+ rot flackernd, Ping-Leiter bei 3/5/8/10+
+- **Kamera** `CameraShake`: Shake 2–20 px, Combo-Zoom bis 1,25×, Hitstop, Frame-Freeze, Zeitlupe (Mops 0,1× · X-Ray 0,5× · Fatality 0,3×)
+- **Screen-FX** `ScreenEffects`: Vignette, Rotblitze, Mells Puls-Rand, Blackout, Blut auf der Linse
+- **Arena-Look** `ArenaVisuals`: Laternen-Spotlights, Mondlicht, flackerndes Neonschild, Mücken/Staub/Rauch, nasses Pflaster
+- **Charakter-Auren** `CharacterVisuals`: Le Bindes Fettglanz, Mells pulsabhängiges Flackern, Bobs Gold-Staub je Mojo-Punkt
+- **Status-HUD** `HudStatusBars`: Mojo-Punkte, Puls-Balken (schlägt im Takt), Schmier-Schlüppa, Fatal-Blow
+- **Signatur-Combos** `SignatureFx`: jede Spezial-Combo aller 9 Charaktere als fertige Inszenierung
+- **Mops-Kommando** `MopsKommandoSequence`: 180-Frame-Cinematic (Zeitlupe, Paula, Häufchen, kippende Arena)
+- **Arena-Props** `ArenaProp`: Bierkasten-Turm, Gasflasche (4 Treffer → Explosion), Wäscheleine (Stun), Mülltonne, Gerüst + Boden-Hazards
+- **Charakter-Shader** `Assets/Shaders/PennerCharacter.shader`: Grease, Pulse, Gold, Fire, Matrix, Rat + Treffer-Flash
+- **Relay-Server** `server/` (Node + `ws`): Räume, Nachrichtenspiegelung, Ready→Start, Heartbeat — `cd server && npm install && npm start`
+- **Optional URP** `UrpPostProcessingDriver` (Define `PK_URP`): Bloom, ACES, Vignette, CA, DoF, Film Grain
+
 ---
 
 ## 📁 Projektstruktur
@@ -77,19 +110,26 @@ Assets/
 
 ---
 
-## 🚀 So startest du (Unity-Setup)
+## 🚀 So startest du (5 Minuten bis zum ersten Kampf)
 
-1. **Unity Hub** → neues Projekt **„3D (URP)"** mit **Unity 2023 LTS** oder **Unity 6**.
-2. `Assets/Scripts` aus diesem Repo in das Projekt kopieren.
-3. **Package Manager** aktivieren:
-   - **Input System** (`com.unity.inputsystem`) — Voraussetzung für `FighterInput`.
-   - **TextMeshPro** (TMP Essentials importieren).
-4. **Layers/Tags** anlegen: `Ground`, `Fighter`, `Interactable`, `Projectile`. Die `enemyLayer`-Masken der Kämpfer auf die `Fighter`-Layer setzen.
-5. **Eingabe-Modus** in *Player Settings → Active Input Handling* auf **„Both"** (oder „Input System Package").
-6. **Minimal-Szene aufbauen** (siehe `docs/SETUP.md`): Ebene + `Bootstrapper`-Object.
-7. Kontroll-Build starten.
+1. **Unity Hub → Add** → diesen Repo-Ordner wählen. `Packages/manifest.json` und
+   `ProjectSettings/` liegen bei, das Repo öffnet direkt als Unity-Projekt
+   (Zielversion **2022.3 LTS**, neuere Versionen migrieren automatisch).
+2. Beim ersten Öffnen richtet sich das Projekt selbst ein (Tags, Layer, `PK_URP`,
+   TMP-Ressourcen, *Active Input Handling = Both*). Falls Unity einen Neustart
+   verlangt: zulassen.
+3. Menü **`Tools → Penner Kombat → ▶ Alles einrichten und spielen`** —
+   erzeugt Szene, Boden, Wände, HUD, FighterDatabase, 9 Platzhalter-Kämpfer und startet Play.
+4. Kämpfen: **P1 = WASD · J leicht · K schwer · Shift Block · Space Sprung · F4 Frame-Daten · F7 Modelle.**
+5. Echte Modelle: `.glb` in den Modell-Ordner legen und über
+   `Tools → Penner Kombat → GLB → …` oder im Spiel mit **F7** zuweisen
+   (**[docs/MODELLE.md](docs/MODELLE.md)**).
 
-> Details, Prefab-Anforderungen und Empfehlungen: **[docs/SETUP.md](docs/SETUP.md)**
+Ohne Modelle sind die Kämpfer Kapseln — Bewegung, Hitboxen, Combos, KI, Runden,
+HUD und alle Effekte laufen trotzdem vollständig.
+
+> Schritt-für-Schritt, Fehlerbehebung und der Weg zu echten Modellen:
+> **[docs/SPIELEN.md](docs/SPIELEN.md)** · Prefab-Details: **[docs/SETUP.md](docs/SETUP.md)**
 
 ## 📚 Dokumentation
 
@@ -97,10 +137,22 @@ Assets/
 |-------|--------|
 | [docs/DESIGN.md](docs/DESIGN.md) | Design-Dokument der Roster-Erweiterung (Le Binde, Mell, Mojo Bob, Arena) |
 | [docs/MOVESETS.md](docs/DESIGN.md) | Movesets/Frame-Daten aller Charaktere (Design-Kapitel §1.1–§1.9) |
+| [docs/VISUALS.md](docs/VISUALS.md) | Gameplay-Visuals, Effekte & Combo-Feedback (Cover-Look) |
 | [docs/TROPHIES.md](docs/TROPHIES.md) | Alle 56 Trophäen |
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
+| [docs/WEB.md](docs/WEB.md) | **Browser-Fassung in `web/`** — sofort spielbar, gleiche Kampfwerte, 11 Tests grün |
+| [docs/HANDY.md](docs/HANDY.md) | **Auf dem Handy spielen**: APK oder WebGL aus der CI, Touch, Leistungsstufen |
+| [docs/MODELLE.md](docs/MODELLE.md) | **GLB-Import**: Editor-Menü (Prefabs) und F7-Menü im Spiel, Skalierung, Grenzen |
+| [docs/SPIELEN.md](docs/SPIELEN.md) | **Vom Repo zum laufenden Kampf** — MVP-Anleitung, Steuerung, Fehlerbehebung |
 | [docs/SETUP.md](docs/SETUP.md) | Unity-Setup-Anleitung |
+| [docs/EXTRAS.md](docs/EXTRAS.md) | Arena-Zerstörung, Waffen, Power-Ups, Konter, Ragdoll, Bosse, Crowd, Beat-Sync |
+| [docs/3D.md](docs/3D.md) | 3D-Kampfraum: Kameramodi, 360°-Bewegung, Rolle, 3D-Hitboxen, Arena-Objekte |
+| [docs/SERVER.md](docs/SERVER.md) | Relay-Server: Start, Protokoll, Deployment, Grenzen |
+| [docs/CONTROLS.md](docs/CONTROLS.md) | Tastatur (P1/P2), Gamepad, KI-Stufen, Multiplayer-Modi |
+| [docs/TOUCH.md](docs/TOUCH.md) | Touch-Steuerung: Joystick, Buttons, Gesten, Layout-Editor, Optionen |
+| [docs/STATUS.md](docs/STATUS.md) | Soll/Ist: was im Repo steckt und was wirklich noch fehlt |
+| [docs/BUILD_ANDROID.md](docs/BUILD_ANDROID.md) | Android-Build (APK/AAB): Setup, Player Settings, Signierung |
 | [docs/RELEASE.md](docs/RELEASE.md) | GitHub-Release-Anleitung |
 
 ---

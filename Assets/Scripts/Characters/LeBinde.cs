@@ -34,6 +34,9 @@ namespace PennerKombat
         private float flaschenTimer;
         private float mopsTimer;
         private int greaseCharges;
+
+        /// <summary>Verbleibende Schmier-Schlüppa-Ladungen (für HUD/VFX).</summary>
+        public int GreaseCharges => greaseCharges;
         private bool greaseActive = true;
         private int fireHitsTaken;
         private float greaseBurnTimer;
@@ -105,6 +108,7 @@ namespace PennerKombat
         public void Flaschenhals(bool exVersion)
         {
             flaschenTimer = flaschenHalsCooldown;
+            SignatureFx.LeBinde_Flaschenhals(this, GetEnemy(), exVersion);
             if (bottleProjectile != null)
             {
                 var go = Instantiate(bottleProjectile, attackPoint.position, transform.rotation);
@@ -123,6 +127,9 @@ namespace PennerKombat
                 var ctrl = mops.GetComponent<MopsController>();
                 if (ctrl != null) ctrl.Initialize(this, GetEnemy());
             }
+            // Mops-Kommando: vollständige 180-Frame-Inszenierung (docs/VISUALS.md §3.2)
+            MopsKommandoSequence.Play(this, GetEnemy());
+
             // Herta einsetzen (Trophäe)
             Herta herta = FindObjectOfType<Herta>();
             if (herta != null) herta.RegisterUse();
@@ -137,7 +144,12 @@ namespace PennerKombat
             {
                 var enemy = c.GetComponent<FighterController>();
                 if (enemy != null && enemy != this)
+                {
                     enemy.TakeDamage(bigSwingDamage, transform.forward, this);
+                    // Wallbounce-Staub + starker Shake
+                    PlayHitFeedback(enemy, bigSwingDamage, HitTier.Ex);
+                    VFXManager.Instance?.PlayDust(enemy.transform.position, 1.5f);
+                }
             }
         }
 
@@ -146,6 +158,7 @@ namespace PennerKombat
         {
             // Buff: nächster Treffer +80% Schaden
             reifTimer = 6f;
+            SignatureFx.LeBinde_Reif(this);
         }
         void ReifExpire()
         {
@@ -160,7 +173,10 @@ namespace PennerKombat
             {
                 var enemy = c.GetComponent<FighterController>();
                 if (enemy != null && enemy != this)
+                {
                     enemy.TakeDamage(panDamage, transform.forward, this);
+                    SignatureFx.LeBinde_Pfanne(this, enemy);
+                }
             }
         }
 

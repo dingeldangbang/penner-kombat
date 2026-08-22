@@ -96,13 +96,19 @@ namespace PennerKombat
             foreach (var h in hits)
             {
                 var e = h.GetComponent<FighterController>();
-                if (e != null && e != this) e.TakeDamage(14f, transform.forward, this);
+                if (e != null && e != this)
+                {
+                    e.TakeDamage(14f, transform.forward, this);
+                    SignatureFx.Dieter_Kanal(this, e.transform.position);
+                    PlayHitFeedback(e, 14f, HitTier.Special);
+                }
             }
         }
 
         public override void Special2()
         {
             abflussTimer = abflussCooldown;
+            SignatureFx.Dieter_Abflussreiniger(this);
             StartCoroutine(AbflussBuff());
         }
 

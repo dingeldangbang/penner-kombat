@@ -44,14 +44,35 @@ namespace PennerKombat
 
         public void UpdateHealth(float p1, float p2)
         {
-            if (hpBar1 != null) { hpBar1.fillAmount = p1; hpBar1.color = Color.Lerp(Color.red, Color.green, p1); }
-            if (hpBar2 != null) { hpBar2.fillAmount = p2; hpBar2.color = Color.Lerp(Color.red, Color.green, p2); }
+            // Cover-Palette: satt rot bei wenig HP, warm orange/gold bei viel
+            if (hpBar1 != null) { hpBar1.fillAmount = p1; hpBar1.color = HealthColor(p1); }
+            if (hpBar2 != null) { hpBar2.fillAmount = p2; hpBar2.color = HealthColor(p2); }
+        }
+
+        /// <summary>Lebensbalken-Farbverlauf laut Visual-Spec (Blutrot → Gold).</summary>
+        public static Color HealthColor(float t)
+        {
+            return t < 0.35f
+                ? Color.Lerp(PennerPalette.BloodRed, PennerPalette.WarmOrange, t / 0.35f)
+                : Color.Lerp(PennerPalette.WarmOrange, PennerPalette.Gold, (t - 0.35f) / 0.65f);
         }
 
         public void UpdateFatalBlow(float f1, float f2)
         {
-            if (fatalBlow1 != null) fatalBlow1.fillAmount = f1;
-            if (fatalBlow2 != null) fatalBlow2.fillAmount = f2;
+            if (fatalBlow1 != null)
+            {
+                fatalBlow1.fillAmount = f1;
+                fatalBlow1.color = f1 >= 1f
+                    ? PennerPalette.BloodRed.WithAlpha(0.7f + 0.3f * Mathf.PingPong(Time.time * 2f, 1f))
+                    : PennerPalette.NeonBlue;
+            }
+            if (fatalBlow2 != null)
+            {
+                fatalBlow2.fillAmount = f2;
+                fatalBlow2.color = f2 >= 1f
+                    ? PennerPalette.BloodRed.WithAlpha(0.7f + 0.3f * Mathf.PingPong(Time.time * 2f, 1f))
+                    : PennerPalette.NeonBlue;
+            }
         }
 
         public void UpdateTimer(float time)
@@ -66,14 +87,24 @@ namespace PennerKombat
 
         public void UpdateCombo(int c1, int c2)
         {
-            if (comboText1 != null) comboText1.text = c1 > 1 ? $"{c1} Treffer!" : "";
-            if (comboText2 != null) comboText2.text = c2 > 1 ? $"{c2} Treffer!" : "";
+            // Zusätzlich zum dynamischen Weltraum-Zähler (ComboCounterUI)
+            if (comboText1 != null)
+            {
+                comboText1.text = c1 > 1 ? $"{c1} Treffer!" : "";
+                comboText1.color = PennerPalette.ForCombo(c1);
+            }
+            if (comboText2 != null)
+            {
+                comboText2.text = c2 > 1 ? $"{c2} Treffer!" : "";
+                comboText2.color = PennerPalette.ForCombo(c2);
+            }
         }
 
         public void ResetCombo()
         {
             if (comboText1 != null) comboText1.text = "";
             if (comboText2 != null) comboText2.text = "";
+            ComboSystem.Instance?.ResetAll();
         }
 
         public void SetNames(string p1, string p2)
