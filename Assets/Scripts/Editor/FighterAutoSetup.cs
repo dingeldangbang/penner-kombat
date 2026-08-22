@@ -218,6 +218,10 @@ namespace PennerKombat.Editor
                     holder.socket = weaponSlot;
                 }
 
+                // 6c. Ragdoll aus dem Humanoid-Rig (fällt sonst auf Primitiv-Trümmer zurück)
+                if (FighterRagdollBuilder.Build(root))
+                    Debug.Log($"[Penner Kombat] {cfg.displayName}: Ragdoll aus dem Rig gebaut.");
+
                 // 7. Tag und Layer
                 TrySetTag(root, GameConstants.TagFighter);
                 int layer = LayerMask.NameToLayer("Fighter");

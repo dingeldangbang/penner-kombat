@@ -1,6 +1,15 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Ragdoll-Automatik
+- **`Editor/FighterRagdollBuilder.cs`**: erzeugt aus einem Humanoid-Rig ein komplettes Ragdoll
+  (12 Knochen: Hüfte, Spine, Chest, Kopf, Ober-/Unterarme, Ober-/Unterschenkel) mit Rigidbodies,
+  passenden Collidern (Box/Sphere/Capsule aus der Knochenlänge) und `CharacterJoint`-Limits.
+- Knochen starten kinematisch mit deaktivierten Collidern — `RagdollController` schaltet sie beim
+  K.o. scharf und beim Rundenstart wieder ab; ohne Rig bleibt es beim Primitiv-Fallback.
+- Läuft automatisch im Auto-Setup mit; Menü zum Nachrüsten:
+  *GLB → Ragdoll für alle Kämpfer bauen*.
+
 ### Auto-Setup: benannte Sockets, Waffenhand, Überschreibschutz
 - **`AttackPoint` und `WeaponSlot` aus dem Modell** werden bevorzugt verwendet, wenn sie als
   Kind-Objekte existieren; sonst greift die Rig-Erkennung, sonst ein Fallback mit Warnung.

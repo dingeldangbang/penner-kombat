@@ -57,6 +57,7 @@ Was dabei automatisch gesetzt wird:
 | WeaponSlot | Kind namens `WeaponSlot` oder die Schlaghand → landet als `socket` im `WeaponHolder`, die Waffe erscheint dann **in der Hand** statt an der Hüfte |
 | Hitbox-Größe | aus Radius, Höhe und `attackRange` des Charakters |
 | Animator | Controller + Avatar vom Modell auf die Prefab-Wurzel gezogen; fehlt ein Controller, wird einer **generiert** und mit passenden Clips bestückt (§4) |
+| Ragdoll | aus dem Humanoid-Rig: Rigidbodies, Collider und CharacterJoints an Hüfte, Wirbelsäule, Kopf, Armen, Beinen — kinematisch und Collider aus, bis der K.o. kommt |
 | Tag / Layer | `Fighter` |
 | Ablage | `Assets/Prefabs/Fighters/PK_<id>.prefab`, wird bei erneutem Import **aktualisiert**, nicht dupliziert |
 | Eintrag | automatisch in `Assets/Resources/FighterDatabase.asset` |
@@ -156,6 +157,8 @@ Gesucht wird in zwei Quellen: **im Modell selbst** (GLB/FBX mit eingebetteten Cl
 übersprungen, jeder Clip wird nur einmal vergeben.
 
 Nachträglich neu bauen: `Tools → Penner Kombat → GLB → Animator-Controller für alle Kämpfer bauen`.
+Ragdoll nachrüsten: `… → Ragdoll für alle Kämpfer bauen` (braucht ein Humanoid-Rig; ohne Rig
+bleibt es bei den Primitiv-Trümmern aus `RagdollController`).
 
 Bringt das Modell bereits einen eigenen Controller mit, bleibt der unangetastet.
 Und falls dort Parameter fehlen: `FighterController` prüft seit dieser Version jeden

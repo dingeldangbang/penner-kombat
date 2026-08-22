@@ -74,6 +74,36 @@ hängt alles an Punkt 1–5 der Tabelle oben, und das ist Editor-/Art-Arbeit.
 
 ---
 
+## 🛑 Warum die kursierenden Charakter-Dumps nicht übernommen werden
+
+Es sind mehrfach „vollständige" Charakter-Skripte aufgetaucht (`namespace PennerKombat.Characters`,
+`void Update()`, `Input.GetKeyDown(KeyCode.J)`). Die sind **kürzer und schwächer** als das, was im
+Repo steht, und würden so nicht einmal kompilieren:
+
+| Problem im Dump | Realität im Repo |
+|---|---|
+| `namespace PennerKombat.Characters` | Alles liegt in `namespace PennerKombat` — der Dump fände `FighterController` nicht |
+| `void Update()` + `base.Update()` | `FighterController.Update()` ist `protected virtual` → Shadowing statt Override, Compile-Fehler |
+| `lightAttackDamage`, `heavyAttackDamage` | heißen `lightDamage` / `heavyDamage` |
+| `attackCooldown` | heißt `lightCooldown` / `heavyCooldown` |
+| `enemy.stunTimer = …`, `enemy.attackTimer` | `protected` — fremde Instanzen dürfen da nicht ran (nutze `ApplyGrabStun`) |
+| `attacker.stunTimer = 0.2f` | dito |
+| `Input.GetKeyDown(KeyCode.J)` | Legacy-Input; das Projekt nutzt das **neue Input System** (`FighterInput`) |
+| `IsDirectionSequence` prüft *gleichzeitig gedrückte* Tasten | echte Eingabe-Historie liegt in `CommandInput` (Numpad-Notation, Puffer, Toleranzfenster) |
+| `AddComponent<FighterController>()` als Fallback | die Klasse ist `abstract` |
+| `ArenaManager.Instance.TiltAllProps()` ohne Null-Prüfung | vorhanden, aber `Instance` kann null sein |
+| Doppelte `MopsController` / `RatController` | existieren bereits unter `Characters/Summons/` |
+| Eigene Hitbox-Coroutinen pro Charakter | umgeht `EnableHitbox`, damit auch Combo-Zähler, Parry-Multiplikator, Arena-Zerstörung, Trefferfeedback und Fatal-Blow-Aufladung |
+
+Was die Dumps können, kann das Repo längst — und zusätzlich: Kommando-Eingaben über
+`MoveCatalog`/`CommandInput`, Frame-Daten, `PurgeBuffs`, Signatur-VFX, EX-Moves, Fatal Blow,
+Fatalities und die Ressourcensysteme (Mojo-Punkte, Mells Puls, Le Bindes Schmier-Schlüppa).
+
+**Wenn ein Move fehlt oder sich falsch anfühlt: einzeln benennen** — dann ändere ich gezielt die
+vorhandene Klasse, statt sie durch eine dünnere Version zu ersetzen.
+
+---
+
 ## 🚀 Empfohlene Reihenfolge
 
 1. Repo in Unity Hub öffnen (Projektdateien liegen jetzt bei)
