@@ -1,6 +1,15 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Android-APK aus der CI
+- **`docs/ci/android-build.yml`**: Workflow-Vorlage für `game-ci/unity-builder` — baut ein APK
+  auf GitHubs Runnern (manuell oder bei jedem Tag `v*.*.*`, dann hängt es am Release).
+  Library-Cache, Speicheraufräumen und optionale Keystore-Signierung sind vorbereitet.
+- **`docs/ci/README.md`**: Schritt-für-Schritt zur Unity-Lizenzdatei, den drei Secrets und den
+  typischen Fehlerbildern.
+- **`docs/BUILD_ANDROID.md`**: zwei klar getrennte Wege (lokal / CI) und der Hinweis, dass die
+  Projektdateien seit v1.4.0 im Repo liegen.
+
 ### Balance greift auch bei handgebauten Prefabs
 - **`FighterController.ApplyConfig(FighterConfig)`**: überträgt HP, Tempo, Schaden und Reichweite
   aus der `FighterDatabase` auf gespawnte Kämpfer. Vorher galten bei eigenen Prefabs die Werte,

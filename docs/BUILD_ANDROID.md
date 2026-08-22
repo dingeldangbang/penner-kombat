@@ -1,8 +1,20 @@
 # 📱 Android-Build (APK / AAB)
 
 Diese Anleitung führt vom Repo zum installierbaren `.apk`.
-**Wichtig:** Das Repo enthält den Code, aber **kein Unity-Projekt** — Schritt 1
-und 2 sind nicht optional.
+
+**Zwei Wege:**
+
+| Weg | Voraussetzung | Anleitung |
+|---|---|---|
+| **A — Unity auf dem eigenen Rechner** | Unity 2022.3 LTS + Android-Modul | diese Seite |
+| **B — GitHub baut das APK** | kostenlose Unity-Lizenz als Secret | [`docs/ci/README.md`](ci/README.md) → `android-build.yml` |
+
+**Nicht nötig:** PS3-Emulatoren, WebView, Capacitor oder ein Browser-Export.
+Penner Kombat ist ein Unity-Projekt in C# — Android ist ein normales Build-Ziel.
+
+**Hinweis:** Seit v1.4.0 liegen `ProjectSettings/` und `Packages/manifest.json`
+im Repo — Schritt 1 („Projekt anlegen") entfällt, du kannst den Ordner direkt
+in Unity Hub öffnen.
 
 ---
 
