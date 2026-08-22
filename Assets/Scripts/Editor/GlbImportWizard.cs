@@ -17,8 +17,7 @@ namespace PennerKombat.Editor
     /// </summary>
     public static class GlbImportWizard
     {
-        const string ModelFolder = "Assets/Models/Fighters";
-        const string PrefabFolder = "Assets/Prefabs/Fighters";
+        const string ModelFolder = FighterAutoSetup.ModelFolder;
         const string PackageId = "com.unity.cloud.gltfast";
 
         static AddRequest addRequest;
@@ -88,8 +87,6 @@ namespace PennerKombat.Editor
             }
 
             EnsureFolder(ModelFolder);
-            EnsureFolder(PrefabFolder);
-
             var db = PkQuickStart.LoadOrCreateDatabase();
             var models = CollectModels();
             if (models.Count == 0)
@@ -100,42 +97,10 @@ namespace PennerKombat.Editor
             }
 
             int built = 0;
-            foreach (var cfg in db.fighters)
+            foreach (var pair in models)
             {
-                if (cfg == null) continue;
-                if (!models.TryGetValue(cfg.id, out var modelAsset)) continue;
-
-                var root = FighterFactory.CreatePlaceholder(cfg, Vector3.zero, Quaternion.identity);
-                if (root == null) continue;
-                root.name = $"PK_{cfg.id}_glb";
-
-                // Kapsel-Optik raus, Modell rein
-                var placeholder = root.transform.Find("Visual");
-                if (placeholder != null) Object.DestroyImmediate(placeholder.gameObject);
-
-                var model = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset, root.transform);
-                model.name = "Model_GLB";
-                var fighter = root.GetComponent<FighterController>();
-                GlbModelLoader.Normalize(fighter, model.transform);
-
-                // Animator vorbereiten, falls das Modell gerigged ist
-                var animator = model.GetComponentInChildren<Animator>();
-                if (animator != null && root.GetComponent<Animator>() == null)
-                {
-                    var rootAnimator = root.AddComponent<Animator>();
-                    rootAnimator.runtimeAnimatorController = animator.runtimeAnimatorController;
-                    rootAnimator.avatar = animator.avatar;
-                    rootAnimator.applyRootMotion = false;
-                }
-
-                string path = $"{PrefabFolder}/PK_{cfg.id}_glb.prefab";
-                var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
-                Object.DestroyImmediate(root);
-
-                cfg.prefab = prefab;
-                EditorUtility.SetDirty(cfg);
-                built++;
-                Debug.Log($"[Penner Kombat] {cfg.displayName}: Prefab aus {modelAsset.name} gebaut → {path}");
+                string assetPath = AssetDatabase.GetAssetPath(pair.Value);
+                if (FighterAutoSetup.BuildFor(assetPath, verbose: true) != null) built++;
             }
 
             EditorUtility.SetDirty(db);

@@ -1,6 +1,19 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Modelle automatisch spielfertig machen
+- **`Editor/FighterAutoSetup.cs`**: baut aus einem Modell einen kompletten Kämpfer —
+  Charakterskript nach ID, Balance-Werte aus der Datenbank, Rigidbody, CapsuleCollider aus
+  den **echten Modellmaßen**, `AttackPoint` am **rechten Handknochen** (Humanoid-Avatar oder
+  Knochennamen à la `mixamorig:RightHand`), Hitbox-Maße, Animator-Übernahme, Tag/Layer,
+  Prefab-Ablage und Eintrag in die `FighterDatabase`.
+- **Import-Wächter `FighterModelPostprocessor`**: jede neue Datei in `Assets/Models/Fighters`
+  wird sofort verarbeitet (`.glb`, `.gltf`, `.fbx`); vorhandene Prefabs werden aktualisiert
+  statt dupliziert. FBX wird beim Erstimport gleich auf Humanoid gestellt.
+- Neue Menüpunkte: *Automatik: neue Modelle sofort einrichten* (Häkchen) und
+  *Ausgewähltes Modell zu Kämpfer machen*.
+- `GlbImportWizard` nutzt jetzt dieselbe Bauroutine — keine zweite, abweichende Implementierung.
+
 ### GLB-Modellimport über Menüs
 - **`Utils/GlbLibrary.cs`**: findet `.glb`/`.gltf` in `persistentDataPath/Models`,
   `StreamingAssets/Models` und `<Projekt>/Models`, ordnet Modelle Charakteren zu

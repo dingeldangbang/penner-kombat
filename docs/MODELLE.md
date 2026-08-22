@@ -33,6 +33,42 @@ Zurück zu den Kapseln: `Tools → Penner Kombat → GLB → Zurück zu Platzhal
 
 ---
 
+### Automatik (Standard an)
+
+Du musst Schritt 4 gar nicht anstoßen: Ein **Import-Wächter** (`FighterModelPostprocessor`)
+beobachtet `Assets/Models/Fighters`. Sobald dort eine Datei landet — per Drag & Drop, Kopie
+im Explorer oder Verschieben —, wird sie erkannt und **sofort** zu einem spielfertigen
+Kämpfer verarbeitet:
+
+```
+le_binde.glb  →  Assets/Prefabs/Fighters/PK_le_binde.prefab  →  FighterDatabase[le_binde]
+```
+
+Was dabei automatisch gesetzt wird:
+
+| Schritt | Detail |
+|---|---|
+| Charaktererkennung | über den Dateinamen (`GuessCharacterId`) |
+| Charakterskript | `LeBinde`, `Mell`, `MojoBob`, … je nach ID, mit Balance-Werten aus der Datenbank |
+| Größe | auf 1,80 m normiert, Füße auf y = 0, x/z zentriert |
+| Rigidbody | Masse 1, Rotation gesperrt, Interpolation, Continuous |
+| CapsuleCollider | Höhe und Radius aus den **echten Modellmaßen** |
+| AttackPoint | am **rechten Handknochen**, wenn ein Rig da ist (Humanoid-Avatar oder Namen wie `mixamorig:RightHand`, `Hand_R`) — sonst vor dem Körper |
+| Hitbox-Größe | aus Radius, Höhe und `attackRange` des Charakters |
+| Animator | Controller + Avatar vom Modell auf die Prefab-Wurzel gezogen |
+| Tag / Layer | `Fighter` |
+| Ablage | `Assets/Prefabs/Fighters/PK_<id>.prefab`, wird bei erneutem Import **aktualisiert**, nicht dupliziert |
+| Eintrag | automatisch in `Assets/Resources/FighterDatabase.asset` |
+
+FBX-Dateien in diesem Ordner werden beim ersten Import zusätzlich gleich auf
+**Humanoid-Rig** gestellt (Kameras/Lichter aus).
+
+Abschalten: `Tools → Penner Kombat → GLB → Automatik: neue Modelle sofort einrichten`
+(Häkchen). Einzelne Datei nachträglich verarbeiten: im Project-Fenster markieren →
+`Tools → Penner Kombat → GLB → Ausgewähltes Modell zu Kämpfer machen`.
+
+---
+
 ## 2. Weg B — im Spiel: Modell-Menü (Taste **F7**)
 
 Für schnelles Ausprobieren und für Handy-Builds, ohne neu zu bauen.
@@ -100,5 +136,10 @@ Das ist Editor-Arbeit und lässt sich nicht sinnvoll erraten.
   pink aus, fehlt das URP-Asset unter *Project Settings → Graphics*.
 - **Nicht getestet:** In dieser Umgebung gibt es kein Unity — der GLB-Pfad ist geschrieben,
   aber nie ausgeführt worden. Erste Fehlermeldungen bitte durchreichen.
+- **Automatik ist Namensraterei.** Heißt die Datei `char01.glb`, passiert nichts — dann
+  umbenennen oder den Menüpunkt für die Auswahl nutzen.
+- **Rig-Erkennung ist heuristisch.** Ohne Humanoid-Avatar wird über Knochennamen gesucht;
+  exotische Namensschemata landen beim Fallback (AttackPoint vor dem Körper). Das spielt
+  sich trotzdem, sitzt aber optisch nicht an der Faust.
 - Skalierung nach Bounding-Box: Modelle mit Waffen/Umhängen, die weit übers Kopfende ragen,
   werden zu klein — dann im F7-Menü mit `+` nachjustieren.
