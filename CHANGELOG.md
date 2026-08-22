@@ -1,6 +1,14 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Auto-Setup: benannte Sockets, Waffenhand, Überschreibschutz
+- **`AttackPoint` und `WeaponSlot` aus dem Modell** werden bevorzugt verwendet, wenn sie als
+  Kind-Objekte existieren; sonst greift die Rig-Erkennung, sonst ein Fallback mit Warnung.
+- **`WeaponHolder.socket`**: Waffen erscheinen jetzt in der Hand statt an der Hüfte, sobald ein
+  Slot bekannt ist (`WeaponSlot`-Kind oder Handknochen).
+- **`Core/PkAutoSetupInfo.cs`**: Merkzettel auf jedem erzeugten Prefab (Quellmodell, ID, Datum,
+  Version) mit Schalter **Lock Manual Edits** — gesperrte Prefabs überspringt der Import-Wächter.
+
 ### Animator-Controller aus Clips generieren
 - **`Editor/FighterAnimatorBuilder.cs`**: baut pro Charakter einen Animator-Controller
   (`Assets/Animations/Controllers/PK_<id>.controller`) mit allen Parametern, die der Kampfcode

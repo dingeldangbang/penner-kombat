@@ -53,7 +53,8 @@ Was dabei automatisch gesetzt wird:
 | Größe | auf 1,80 m normiert, Füße auf y = 0, x/z zentriert |
 | Rigidbody | Masse 1, Rotation gesperrt, Interpolation, Continuous |
 | CapsuleCollider | Höhe und Radius aus den **echten Modellmaßen** |
-| AttackPoint | am **rechten Handknochen**, wenn ein Rig da ist (Humanoid-Avatar oder Namen wie `mixamorig:RightHand`, `Hand_R`) — sonst vor dem Körper |
+| AttackPoint | Reihenfolge: **Kind namens `AttackPoint` im Modell** > rechter Handknochen (Humanoid-Avatar oder Namen wie `mixamorig:RightHand`, `Hand_R`) > Fallback vor dem Körper (mit Warnung) |
+| WeaponSlot | Kind namens `WeaponSlot` oder die Schlaghand → landet als `socket` im `WeaponHolder`, die Waffe erscheint dann **in der Hand** statt an der Hüfte |
 | Hitbox-Größe | aus Radius, Höhe und `attackRange` des Charakters |
 | Animator | Controller + Avatar vom Modell auf die Prefab-Wurzel gezogen; fehlt ein Controller, wird einer **generiert** und mit passenden Clips bestückt (§4) |
 | Tag / Layer | `Fighter` |
@@ -62,6 +63,15 @@ Was dabei automatisch gesetzt wird:
 
 FBX-Dateien in diesem Ordner werden beim ersten Import zusätzlich gleich auf
 **Humanoid-Rig** gestellt (Kameras/Lichter aus).
+
+**Eigene Änderungen schützen:** Jedes erzeugte Prefab trägt die Komponente
+`PkAutoSetupInfo` (Quellmodell, Datum, Version). Setzt du dort das Häkchen
+**„Lock Manual Edits"**, rührt die Automatik dieses Prefab nie wieder an — du kannst
+Collider, Hitbox oder Sockets also gefahrlos von Hand nachziehen.
+
+**Optionale Vorbereitung im 3D-Programm:** Leere Objekte `AttackPoint` (an der Faust) und
+`WeaponSlot` (in der Hand) ins Modell legen — die werden bevorzugt verwendet und schlagen
+jede Automatik.
 
 Abschalten: `Tools → Penner Kombat → GLB → Automatik: neue Modelle sofort einrichten`
 (Häkchen). Einzelne Datei nachträglich verarbeiten: im Project-Fenster markieren →

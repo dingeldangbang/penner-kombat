@@ -83,6 +83,18 @@ namespace PennerKombat.Editor
                 return null;
             }
 
+            // Manuell bearbeitete Prefabs in Ruhe lassen
+            string existingPath = $"{PrefabFolder}/PK_{id}.prefab";
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(existingPath);
+            var info = existing != null ? existing.GetComponent<PkAutoSetupInfo>() : null;
+            if (info != null && info.lockManualEdits)
+            {
+                if (verbose)
+                    Debug.Log($"[Penner Kombat] {existingPath} ist gegen Überschreiben gesperrt "
+                            + "(PkAutoSetupInfo → Lock Manual Edits). Übersprungen.");
+                return existing;
+            }
+
             var db = PkQuickStart.LoadOrCreateDatabase();
             var cfg = db.GetFighter(id);
             if (cfg == null)
@@ -140,18 +152,31 @@ namespace PennerKombat.Editor
                 capsule.radius = radius;
                 capsule.center = new Vector3(0f, height * 0.5f, 0f);
 
-                // 4. AttackPoint — bevorzugt an der Schlaghand, sonst vor dem Körper
+                // 4. AttackPoint — Reihenfolge: im Modell benannt > Schlaghand > Fallback
                 var hand = FindHandBone(model.transform);
-                var attackPoint = new GameObject("AttackPoint");
-                if (hand != null)
+                var named = FindChildByName(model.transform, "AttackPoint");
+                Transform attackPoint;
+                if (named != null)
                 {
-                    attackPoint.transform.SetParent(hand, false);
-                    attackPoint.transform.localPosition = Vector3.zero;
+                    attackPoint = named;
                 }
                 else
                 {
-                    attackPoint.transform.SetParent(root.transform, false);
-                    attackPoint.transform.localPosition = new Vector3(0f, height * 0.6f, radius + 0.5f);
+                    var go = new GameObject("AttackPoint");
+                    attackPoint = go.transform;
+                    if (hand != null)
+                    {
+                        attackPoint.SetParent(hand, false);
+                        attackPoint.localPosition = Vector3.zero;
+                    }
+                    else
+                    {
+                        attackPoint.SetParent(root.transform, false);
+                        attackPoint.localPosition = new Vector3(0f, height * 0.6f, radius + 0.5f);
+                        Debug.LogWarning($"[Penner Kombat] {cfg.displayName}: keine Schlaghand im Rig gefunden — "
+                                       + "AttackPoint sitzt vor dem Körper. Im Modell ein Kind 'AttackPoint' "
+                                       + "anlegen, wenn es genauer sein soll.");
+                    }
                 }
 
                 // 5. Charakterskript mit Balance-Werten
@@ -163,7 +188,7 @@ namespace PennerKombat.Editor
                 fighter.lightDamage = cfg.lightDamage;
                 fighter.heavyDamage = cfg.heavyDamage;
                 fighter.attackRange = cfg.attackRange;
-                fighter.attackPoint = attackPoint.transform;
+                fighter.attackPoint = attackPoint;
                 fighter.attackBoxSize = new Vector3(radius * 2.2f, height * 0.5f, cfg.attackRange);
                 fighter.enemyLayer = FighterFactory.DefaultEnemyMask();
 
@@ -185,12 +210,28 @@ namespace PennerKombat.Editor
                     animator.runtimeAnimatorController = FighterAnimatorBuilder.Build(cfg.id, clips);
                 }
 
+                // 6b. Waffen-Halterung: Kind 'WeaponSlot' oder die Schlaghand
+                var weaponSlot = FindChildByName(model.transform, "WeaponSlot") ?? hand;
+                if (weaponSlot != null)
+                {
+                    var holder = root.GetComponent<WeaponHolder>() ?? root.AddComponent<WeaponHolder>();
+                    holder.socket = weaponSlot;
+                }
+
                 // 7. Tag und Layer
                 TrySetTag(root, GameConstants.TagFighter);
                 int layer = LayerMask.NameToLayer("Fighter");
                 if (layer >= 0) root.layer = layer;
 
                 // 8. Speichern
+                // 7b. Merkzettel für Nachvollziehbarkeit und Überschreibschutz
+                var stamp = root.AddComponent<PkAutoSetupInfo>();
+                stamp.sourceModel = AssetDatabase.GetAssetPath(modelAsset);
+                stamp.fighterId = cfg.id;
+                stamp.setupDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+                stamp.setupVersion = PkAutoSetupInfo.CurrentVersion;
+                stamp.lockManualEdits = false;
+
                 // Immer derselbe Pfad: ein erneuter Import aktualisiert den Kämpfer,
                 // statt ein zweites Prefab danebenzulegen.
                 string path = $"{PrefabFolder}/PK_{cfg.id}.prefab";
@@ -250,6 +291,14 @@ namespace PennerKombat.Editor
                 string n = t.name.ToLowerInvariant().Replace(" ", "");
                 if (patterns.Any(p => n.Contains(p.Replace(":", "")) || n.Contains(p))) return t;
             }
+            return null;
+        }
+
+        /// <summary>Sucht rekursiv ein Kind mit genau diesem Namen (Groß-/Kleinschreibung egal).</summary>
+        public static Transform FindChildByName(Transform parent, string name)
+        {
+            foreach (var t in parent.GetComponentsInChildren<Transform>(true))
+                if (string.Equals(t.name, name, System.StringComparison.OrdinalIgnoreCase)) return t;
             return null;
         }
 

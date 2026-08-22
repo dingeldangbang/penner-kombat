@@ -31,6 +31,10 @@ namespace PennerKombat
         public WeaponDefinition weapon;
         public int remainingUses;
 
+        [Tooltip("Halte-Punkt für die Waffe (z.B. Hand-Knochen oder ein Kind namens 'WeaponSlot'). "
+               + "Leer = Standardposition an der Hüfte.")]
+        public Transform socket;
+
         private FighterController fighter;
         private GameObject visual;
 
@@ -53,9 +57,18 @@ namespace PennerKombat
             visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Destroy(visual.GetComponent<Collider>());
             visual.name = "PK_Waffe";
-            visual.transform.SetParent(transform, false);
-            visual.transform.localPosition = new Vector3(0.35f, 1.0f, 0.35f);
-            visual.transform.localRotation = Quaternion.Euler(20f, 0f, 60f);
+            if (socket != null)
+            {
+                visual.transform.SetParent(socket, false);
+                visual.transform.localPosition = Vector3.zero;
+                visual.transform.localRotation = Quaternion.Euler(20f, 0f, 60f);
+            }
+            else
+            {
+                visual.transform.SetParent(transform, false);
+                visual.transform.localPosition = new Vector3(0.35f, 1.0f, 0.35f);
+                visual.transform.localRotation = Quaternion.Euler(20f, 0f, 60f);
+            }
             visual.transform.localScale = new Vector3(0.07f, 0.5f, 0.07f);
 
             var mr = visual.GetComponent<MeshRenderer>();
