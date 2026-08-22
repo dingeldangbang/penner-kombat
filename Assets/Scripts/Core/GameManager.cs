@@ -203,13 +203,19 @@ namespace PennerKombat
             if (cfg.prefab != null)
             {
                 var go = Instantiate(cfg.prefab, spawn.position, spawn.rotation);
-                if (go.GetComponent<FighterController>() == null)
+                var fighter = go.GetComponent<FighterController>();
+                if (fighter == null)
                 {
                     Debug.LogWarning($"[Penner Kombat] Prefab von '{cfg.id}' hat keinen FighterController — "
                                    + "es wird stattdessen ein Platzhalter erzeugt.");
                     Destroy(go);
                 }
-                else return go;
+                else
+                {
+                    // Auch handgebaute Prefabs folgen der Datenbank (Balance an einer Stelle)
+                    fighter.ApplyConfig(cfg);
+                    return go;
+                }
             }
             return FighterFactory.CreatePlaceholder(cfg, spawn.position, spawn.rotation);
         }

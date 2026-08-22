@@ -44,6 +44,11 @@ namespace PennerKombat
         public Vector3 attackBoxSize = new Vector3(1.5f, 1.5f, 2f);
         public LayerMask enemyLayer;
 
+        [Header("Balance")]
+        [Tooltip("An: Werte aus der FighterDatabase werden beim Spawnen NICHT übernommen "
+               + "(für Prefabs mit absichtlich abweichenden Werten).")]
+        public bool ignoreConfigBalance;
+
         [Header("References")]
         public GameObject hitEffectPrefab;
         public GameObject blockEffectPrefab;
@@ -145,6 +150,42 @@ namespace PennerKombat
             if (GetComponent<RagdollController>() == null) gameObject.AddComponent<RagdollController>();
             if (GetComponent<ParrySystem>() == null) gameObject.AddComponent<ParrySystem>();
             if (GetComponent<WeaponHolder>() == null) gameObject.AddComponent<WeaponHolder>();
+        }
+
+        /// <summary>
+        /// Überträgt die Balance-Werte aus der <see cref="FighterDatabase"/> auf
+        /// diesen Kämpfer. Wichtig für **handgebaute Prefabs**: die behalten sonst
+        /// die Werte, die zufällig im Inspector standen, statt der Datenbank zu folgen.
+        /// Prefabs mit bewusst abweichenden Werten setzen <see cref="ignoreConfigBalance"/>.
+        /// </summary>
+        public virtual void ApplyConfig(FighterConfig config)
+        {
+            if (config == null || ignoreConfigBalance) return;
+
+            fighterId = config.id;
+            displayName = config.displayName;
+            maxHP = config.maxHP;
+            moveSpeed = config.moveSpeed;
+            lightDamage = config.lightDamage;
+            heavyDamage = config.heavyDamage;
+            attackRange = config.attackRange;
+            currentHP = maxHP;
+        }
+
+        /// <summary>
+        /// Bricht einen laufenden Angriff ab (Konter, Fatal Blow, Rundenende).
+        /// Anders als ein simples Zurücksetzen räumt das auch die Trefferliste auf,
+        /// sonst zählt der nächste Schlag denselben Gegner nicht mehr.
+        /// </summary>
+        public virtual void InterruptAttack()
+        {
+            if (!isAttacking) return;
+            CancelInvoke(nameof(EnableHitbox));
+            CancelInvoke(nameof(DisableHitbox));
+            isAttacking = false;
+            attackTimer = 0f;
+            hitThisAttack.Clear();
+            AnimTrigger("Interrupt");
         }
 
         // --- Animator-Zugriff, der fremde Controller nicht anmeckert ---

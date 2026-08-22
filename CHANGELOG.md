@@ -1,6 +1,14 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Balance greift auch bei handgebauten Prefabs
+- **`FighterController.ApplyConfig(FighterConfig)`**: überträgt HP, Tempo, Schaden und Reichweite
+  aus der `FighterDatabase` auf gespawnte Kämpfer. Vorher galten bei eigenen Prefabs die Werte,
+  die zufällig im Inspector standen — Balance-Änderungen in der Datenbank blieben wirkungslos.
+  Abschaltbar pro Prefab über `ignoreConfigBalance`.
+- **`FighterController.InterruptAttack()`**: bricht einen laufenden Angriff sauber ab
+  (Invokes stoppen, Trefferliste leeren, `Interrupt`-Trigger) — für Konter, Fatal Blow, Rundenende.
+
 ### Frontend und Ton
 - **`UI/FrontEnd.cs`** (Taste **F1**): prozedurales Hauptmenü (Versus · Training · Modelle · Beenden)
   und Charakterauswahl mit allen 9 Kämpfern für P1 und P2, Umschalter Mensch/KI, KI-Stufe
