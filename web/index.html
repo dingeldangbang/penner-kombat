@@ -7,6 +7,10 @@
 <meta name="description" content="LETAL PENNER KOMBAT — Browser-Fassung. Kämpfe wie ein Penner, gewinne wie ein König.">
 <title>LETAL PENNER KOMBAT</title>
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -44,15 +48,20 @@
 </div>
 
 <!-- Hauptmenü -->
-<section id="screen-main" class="screen">
-  <h1>PENNER<span>KOMBAT</span></h1>
-  <p class="sub">Kämpfe wie ein Penner — gewinne wie ein König</p>
+<section id="screen-main" class="screen cover">
+  <canvas id="cover-canvas"></canvas>
+  <img id="cover-img" class="hidden" alt="Penner Kombat Cover">
+  <div class="cover-front">
+    <div class="clothesline"></div>
+    <h1>PENNER<span>KOMBAT</span></h1>
+    <p class="sub">KÄMPFE WIE EIN PENNER — GEWINNE WIE EIN KÖNIG</p>
   <div class="menu">
     <button id="btn-versus" class="big red">VERSUS</button>
     <button id="btn-training" class="big orange">TRAINING</button>
     <button id="btn-help" class="big blue">STEUERUNG</button>
   </div>
-  <p class="foot">Browser-Fassung · dieselben Kampfwerte wie die Unity-Version · Dingelang Games</p>
+    <p class="foot">Dingelang Games · Browser-Fassung mit den Kampfwerten der Unity-Version</p>
+  </div>
 </section>
 
 <!-- Charakterauswahl -->
@@ -105,5 +114,10 @@
 </section>
 
 <script type="module" src="src/main.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
 </body>
 </html>

@@ -156,3 +156,52 @@ th { color: var(--gold); }
 .b-fatal { border-color: var(--blood); background: rgba(139,0,0,0.35); font-size: 11px; }
 
 body.touch .hud-side { width: 34vw; }
+
+
+/* ---------------- Cover-Look (Hauptmenü) ---------------- */
+
+.screen.cover { padding: 0; background: #0b0d16; }
+#cover-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#cover-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+}
+
+.cover-front {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 20px; width: 100%; max-height: 100%; overflow-y: auto;
+}
+
+.screen.cover h1 {
+  font-size: clamp(40px, 11vw, 118px);
+  letter-spacing: 3px;
+  color: #c81212;
+  -webkit-text-stroke: 2px #2b0505;
+  text-shadow:
+    0 3px 0 #4a0a0a,
+    0 6px 14px rgba(0,0,0,0.8),
+    0 0 34px rgba(200,18,18,0.5);
+  transform: rotate(-1.2deg);
+}
+.screen.cover h1 span {
+  color: #e01b1b;
+  -webkit-text-stroke: 2px #2b0505;
+  text-shadow: 0 3px 0 #4a0a0a, 0 6px 14px rgba(0,0,0,0.8);
+}
+
+.screen.cover .sub {
+  font-weight: 800; letter-spacing: 1px;
+  color: #f4f1e6;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+  background: rgba(0,0,0,0.35);
+  padding: 4px 14px; border-radius: 4px;
+}
+
+.screen.cover .menu { margin-top: 6px; }
+.screen.cover .foot { position: static; margin-top: 10px; opacity: 0.6; }
+
+.screen.cover .big {
+  border: 2px solid rgba(0,0,0,0.5);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.45), 0 8px 22px rgba(0,0,0,0.55);
+}

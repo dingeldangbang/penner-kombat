@@ -1,0 +1,14 @@
+{
+  "name": "LETAL PENNER KOMBAT",
+  "short_name": "Penner Kombat",
+  "description": "Kämpfe wie ein Penner — gewinne wie ein König.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1A1C2A",
+  "theme_color": "#8B0000",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

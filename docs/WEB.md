@@ -99,3 +99,26 @@ Auf dem Handy bedient der Touch nur Spieler 1.
 - Die Browser-Fassung ist **kein Ersatz** für die Unity-Version, sondern der Weg,
   jetzt schon zu spielen, während die Unity-Fassung auf einen tauglichen Rechner
   oder einen CI-Build wartet.
+
+---
+
+## 6. Cover-Look und Installation auf dem Handy
+
+**Hauptmenü im Stil des Artworks:** Der Hinterhof wird prozedurallgezeichnet
+(`web/src/cover.js`) — Backsteinwand, Wäscheleine mit wehenden Klamotten, zwei
+flackernde Laternen, das Neonschild „Zum Blauen Eimer", Bierkästen, Gasflasche,
+Graffiti „DINGELANG", nasses Pflaster mit Spiegelungen. Der Titel steht im
+Cover-Rot mit dunkler Kontur.
+
+**Dein echtes Cover einsetzen:** Datei als `web/assets/cover.jpg` ablegen —
+das Menü nimmt sie dann automatisch statt der gezeichneten Kulisse. Kein
+Codeeingriff nötig.
+
+**Als App aufs Handy legen:** `manifest.webmanifest` und `sw.js` machen die
+Fassung zur installierbaren PWA.
+
+- Android/Chrome: Menü → *Zum Startbildschirm hinzufügen*
+- iOS/Safari: Teilen → *Zum Home-Bildschirm*
+
+Danach startet sie im Vollbild, im Querformat und **funktioniert offline** —
+der Service Worker legt alle Dateien im Cache ab.

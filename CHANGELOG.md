@@ -1,6 +1,15 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Cover-Look und PWA für die Browser-Fassung
+- **`web/src/cover.js`**: Hinterhof-Kulisse im Stil des Artworks, komplett gezeichnet —
+  Backstein, Wäscheleine mit Wind, flackernde Laternen, Neonschild „Zum Blauen Eimer",
+  Bierkästen, Gasflasche, Graffiti, nasses Pflaster mit Laternenspiegelung, Vignette.
+- Titel im Cover-Rot mit dunkler Kontur und Schlagschatten; liegt eine Datei unter
+  `web/assets/cover.jpg`, wird stattdessen das echte Artwork gezeigt.
+- **PWA**: `manifest.webmanifest`, gezeichnetes SVG-Icon und `sw.js` — installierbar auf dem
+  Startbildschirm, Vollbild, Querformat, **offline spielbar**.
+
 ### Browser-Fassung als Alternative (`web/`)
 - **Vollständig spielbare Web-Version** ohne Unity: Hauptmenü, Charakterauswahl aller 9 Kämpfer,
   KI-Stufen, Runden, HUD, 2,5D-Canvas-Darstellung, Touch-Steuerung (Joystick + 9 Buttons),

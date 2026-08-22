@@ -8,6 +8,7 @@ import { Match, STEP } from './sim.js';
 import { Renderer } from './render.js';
 import { InputState, buildTouchControls } from './input.js';
 import * as A from './audio.js';
+import { CoverScene, loadCoverIfPresent } from './cover.js';
 
 const $ = (sel) => document.querySelector(sel);
 const isTouch = matchMedia('(hover: none)').matches || 'ontouchstart' in window;
@@ -245,6 +246,21 @@ function wire() {
   }
 }
 
+// --- Cover-Kulisse im Hauptmenü ---
+const cover = new CoverScene($('#cover-canvas'));
+let coverLast = performance.now();
+function coverLoop(now) {
+  const dt = Math.min(0.05, (now - coverLast) / 1000);
+  coverLast = now;
+  if (!$('#screen-main').classList.contains('hidden') && $('#cover-img').classList.contains('hidden')) {
+    cover.draw(dt);
+  }
+  requestAnimationFrame(coverLoop);
+}
+
 buildSelect();
 wire();
 showScreen('screen-main');
+// Echtes Cover verwenden, falls jemand assets/cover.jpg hinterlegt hat
+loadCoverIfPresent($('#cover-img'));
+requestAnimationFrame(coverLoop);
