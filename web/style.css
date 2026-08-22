@@ -149,6 +149,10 @@ th { color: var(--gold); }
 .b-heavy { border-color: var(--orange); }
 .b-s1 { border-color: var(--gold); }
 .b-s2 { border-color: var(--gold); font-size: 14px; }
+.b-s3 { border-color: var(--orange); font-size: 13px; }
+.b-s4 { border-color: #4bd07a; font-size: 13px; }
+.b-s5 { border-color: var(--blood); font-size: 13px; }
+.b-ex { border-color: var(--gold); background: rgba(255,215,0,0.15); font-size: 13px; }
 .b-jump { border-color: var(--neon); }
 .b-block { border-color: var(--neon); font-size: 11px; }
 .b-roll { border-color: #9a9a9a; font-size: 11px; }

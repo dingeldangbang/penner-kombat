@@ -69,10 +69,14 @@ export const ROSTER = [
   {
     id: 'le_binde', name: 'Le Binde', color: PALETTE.bloodRed, stature: 'adipoes',
     maxHP: 130, moveSpeed: 4.2, light: 11, heavy: 18, range: 2.8,
-    passive: 'Schmier-Schlüppa: −60 % Schaden, 45 % Griff-Rutsch',
+    passive: 'Schmier-Schlüppa: −60 % Schaden, 45 % Griff-Rutsch, brennt nach 3 Feuer',
     specials: [
-      { key: 'flaschenhals', name: 'Flaschenhals', damage: 11, cooldown: 5, range: 3.0, effect: 'bleed' },
-      { key: 'mops', name: 'Mops-Kommando', damage: 0, cooldown: 22, range: 6.0, effect: 'stun' },
+      { key: 'flaschenhals', name: 'Flaschenhals ↓↘→+□', damage: 11, cooldown: 5, range: 3.5, effect: 'bleed', startup: 14, active: 4, recovery: 28, desc: 'Grab, Blutung 5s, Flaschen-Projektil' },
+      { key: 'flaschenhals_ex', name: 'EX-Flaschenhals', damage: 15, cooldown: 6, range: 3.8, effect: 'bleed_heavy', startup: 14, active: 4, recovery: 28, desc: 'EX: mehr Schaden, Knockback' },
+      { key: 'grosser_schwung', name: 'Großer Schwung ←→+△', damage: 16, cooldown: 7, range: 3.2, effect: 'armor_knock', startup: 21, active: 6, recovery: 22, desc: 'Halbkreis mit Armor Frames 8-20, Wallbounce' },
+      { key: 'reif', name: 'REIF! ↓↓+○', damage: 0, cooldown: 8, range: 0, effect: 'buff', startup: 30, active: 0, recovery: 0, desc: 'Buff: nächster Treffer +80% für 6s, Lachen' },
+      { key: 'mops', name: 'Mops-Kommando ↓↘→+○', damage: 0, cooldown: 22, range: 6.0, effect: 'summon_stun', startup: 50, active: 0, recovery: 0, desc: 'Paula kommt, +50% Krit 8s, kippt alle Arena-Props, Neon Panik' },
+      { key: 'pfanne', name: 'Aus der Pfanne →→+△', damage: 14, cooldown: 6, range: 2.9, effect: 'launch', startup: 11, active: 4, recovery: 18, desc: 'Anti-Air, verbraucht Schlüppa-Fett, Launch' },
     ],
   },
   {
@@ -87,10 +91,14 @@ export const ROSTER = [
   {
     id: 'mojo_bob', name: 'Mojo Bob', color: PALETTE.gold, stature: 'normal',
     maxHP: 100, moveSpeed: 4.8, light: 9, heavy: 14, range: 3.5,
-    passive: 'Das Mojo: 15 % Krit-Chance, ×2,4 Schaden',
+    passive: 'Das Mojo: 15 % Krit ×2,4, 0-7 Mojo-Punkte, Wette R1+Richtung',
     specials: [
-      { key: 'riesenschwanz', name: 'Riesenschwanz', damage: 12, cooldown: 6, range: 4.0, effect: 'crit' },
-      { key: 'beutelchen', name: 'Beutelchen', damage: 9, cooldown: 8, range: 3.2, effect: 'gamble' },
+      { key: 'riesenschwanz', name: 'Riesenschwanz ↓↘→+□', damage: 12, cooldown: 6, range: 4.5, effect: 'whip', startup: 19, active: 6, recovery: 24, desc: 'Längste Reichweite, Peitsche, Krit-fähig' },
+      { key: 'riesenschwanz_ex', name: 'EX-Riesenschwanz', damage: 18, cooldown: 7, range: 5.0, effect: 'whip_multi', startup: 19, active: 18, recovery: 24, desc: '18 Frames aktiv, Multi-Hit' },
+      { key: 'beutelchen', name: 'Beutelchen ←↙↓+○', damage: 9, cooldown: 8, range: 3.2, effect: 'gamble', startup: 22, active: 0, recovery: 0, desc: 'Zufall: Klavier 5%, Heilung, Gift, Slow, Invert, Burn' },
+      { key: 'loeffelsturm', name: 'Löffelsturm →↘↓↙←+□', damage: 17, cooldown: 10, range: 6.5, effect: 'projectile_storm', startup: 24, active: 0, recovery: 0, desc: '17 Löffel, jeder würfelt Krit' },
+      { key: 'fuenfzig', name: 'Fünfzig Cent ↓↓+□', damage: 8, cooldown: 5, range: 5.5, effect: 'coin', startup: 15, active: 0, recovery: 0, desc: 'Münz-Projektil, Kalle fängt' },
+      { key: 'dingeneldang', name: 'Dingeneldang! →→↓↓+○', damage: 0, cooldown: 20, range: 0, effect: 'mojo_ult', startup: 30, active: 0, recovery: 0, desc: '7 Mojo -> 100% Krit 8s, dann 15s Reue -30%' },
     ],
   },
   {
