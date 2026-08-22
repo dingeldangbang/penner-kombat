@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#1A1C2A">
+<meta name="description" content="PENNER KOMBAT 3D — Le Binde vs Mojo Bob, Pose-System, alle Kombos 100% spielbar">
+<title>PENNER KOMBAT 3D — Le Binde vs Mojo Bob</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  #stage3d { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .spec { background: rgba(255,255,255,0.06); border-left: 3px solid var(--gold); padding: 6px 8px; margin: 4px 0; border-radius: 4px; font-size: 12px; }
+  .spec b { color: var(--gold); }
+  .spec small { opacity: 0.7; }
+  .buff { font-size: 11px; color: var(--gold); margin-top: 4px; min-height: 14px; }
+  .controls-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; opacity: 0.8; }
+  .controls-legend div { background: rgba(255,255,255,0.05); padding: 6px; border-radius: 4px; }
+  .pose-debug { position: fixed; bottom: 10px; left: 10px; font-size: 10px; opacity: 0.5; pointer-events: none; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="stage3d" class="hidden"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div class="hud-side left">
+    <div class="hud-name" id="name1">Le Binde</div>
+    <div class="bar"><div class="fill" id="hp1-fill"></div></div>
+    <div class="bar small"><div class="fill neon" id="fb1-fill"></div></div>
+    <div class="med" id="med1"></div>
+    <div class="buff" id="buff1"></div>
+  </div>
+
+  <div class="hud-center">
+    <div id="timer">99</div>
+    <div id="round">Runde 1 / 3</div>
+    <button id="btn-pause" class="ghost">MENÜ</button>
+  </div>
+
+  <div class="hud-side right">
+    <div class="hud-name" id="name2">Mojo Bob</div>
+    <div class="bar rtl"><div class="fill" id="hp2-fill"></div></div>
+    <div class="bar small rtl"><div class="fill neon" id="fb2-fill"></div></div>
+    <div class="med" id="med2"></div>
+    <div class="buff" id="buff2"></div>
+  </div>
+
+  <div id="result" class="hidden">
+    <div id="result-text">Sieger</div>
+    <div class="row">
+      <button id="btn-rematch" class="big red">REVANCHE</button>
+      <button id="btn-menu" class="big dark">MENÜ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hauptmenü -->
+<section id="screen-main" class="screen cover">
+  <div class="cover-front">
+    <div class="clothesline"></div>
+    <h1>PENNER<span>KOMBAT 3D</span></h1>
+    <p class="sub">LE BINDE vs MOJO BOB — POSE SYSTEM — ALLE KOMBOS 100% SPIELBAR</p>
+    <div class="menu">
+      <button id="btn-versus" class="big red">2 SPIELER: LE BINDE vs MOJO BOB</button>
+      <button id="btn-training" class="big orange">TRAINING (KI LEICHT)</button>
+      <button id="btn-help" class="big blue">STEUERUNG & KOMBOS</button>
+    </div>
+    <div style="margin-top:14px; width:min(720px,94vw); font-size:12px; opacity:0.85; line-height:1.5; background:rgba(0,0,0,0.35); padding:12px; border-radius:8px;">
+      <b style="color:var(--gold)">Was ist neu?</b><br>
+      • Echte 3D Arena "Zum Blauen Eimer" mit Three.js — Laternen, Neon, Bierkasten-Turm, Gasflasche, Wäscheleine<br>
+      • <b>Pose-System</b> statt Clips: 20 Posen (idle, walk, light/heavy, block, jump, roll, hit, death + 6 Specials pro Charakter) — wie Unity Animator, aber prozedural<br>
+      • <b>Alle Kombos 100% spielbar:</b> Le Binde 6 Moves (Flaschenhals, EX, Großer Schwung mit Armor, REIF! Buff, Mops-Kommando kippt Arena + Krit, Pfanne Anti-Air) + Mojo Bob 6 Moves (Riesenschwanz, EX Multi-Hit, Beutelchen Gamble 5% Klavier, Löffelsturm 17 Projektile, Fünfzig Cent, Dingeneldang 7 Mojo -> 100% Krit 8s)<br>
+      • Schmier-Schlüppa -60% Schaden, 45% Grab-Rutsch, brennt nach 3 Feuer, Mojo System 15% Krit x2.4, Mojo-Punkte, Effekte: Bleed, Burn, Poison, Slow, Invert, Stun, Launch, Armor<br>
+      • Projektile: Flasche, Löffelsturm, Münze — mit Hitstop, Screen-Shake, Partikeln
+    </div>
+    <p class="foot">Dingelang Games · Pose-basiert, keine externen Modelle — wie FighterFactory</p>
+  </div>
+</section>
+
+<!-- Charakterauswahl -->
+<section id="screen-select" class="screen hidden">
+  <h2>WER PRÜGELT? — 3D POSE ARENA</h2>
+  <div class="select-grid">
+    <div class="col">
+      <div class="label" id="label-p1">Spieler 1</div>
+      <div class="list" id="list-p1"></div>
+      <div class="passive" id="passive-p1"></div>
+      <div id="specials-p1" style="margin-top:8px;"></div>
+    </div>
+    <div class="col mid">
+      <button id="btn-mode" class="opt">Gegner: Spieler 2</button>
+      <button id="btn-ai" class="opt">KI-Stufe: Mittel</button>
+      <button id="btn-rounds" class="opt">Runden: Best of 3</button>
+      <button id="btn-fight" class="big red">IN DIE 3D ARENA</button>
+      <button class="ghost" data-back>ZURÜCK</button>
+      <div class="controls-legend" style="margin-top:12px;">
+        <div><b>P1:</b><br>WASD bewegen<br>J leicht K schwer<br>U S1 Flaschenhals/Schwanz<br>I S2 Mops/Beutelchen<br>L S3 Schwung/Löffel<br>M S4 REIF!/50Cent<br>N S5 Pfanne/Dingeldang<br>, EX<br>Shift Block Space Jump<br>O Rolle Y Fatal H Med</div>
+        <div><b>P2:</b><br>Pfeile bewegen<br>Num1 leicht Num2 schwer<br>Num4 S1 Num5 S2<br>Num7 S3 Num8 S4<br>Num9 S5 Num+ EX<br>Num3 Block Num0 Jump<br>Num6 Rolle Num* Fatal<br>NumEnter Med</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label" id="label-p2">Spieler 2</div>
+      <div class="list" id="list-p2"></div>
+      <div class="passive" id="passive-p2"></div>
+      <div id="specials-p2" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Steuerung -->
+<section id="screen-help" class="screen hidden">
+  <h2>STEUERUNG & ALLE KOMBOS — 100% SPIELBAR</h2>
+  <div class="help" style="width:min(900px,96vw)">
+    <table>
+      <tr><th>Aktion</th><th>Spieler 1</th><th>Spieler 2</th><th>Pose</th></tr>
+      <tr><td>Bewegen</td><td>W A S D</td><td>Pfeiltasten</td><td>walk / walk2 Cycle</td></tr>
+      <tr><td>Leicht</td><td>J</td><td>Numpad 1</td><td>light_punch</td></tr>
+      <tr><td>Schwer</td><td>K</td><td>Numpad 2</td><td>heavy_punch</td></tr>
+      <tr><td>Blocken</td><td>Shift halten</td><td>Numpad 3</td><td>block + Schild</td></tr>
+      <tr><td>Springen</td><td>Space</td><td>Numpad 0</td><td>jump</td></tr>
+      <tr><td>Rolle (0.2s unverwundbar)</td><td>O</td><td>Numpad 6</td><td>roll</td></tr>
+      <tr><td>Fatal Blow 28-44</td><td>Y</td><td>Numpad *</td><td>fatal</td></tr>
+      <tr><td>Med-Kapsel +25</td><td>H</td><td>Numpad Enter</td><td>—</td></tr>
+    </table>
+    <h3 style="color:var(--gold); margin-top:18px;">LE BINDE — 6 Specials (alle mit Pose + Effekt)</h3>
+    <table>
+      <tr><th>Move</th><th>Input</th><th>Schaden</th><th>Effekt</th></tr>
+      <tr><td>Flaschenhals</td><td>U / Num4</td><td>11</td><td>Projektil Flasche + Bleed 5s</td></tr>
+      <tr><td>EX-Flaschenhals</td><td>, / Num+</td><td>15</td><td>Mehr Schaden, Knock, Bleed heavy</td></tr>
+      <tr><td>Großer Schwung</td><td>L / Num7</td><td>16</td><td>Armor Frames 8-20, Wallbounce, Staub</td></tr>
+      <tr><td>REIF!</td><td>M / Num8</td><td>0</td><td>Buff +80% nächster Treffer 6s</td></tr>
+      <tr><td>Mops-Kommando</td><td>I / Num5</td><td>0</td><td>Paula, +50% Krit 8s, kippt alle Props, Neon Panik</td></tr>
+      <tr><td>Aus der Pfanne</td><td>N / Num9</td><td>14</td><td>Anti-Air Launch, verbraucht Fett</td></tr>
+    </table>
+    <p class="note">Passiv Schmier-Schlüppa: -60% Schaden wenn nicht blockend, 45% Grab-Rutsch, 3 Ladungen, brennt nach 3 Feuer 8s weg.</p>
+
+    <h3 style="color:var(--gold); margin-top:18px;">MOJO BOB — 6 Specials (Gamble + Krit)</h3>
+    <table>
+      <tr><th>Move</th><th>Input</th><th>Schaden</th><th>Effekt</th></tr>
+      <tr><td>Riesenschwanz</td><td>U / Num4</td><td>12</td><td>Größte Reichweite 4.5m, Schwanz-Pose, Krit</td></tr>
+      <tr><td>EX-Riesenschwanz</td><td>, / Num+</td><td>18</td><td>18 Frames aktiv, Multi-Hit 3x</td></tr>
+      <tr><td>Beutelchen</td><td>I / Num5</td><td>9 + Random</td><td>Gamble: 5% Klavier 25 DMG + Stun, sonst Heal/Burn/Poison/Slow/Invert/Mojo+1</td></tr>
+      <tr><td>Löffelsturm</td><td>L / Num7</td><td>17x1.2</td><td>17 Löffel-Projektile, jedes würfelt Krit x2.4</td></tr>
+      <tr><td>Fünfzig Cent</td><td>M / Num8</td><td>8</td><td>Münz-Projektil 11 m/s</td></tr>
+      <tr><td>Dingeneldang!</td><td>N / Num9</td><td>0</td><td>7 Mojo-Punkte -> 100% Krit 8s, danach 15s Reue -30%</td></tr>
+    </table>
+    <p class="note">Passiv Mojo: 15% Basis-Krit x2.4 unblockbar, Mojo-Punkte 0-7 aus verlorenen Situationen, Wette-System.</p>
+
+    <h3 style="color:var(--gold); margin-top:18px;">Kombos & System</h3>
+    <p class="note">
+      • Kombo-Fenster 2.0s wie Unity, jeder Treffer +12 Meter, kassiert +8 Meter<br>
+      • Light 0.4s Cooldown, Heavy 0.8s, Startup 0.12s / 0.20s, Active 0.2s, Recovery 0.13s-0.25s<br>
+      • Effekte über Zeit: Bleed 1.2 DPS 5s, Burn 2 DPS 4s, Poison 1.5 DPS 5s, Slow 0.6x 3s, Invert 4s, Stun 0.6-1.5s<br>
+      • Pose-System: 20 Posen definiert in pose.js, lerp 0.35 Blend, Walk-Cycle Sinus 8Hz, Tail-Wag für Mojo Bob
+    </p>
+    <button class="ghost" data-back>ZURÜCK</button>
+  </div>
+</section>
+
+<div class="pose-debug">Pose-System aktiv · Three.js · 60 FPS sim</div>
+
+<script type="module" src="src/main3d.js"></script>
+</body>
+</html>
