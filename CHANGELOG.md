@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### macOS-Hinweise
+- `docs/SPIELEN.md` und `docs/BUILD_ANDROID.md` halten fest, dass **macOS Big Sur 11.x genügt**
+  (Unity 2022.3 LTS: Mojave 10.14+ auf Intel, Big Sur 11.0+ auf Apple Silicon), inklusive
+  Hinweisen zu Rosetta 2, Mono-Build ohne Xcode und den nötigen Android-Modulen.
+
 ### Android-APK aus der CI
 - **`docs/ci/android-build.yml`**: Workflow-Vorlage für `game-ci/unity-builder` — baut ein APK
   auf GitHubs Runnern (manuell oder bei jedem Tag `v*.*.*`, dann hängt es am Release).

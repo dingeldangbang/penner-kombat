@@ -9,6 +9,10 @@ Diese Anleitung führt vom Repo zum installierbaren `.apk`.
 | **A — Unity auf dem eigenen Rechner** | Unity 2022.3 LTS + Android-Modul | diese Seite |
 | **B — GitHub baut das APK** | kostenlose Unity-Lizenz als Secret | [`docs/ci/README.md`](ci/README.md) → `android-build.yml` |
 
+**macOS Big Sur (11.x) reicht** — Unity 2022.3 LTS verlangt Mojave 10.14+ (Intel)
+bzw. Big Sur 11.0+ (Apple Silicon). Für Weg A im Hub das Modul *Android Build Support*
+inklusive **OpenJDK** und **Android SDK & NDK Tools** mitinstallieren.
+
 **Nicht nötig:** PS3-Emulatoren, WebView, Capacitor oder ein Browser-Export.
 Penner Kombat ist ein Unity-Projekt in C# — Android ist ein normales Build-Ziel.
 

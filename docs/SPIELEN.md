@@ -38,6 +38,34 @@ Wer lieber sofort ins Testduell springt: am `Bootstrapper` den Haken `createFron
 
 ---
 
+## 1c. Mac mit macOS Big Sur (11.x)
+
+Reicht aus. Unity 2022.3 LTS verlangt **Mojave 10.14+** auf Intel-Macs und
+**Big Sur 11.0+** auf Apple-Silicon-Macs — du liegst in beiden Fällen drüber.
+(Selbst Unity 6 würde laufen, das verlangt Big Sur 11+.)
+
+| Punkt | Für dich |
+|---|---|
+| Editor-Version | **2022.3 LTS** — genau die, auf die `ProjectSettings/ProjectVersion.txt` zeigt |
+| Intel oder Apple Silicon | im Hub die passende Variante wählen; auf M1/M2 braucht die Intel-Variante Rosetta 2 |
+| Grafik | Metal-fähige GPU — jeder Mac, der Big Sur läuft, erfüllt das |
+| RAM | 8 GB Minimum. Mit weniger wird der Editor zäh, das Spiel selbst ist genügsam |
+| Xcode | **nicht nötig**, solange du nur im Editor spielst oder einen Mac-Build mit Scripting Backend *Mono* machst |
+
+**Spielen ohne jeden Build:** Play-Modus im Editor genügt — Tastatur, KI, HUD, alles läuft dort.
+**Als App:** `File → Build Settings → macOS → Build`. Scripting Backend auf **Mono** lassen,
+dann brauchst du kein Xcode.
+
+**Android vom Mac aus:** im Hub beim Editor das Modul *Android Build Support* mitinstallieren
+(inklusive **OpenJDK** und **Android SDK & NDK Tools**) — dann baut der Mac das APK selbst.
+Alternativ baut GitHub es für dich: [`docs/ci/README.md`](ci/README.md).
+
+**Falls der Unity Hub meckert:** neuere Hub-Versionen können höhere macOS-Anforderungen haben.
+Dann den Editor direkt aus dem Unity-Download-Archiv laden und die `.dmg` installieren —
+das Projekt lässt sich anschließend über *Add project from disk* eintragen.
+
+---
+
 ## 2. Steuerung im MVP
 
 | Aktion | Spieler 1 | Spieler 2 |
