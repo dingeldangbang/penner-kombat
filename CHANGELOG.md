@@ -1,6 +1,17 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Browser-Fassung als Alternative (`web/`)
+- **Vollständig spielbare Web-Version** ohne Unity: Hauptmenü, Charakterauswahl aller 9 Kämpfer,
+  KI-Stufen, Runden, HUD, 2,5D-Canvas-Darstellung, Touch-Steuerung (Joystick + 9 Buttons),
+  synthetisierter Ton inklusive 808-Beat, dessen Tempo die Combo treibt.
+- **Kampfwerte Zahl für Zahl aus dem C#-Code gespiegelt** (`web/src/data.js` nennt je Block die
+  Quelldatei): Roster, Statur-Tabelle, 78-%-Block, Combo-Fenster, Rolle mit i-Frames, Fatal Blow,
+  Med-Kapsel, alle sechs KI-Profile.
+- **`web/test/sim.test.mjs`**: 11 Tests, alle grün (`node --test web/test/sim.test.mjs`) — damit ist
+  die Kampflogik erstmals in diesem Projekt tatsächlich ausgeführt und geprüft.
+- **Neue Doku `docs/WEB.md`** mit ehrlichem Abgleich, was identisch ist und was fehlt.
+
 ### Handy als Hauptplattform
 - **`Editor/PkBuildPreparer.cs`**: bereitet Builds automatisch vor — im Batchmode (CI) ohne
   Zutun. Legt die Arena-Szene an und trägt sie in die **Build Settings** ein (ohne das baut
