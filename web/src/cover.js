@@ -2,8 +2,8 @@
  * cover.js — Hinterhof-Kulisse im Stil des Cover-Artworks.
  *
  * Zeichnet Backstein, Wäscheleine, Laternen, Neonschild „Zum Blauen Eimer",
- * Bierkästen, Graffiti und Müll auf ein Canvas — rein prozedural, damit kein
- * Bild geladen werden muss.
+ * Bierkästen und Graffiti auf ein Canvas — rein prozedural, damit kein Bild
+ * geladen werden muss. Bewusst aufgeräumt: kein Unrat am Boden.
  *
  * Liegt eine echte Coverdatei unter `assets/cover.jpg`, wird stattdessen die
  * verwendet (siehe loadCoverIfPresent).
@@ -57,11 +57,7 @@ export class CoverScene {
     for (let i = 0; i < 6; i++) {
       crates.push({ x: 0.02 + (i % 2) * 0.055, y: 0.62 + Math.floor(i / 2) * 0.1, hue: i % 3 });
     }
-    const litter = [];
-    for (let i = 0; i < 18; i++) {
-      litter.push({ x: rnd(), y: 0.86 + rnd() * 0.12, r: 2 + rnd() * 4, a: rnd() * Math.PI });
-    }
-    return { shirts, crates, litter };
+    return { shirts, crates };
   }
 
   draw(dt) {
@@ -223,13 +219,23 @@ export class CoverScene {
       c.fillRect(0, h * 0.8, w, h * 0.2);
     }
 
-    for (const l of this.layout.litter) {
-      c.save();
-      c.translate(l.x * w, l.y * h);
-      c.rotate(l.a);
-      c.fillStyle = ['rgba(120,180,90,0.5)', 'rgba(200,200,200,0.35)', 'rgba(160,90,40,0.45)'][Math.floor(l.r) % 3];
-      c.fillRect(-l.r, -1.5, l.r * 2.5, 3);
-      c.restore();
+    // Sauberes, nasses Pflaster: nur Fugen, kein Unrat
+    c.strokeStyle = 'rgba(255,255,255,0.05)';
+    c.lineWidth = 1;
+    const rows = 4;
+    for (let i = 1; i <= rows; i++) {
+      const y = h * 0.82 + (h * 0.18 * i) / rows;
+      c.beginPath();
+      c.moveTo(0, y);
+      c.lineTo(w, y);
+      c.stroke();
+    }
+    for (let i = 0; i <= 10; i++) {
+      const x = (w / 10) * i;
+      c.beginPath();
+      c.moveTo(x, h * 0.82);
+      c.lineTo(x + (x - w / 2) * 0.12, h);
+      c.stroke();
     }
   }
 

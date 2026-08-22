@@ -107,7 +107,8 @@ Auf dem Handy bedient der Touch nur Spieler 1.
 **Hauptmenü im Stil des Artworks:** Der Hinterhof wird prozedurallgezeichnet
 (`web/src/cover.js`) — Backsteinwand, Wäscheleine mit wehenden Klamotten, zwei
 flackernde Laternen, das Neonschild „Zum Blauen Eimer", Bierkästen, Gasflasche,
-Graffiti „DINGELANG", nasses Pflaster mit Spiegelungen. Der Titel steht im
+Graffiti „DINGELANG", nasses Pflaster mit Spiegelungen und sauberen Fugen —
+**kein Unrat am Boden**. Der Titel steht im
 Cover-Rot mit dunkler Kontur.
 
 **Dein echtes Cover einsetzen:** Datei als `web/assets/cover.jpg` ablegen —

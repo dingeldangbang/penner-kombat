@@ -4,7 +4,8 @@
 ### Cover-Look und PWA für die Browser-Fassung
 - **`web/src/cover.js`**: Hinterhof-Kulisse im Stil des Artworks, komplett gezeichnet —
   Backstein, Wäscheleine mit Wind, flackernde Laternen, Neonschild „Zum Blauen Eimer",
-  Bierkästen, Gasflasche, Graffiti, nasses Pflaster mit Laternenspiegelung, Vignette.
+  Bierkästen, Gasflasche, Graffiti, nasses Pflaster mit Laternenspiegelung und Fugenraster,
+  Vignette — bewusst ohne Unrat am Boden.
 - Titel im Cover-Rot mit dunkler Kontur und Schlagschatten; liegt eine Datei unter
   `web/assets/cover.jpg`, wird stattdessen das echte Artwork gezeigt.
 - **PWA**: `manifest.webmanifest`, gezeichnetes SVG-Icon und `sw.js` — installierbar auf dem
