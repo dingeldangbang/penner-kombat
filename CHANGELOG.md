@@ -1,6 +1,18 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Frontend und Ton
+- **`UI/FrontEnd.cs`** (Taste **F1**): prozedurales Hauptmenü (Versus · Training · Modelle · Beenden)
+  und Charakterauswahl mit allen 9 Kämpfern für P1 und P2, Umschalter Mensch/KI, KI-Stufe
+  (Sehr leicht bis Boss) und Rundenzahl 1/3/5. Kein Prefab, keine zweite Szene nötig.
+- **`GameManager`**: `autoStart`-Schalter, Überladung `StartVersusFight(p1, p2, p2IsAI)`,
+  `aiDifficulty` wird beim Anhängen des `AIController` angewendet, `RestartMatch()` behält
+  Charakterwahl und Gegnertyp bei.
+- **`Core/ProceduralAudio.cs`**: synthetisierte SFX aus Code — Treffer leicht/schwer, Block,
+  Schmerzlaut, UI-Klick, 808-Kick und eine schäbige Siegesfanfare.
+- **`AudioManager`** füllt leere SFX-Listen damit auf (`useProceduralFallback`), sobald echte
+  Clips zugewiesen sind, greift der Fallback nicht mehr.
+
 ### Werkzeuge zur Absicherung
 - **`Tools/check_symbols.py`**: statische Referenzprüfung ohne Unity — findet Aufrufe auf
   projekteigene Typen, deren Mitglied es nicht gibt, unbekannte generische Typparameter und

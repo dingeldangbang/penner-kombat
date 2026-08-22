@@ -13,6 +13,10 @@ namespace PennerKombat
     {
         public static AudioManager Instance;
 
+        [Header("Fallback")]
+        [Tooltip("Leere SFX-Listen mit synthetisierten Klängen füllen, solange keine Aufnahmen da sind.")]
+        public bool useProceduralFallback = true;
+
         [Header("Mixer")]
         public AudioMixerGroup musicGroup;
         public AudioMixerGroup sfxGroup;
@@ -47,6 +51,31 @@ namespace PennerKombat
             sfxSource = CreateSource("SFX", sfxGroup, 0.9f, false);
             voiceSource = CreateSource("Voice", voiceGroup, 0.9f, false);
             ambientSource = CreateSource("Ambient", sfxGroup, 0.35f, true);
+
+            EnsureFallbackSfx();
+        }
+
+        /// <summary>
+        /// Ohne echte Aufnahmen bliebe das Spiel stumm. Deshalb werden leere
+        /// SFX-Listen mit synthetisierten Klängen gefüllt (Core/ProceduralAudio.cs).
+        /// Sobald eigene Clips zugewiesen sind, passiert hier nichts.
+        /// </summary>
+        void EnsureFallbackSfx()
+        {
+            if (!useProceduralFallback) return;
+
+            if (hitSounds == null || hitSounds.Length == 0)
+                hitSounds = new[] { ProceduralAudio.Hit(1f), ProceduralAudio.Hit(1.15f), ProceduralAudio.HeavyHit() };
+            if (blockSounds == null || blockSounds.Length == 0)
+                blockSounds = new[] { ProceduralAudio.Block() };
+            if (hurtSounds == null || hurtSounds.Length == 0)
+                hurtSounds = new[] { ProceduralAudio.Hurt() };
+            if (uiSounds == null || uiSounds.Length == 0)
+                uiSounds = new[] { ProceduralAudio.Click() };
+            if (specialSounds == null || specialSounds.Length == 0)
+                specialSounds = new[] { ProceduralAudio.Kick808() };
+            if (victoryTracks == null || victoryTracks.Length == 0)
+                victoryTracks = new[] { ProceduralAudio.Victory() };
         }
 
         AudioSource CreateSource(string name, AudioMixerGroup grp, float vol, bool loop)

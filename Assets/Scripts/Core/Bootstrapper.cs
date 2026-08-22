@@ -26,6 +26,8 @@ namespace PennerKombat
         public bool createFrameDataOverlay = true;
         [Tooltip("GLB-Modell-Menü bereitstellen (im Spiel mit F7 einblenden, docs/MODELLE.md).")]
         public bool createModelMenu = true;
+        [Tooltip("Hauptmenü + Charakterauswahl zeigen (aus = sofort ins Testduell).")]
+        public bool createFrontEnd = true;
 
         [Header("Extras (docs/EXTRAS.md)")]
         public bool createMusicSync = true;
@@ -74,6 +76,7 @@ namespace PennerKombat
                 GlbModelLoader.Ensure();
                 ModelMenuUI.Ensure();
             }
+            if (createFrontEnd) FrontEnd.Ensure();
             if (createTouchControls && TouchControls.Ensure(touchControlsOnDesktop) != null)
             {
                 AntiGhosting.Ensure();

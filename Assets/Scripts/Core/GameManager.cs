@@ -14,6 +14,10 @@ namespace PennerKombat
         public static GameManager Instance;
 
         [Header("Match Settings")]
+        [Tooltip("Beim Start sofort ein Testduell beginnen. Das Frontend (Menü) schaltet das ab.")]
+        public bool autoStart = true;
+        [Tooltip("Schwierigkeit für KI-Gegner (docs/CONTROLS.md).")]
+        public AIDifficulty aiDifficulty = AIDifficulty.Medium;
         public int bestOfRounds = GameConstants.DefaultBestOfRounds;
         public float roundTime = GameConstants.DefaultRoundTime;
 
@@ -55,8 +59,9 @@ namespace PennerKombat
             EnsureDependencies();
 
             // Standard: Le Binde (Spieler) vs. Mojo Bob (KI) für schnellen Test.
-            if (player1 == null && !matchEnded)
-                StartVersusFight(0, 2);
+            // Liegt ein Menü in der Szene, übernimmt das den Start.
+            if (autoStart && !FrontEnd.SuppressAutoStart && player1 == null && !matchEnded)
+                StartVersusFight(0, 2, p2IsAI: true);
         }
 
         /// <summary>
@@ -101,14 +106,17 @@ namespace PennerKombat
 
         // ===== Öffentliche Einstiegspunkte =====
 
-        public void StartVersusFight(int p1Index, int p2Index)
+        public void StartVersusFight(int p1Index, int p2Index) => StartVersusFight(p1Index, p2Index, false);
+
+        /// <summary>Versus-Match starten. <paramref name="p2IsAI"/> = Gegner ist ein Bot.</summary>
+        public void StartVersusFight(int p1Index, int p2Index, bool p2IsAI)
         {
             isStoryMatch = false;
             currentRound = 1;
             player1Wins = 0;
             player2Wins = 0;
             matchEnded = false;
-            SpawnFighters(p1Index, p2Index, isAI: false);
+            SpawnFighters(p1Index, p2Index, isAI: p2IsAI);
             StartNewRound();
         }
 
@@ -172,7 +180,10 @@ namespace PennerKombat
 
             // AI anhängen, falls KI-gesteuert
             if (player2.isAI && player2.GetComponent<AIController>() == null)
-                player2.gameObject.AddComponent<AIController>();
+            {
+                var ai = player2.gameObject.AddComponent<AIController>();
+                ai.ApplyDifficulty(aiDifficulty);
+            }
 
             if (cameraController != null)
             {
@@ -317,6 +328,12 @@ namespace PennerKombat
             if (roundActive) RoundEnd();
         }
 
-        public void RestartMatch() => StartVersusFight(0, 2);
+        public void RestartMatch()
+        {
+            int p1 = database != null ? database.GetIndexById(player1 != null ? player1.fighterId : "le_binde") : 0;
+            int p2 = database != null ? database.GetIndexById(player2 != null ? player2.fighterId : "mojo_bob") : 2;
+            bool ai = player2 == null || player2.isAI;
+            StartVersusFight(p1, p2, ai);
+        }
     }
 }

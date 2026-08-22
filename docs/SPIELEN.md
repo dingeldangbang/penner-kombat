@@ -22,6 +22,22 @@ danach `Assets/Scenes/Arena.unity` öffnen und ▶ drücken.
 
 ---
 
+## 1b. Was du zuerst siehst: das Menü
+
+Beim Start liegt ein prozedurales **Hauptmenü** über der Arena (`UI/FrontEnd.cs`):
+
+| Punkt | Wirkung |
+|---|---|
+| **VERSUS** | Charakterauswahl: alle 9 für P1 und P2, Gegner Mensch oder KI, KI-Stufe (Sehr leicht … BOSS), Runden 1 / 3 / 5 |
+| **TRAINING** | Duell gegen eine sehr leichte KI mit unendlicher Gesundheit und eingeblendeten Frame-Daten |
+| **MODELLE (GLB)** | öffnet das F7-Menü zum Zuweisen eigener Modelle |
+| **BEENDEN** | schließt das Spiel (im Editor: Play-Modus aus) |
+
+**F1** holt das Menü jederzeit zurück, **Esc** geht aus der Auswahl einen Schritt zurück.
+Wer lieber sofort ins Testduell springt: am `Bootstrapper` den Haken `createFrontEnd` entfernen.
+
+---
+
 ## 2. Steuerung im MVP
 
 | Aktion | Spieler 1 | Spieler 2 |
@@ -38,6 +54,7 @@ danach `Assets/Scenes/Arena.unity` öffnen und ▶ drücken.
 | Med-Kapsel | H | Numpad Enter |
 | Frame-Daten-Overlay | **F4** | — |
 | Modell-Menü (GLB) | **F7** | — |
+| Hauptmenü | **F1** | — |
 | Touch-Debug | F3 | — |
 
 Vollständige Liste inklusive Umbelegung: [`CONTROLS.md`](CONTROLS.md).
