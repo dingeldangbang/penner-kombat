@@ -21,7 +21,18 @@ permissions:
 
 env:
   # Godot-Version und Template-Version MÜSSEN exakt übereinstimmen.
-  GODOT_VERSION: 4.2.2
+  #
+  # WARUM 4.5.1 und nicht 4.2.2?
+  # Godot < 4.5 baut die nativen Bibliotheken mit NDK r27 und richtet sie auf
+  # 4 KB aus. Android 15/16 laufen auf vielen Geräten mit 16-KB-Speicherseiten;
+  # dort lässt sich so ein APK nicht installieren bzw. stürzt beim Start ab
+  # ("INSTALL_FAILED_INVALID_APK: unsupported ELF page size").
+  # Godot 4.5 nutzt NDK r28b und richtet automatisch auf 16 KB aus (GH-106358).
+  #
+  # Für eine Play-Store-Veröffentlichung: 4.7.2 nehmen, das setzt zusätzlich
+  # target SDK 36. Für ein seitlich installiertes Debug-APK reicht 4.5.1 und
+  # der Versionssprung ist kleiner.
+  GODOT_VERSION: 4.5.1
   GODOT_RELEASE: stable
   EXPORT_PRESET: Android
   APK_NAME: pennerkombat-debug.apk
@@ -137,6 +148,11 @@ jobs:
             exit 1
           fi
           unzip -l "build/${APK_NAME}" | grep -E 'classes.dex|assets/' | head
+
+      # Fängt genau den Fehler ab, der auf Android 15/16 zum Absturz führt.
+      # Schlägt fehl, solange GODOT_VERSION < 4.5 ist.
+      - name: 16-KB-Page-Size prüfen (Android 15/16)
+        run: python3 Tools/check_apk_16kb.py "build/${APK_NAME}"
 
       - name: APK als Artefakt hochladen
         uses: actions/upload-artifact@v4

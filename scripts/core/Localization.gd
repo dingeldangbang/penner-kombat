@@ -69,7 +69,11 @@ func _translate(key: String) -> String:
 	return key
 
 
-static func tr(key: String) -> String:
+# NICHT "tr" nennen: Object.tr() existiert bereits in der Basisklasse und
+# Godot >= 4.3 bricht den Parse mit
+#   "The function signature doesn't match the parent"
+# ab -- das Projekt startet dann gar nicht erst.
+static func translate_key(key: String) -> String:
 	if instance:
 		return instance._translate(key)
 	return key
