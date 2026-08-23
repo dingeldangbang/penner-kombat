@@ -1,0 +1,183 @@
+name: Build & Release Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g. v1.12.0)'
+        required: true
+        default: 'v1.12.0'
+      apk_name:
+        description: 'APK filename'
+        required: true
+        default: 'DinGelSchwinG-v1.12.0-release.apk'
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: "4.2.2"
+  GODOT_STATUS: "stable"
+  ANDROID_BUILD_TOOLS: "33.0.2"
+  ANDROID_PLATFORM: "android-33"
+  ANDROID_MIN_SDK: "30"
+
+jobs:
+  build-apk:
+    name: Build Android Release APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 11076708
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --install \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "platforms;${ANDROID_PLATFORM}" \
+            "platform-tools"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+
+      - name: Download Godot 4 headless
+        run: |
+          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
+          echo "Downloading Godot from: $GODOT_URL"
+          wget -q --no-verbose "$GODOT_URL" -O godot.zip
+          unzip -q godot.zip
+          chmod +x Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64
+          sudo mv Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64 /usr/local/bin/godot
+          godot --version
+
+      - name: Download Godot export templates
+        run: |
+          TEMPLATES_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
+          echo "Downloading export templates from: $TEMPLATES_URL"
+          wget -q --no-verbose "$TEMPLATES_URL" -O templates.tpz
+          # Install templates
+          TEMPLATES_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}"
+          mkdir -p "$TEMPLATES_DIR"
+          cd "$TEMPLATES_DIR"
+          unzip -q "${{ github.workspace }}/templates.tpz"
+          # The templates are inside a 'templates' subfolder — move them up
+          if [ -d templates ]; then
+            mv templates/* .
+            rmdir templates
+          fi
+          echo "Export templates installed:"
+          ls -la
+
+      - name: Generate release keystore
+        run: |
+          keytool -genkeypair \
+            -alias pennerkombat \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -keystore release.keystore \
+            -storepass penner123 \
+            -keypass penner123 \
+            -dname "CN=PennerKombat, OU=Games, O=DingelDangBang, L=Berlin, ST=Berlin, C=DE"
+          echo "Keystore generated at: $(pwd)/release.keystore"
+        working-directory: ${{ github.workspace }}
+
+      - name: Configure export preset with keystore
+        run: |
+          # Update the export_presets.cfg to use the generated keystore
+          KEYSTORE_PATH="${{ github.workspace }}/release.keystore"
+          sed -i "s|keystore/release=\"\"|keystore/release=\"${KEYSTORE_PATH}\"|g" export_presets.cfg
+          sed -i "s|keystore/release_user=\"\"|keystore/release_user=\"pennerkombat\"|g" export_presets.cfg
+          sed -i "s|keystore/release_password=\"\"|keystore/release_password=\"penner123\"|g" export_presets.cfg
+          # Set version info
+          VERSION_NAME="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION_NAME="${VERSION_NAME#v}"  # Strip leading 'v'
+          sed -i "s|version/name=\".*\"|version/name=\"${VERSION_NAME}\"|g" export_presets.cfg
+          echo "Export preset configured:"
+          grep -A3 "keystore/" export_presets.cfg
+
+      - name: Import Godot project (headless)
+        run: |
+          mkdir -p build
+          # Import the project — this generates the .godot/imported cache
+          godot --headless --path "${{ github.workspace }}" --import 2>&1 || true
+          echo "Project import completed"
+
+      - name: Export Android Release APK
+        run: |
+          APK_NAME="${{ github.event.inputs.apk_name || 'DinGelSchwinG-v1.12.0-release.apk' }}"
+          mkdir -p build
+          godot --headless --path "${{ github.workspace }}" \
+            --export-release "Android" \
+            "build/${APK_NAME}" 2>&1
+          echo "Export completed"
+          ls -lh build/
+
+      - name: Verify APK exists
+        run: |
+          APK_NAME="${{ github.event.inputs.apk_name || 'DinGelSchwinG-v1.12.0-release.apk' }}"
+          if [ -f "build/${APK_NAME}" ]; then
+            echo "✅ APK built successfully!"
+            ls -lh "build/${APK_NAME}"
+            # Show APK info if aapt is available
+            $ANDROID_HOME/build-tools/${ANDROID_BUILD_TOOLS}/aapt dump badging "build/${APK_NAME}" 2>/dev/null | head -20 || true
+          else
+            echo "❌ APK not found at build/${APK_NAME}"
+            ls -lh build/
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: "DinGelSchwinG ${{ github.event.inputs.version || github.ref_name }} — Penner Kombat"
+          body: |
+            ## 🩸 Penner Kombat — Android Release APK
+
+            **Version:** ${{ github.event.inputs.version || github.ref_name }}
+            **Engine:** Godot ${{ env.GODOT_VERSION }}
+            **Target SDK:** ${{ env.ANDROID_PLATFORM }}
+            **Min SDK:** ${{ env.ANDROID_MIN_SDK }}
+
+            ### Installation
+            1. Download the APK below
+            2. Enable "Install from unknown sources" on your Android device
+            3. Install and play!
+
+            ### Contents
+            - Full Godot mobile combat system
+            - 9 playable characters
+            - Dynamic GLB import with AI skill generation
+            - Touch controls with virtual joystick
+            - Online multiplayer via WebSocket relay
+          files: |
+            build/${{ github.event.inputs.apk_name || 'DinGelSchwinG-v1.12.0-release.apk' }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-apk
+          path: build/*.apk
+          retention-days: 30
