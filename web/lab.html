@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1A1C2A">
+<meta name="description" content="Penner Kombat — KI-Werkstatt: GLB hochladen, im Chat Moves beschreiben, 480p-gesperrte Three.js-Engine lädt die Konfiguration live.">
+<title>PENNER KOMBAT — KI-Werkstatt (480p Runtime Config Lab)</title>
+<link rel="stylesheet" href="src/lab/lab.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">🩸 PENNER KOMBAT · <span>KI-WERKSTATT</span></div>
+  <div class="badges">
+    <span class="badge lock">🔒 <b id="res-readout">854×480</b> Render-Sperre</span>
+    <span class="badge" id="fps-readout">– FPS</span>
+    <span class="badge" id="state-label">bereit</span>
+    <span class="badge" id="profile-label">Profil: —</span>
+    <a class="badge link" href="3d.html">→ 3D-Spiel</a>
+    <a class="badge link" href="index.html">→ 2D-Spiel</a>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Links: Modell + Optionen                                            -->
+  <!-- ------------------------------------------------------------------ -->
+  <aside class="col left">
+    <section class="card">
+      <h2>1 · Charakter laden</h2>
+      <div id="drop-zone" class="drop">
+        <div class="drop-icon">📦</div>
+        <p><b>.glb / .gltf</b> hierher ziehen</p>
+        <button id="btn-file" onclick="document.getElementById('file-input').click()">Datei wählen</button>
+        <input id="file-input" type="file" accept=".glb,.gltf,model/gltf-binary" hidden>
+      </div>
+      <p id="model-status" class="status">Platzhalter-Rig aktiv</p>
+      <div id="clip-list" class="clips"><small>Prozeduraler Rig, keine Clips.</small></div>
+      <button id="btn-placeholder" class="ghost">Platzhalter zurückholen</button>
+    </section>
+
+    <section class="card">
+      <h2>Kampfprofile (1 Klick)</h2>
+      <p class="hint">Fertige JSON-Blöcke — laufen durch dieselbe Validierung wie jede KI-Antwort.</p>
+      <div id="preset-list" class="presets"></div>
+      <button id="btn-export-presets" class="ghost">Alle 4 Profile als JSON</button>
+    </section>
+
+    <section class="card">
+      <h2>Engine-Optionen</h2>
+      <label class="row"><span>Auflösung (max 480p)</span><select id="opt-resolution"></select></label>
+      <label class="row check"><input type="checkbox" id="opt-hitboxes"><span>Hitboxen anzeigen</span></label>
+      <label class="row"><span>KI-Backend</span>
+        <select id="opt-ai-mode">
+          <option value="local">Lokal (regelbasiert, ohne Key)</option>
+          <option value="remote">Remote LLM (OpenAI-kompatibel)</option>
+        </select>
+      </label>
+      <div id="remote-settings" class="hidden">
+        <label class="row col2"><span>Endpoint</span><input id="opt-endpoint" type="text" placeholder="/api/ai/config"></label>
+        <label class="row col2"><span>Modell</span><input id="opt-model" type="text" placeholder="gpt-4o-mini"></label>
+        <label class="row col2"><span>API-Key (optional, bleibt lokal)</span><input id="opt-key" type="password" placeholder="sk-…"></label>
+        <p class="hint">Ohne Key läuft der Proxy <code>server/src/ai-proxy.js</code> mit <code>OPENAI_API_KEY</code> aus der Server-Umgebung. Fällt der Remote-Call aus, übernimmt automatisch der lokale Parser.</p>
+      </div>
+      <div class="row btns">
+        <button id="btn-export" class="ghost">JSON exportieren</button>
+        <button id="btn-import" class="ghost">Importieren</button>
+        <input id="import-input" type="file" accept="application/json,.json" hidden>
+        <button id="btn-reset" class="ghost danger">Reset</button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Mitte: Viewport                                                     -->
+  <!-- ------------------------------------------------------------------ -->
+  <section class="col center">
+    <div class="viewport">
+      <canvas id="lab-canvas"></canvas>
+      <div class="overlay">
+        <div class="dummy-bar">
+          <span id="dummy-hp-label">Dummy 100 HP</span>
+          <div class="bar"><div id="dummy-hp" class="fill"></div></div>
+        </div>
+        <div id="hit-flash" class="hit-flash"></div>
+      </div>
+    </div>
+
+    <div class="padrow">
+      <div class="pad">
+        <button data-token="UP">▲<small>W</small></button>
+        <button data-token="BACK">◀<small>A</small></button>
+        <button data-token="DOWN">▼<small>S</small></button>
+        <button data-token="FORWARD">▶<small>D</small></button>
+      </div>
+      <div class="buffer">
+        <span class="lbl">Eingabepuffer</span>
+        <code id="buffer-view">—</code>
+      </div>
+      <div class="pad buttons">
+        <button data-token="LIGHT_PUNCH">LP<small>J</small></button>
+        <button data-token="HEAVY_PUNCH">HP<small>K</small></button>
+        <button data-token="LIGHT_KICK">LK<small>N</small></button>
+        <button data-token="HEAVY_KICK">HK<small>M</small></button>
+      </div>
+    </div>
+
+    <div class="card flat">
+      <div class="tabs">
+        <button class="tab active" data-tab="moves">Moves (<span id="move-count">0</span>)</button>
+        <button class="tab" data-tab="json">Letztes KI-JSON</button>
+        <button class="tab" data-tab="lib">Asset-Bibliothek</button>
+        <button class="tab" data-tab="arch">Architektur</button>
+      </div>
+
+      <div id="panel-moves" class="tab-panel">
+        <div id="move-list" class="move-list"></div>
+      </div>
+
+      <div id="panel-json" class="tab-panel hidden">
+        <pre id="json-view" class="json">{}</pre>
+      </div>
+
+      <div id="panel-lib" class="tab-panel hidden">
+        <p class="hint">Die KI erfindet keine Geometrie und keine Shader — sie referenziert ausschließlich diese vorkompilierten Bausteine.</p>
+        <div class="lib-grid">
+          <div><h3>VFX-Pakete</h3><ul id="lib-vfx" class="lib"></ul></div>
+          <div><h3>Audio-Pools</h3><ul id="lib-audio" class="lib"></ul></div>
+          <div><h3>Hitbox-Formen</h3><ul id="lib-hitbox" class="lib"></ul></div>
+        </div>
+        <details><summary>Manifest, das im Systemprompt landet</summary><pre id="lib-manifest" class="json"></pre></details>
+      </div>
+
+      <div id="panel-arch" class="tab-panel hidden">
+<pre class="ascii">[ User lädt .glb ] ──> [ Three.js Canvas (hart auf 480p WebGL gesperrt) ]
+                                   │
+[ User tippt im Chat ] ─> [ AI Engine ] ─> [ Text zu JSON geparst ]
+ "Feuerball und schwere            │
+  Kick-Kombo"                      └───────> [ Direkt in die Game Loop ]</pre>
+        <ol class="steps">
+          <li><b>480p-Sperre</b> — <code>src/lab/res480.js</code>: <code>setPixelRatio(1)</code> + <code>setSize(854,480,false)</code>, CSS streckt auf 100 %. Der Backbuffer wächst nie, egal ob 4K oder Handy.</li>
+          <li><b>Chat → JSON</b> — <code>src/lab/aiEngine.js</code>: lokaler Regel-Parser oder LLM mit erzwungenem JSON-Schema.</li>
+          <li><b>Validierung</b> — <code>src/lab/schema.js</code>: klemmt Framedaten/Schaden, mappt unbekannte Assetnamen auf existierende. KI-Text wird nie ausgeführt, nur gelesen.</li>
+          <li><b>Laufzeit-Bindung</b> — <code>src/lab/fighter.js</code> (<code>AIConfigurableFighter.applyAiConfiguration</code>) schreibt Move-Katalog, Optik und Werte live in die laufende Schleife.</li>
+          <li><b>Asset-Bibliothek</b> — <code>src/lab/assetLibrary.js</code>: vorkompilierte VFX, Audio und Hitbox-Primitive als Manifest.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Rechts: Chat                                                        -->
+  <!-- ------------------------------------------------------------------ -->
+  <aside class="col right">
+    <section class="card chat">
+      <h2>2 · Mit der KI bauen</h2>
+      <div id="chat-log" class="chat-log"></div>
+      <div class="chips">
+        <button class="chip" data-prompt="Gib ihm einen Feueratem-Spezialangriff mit 25 Schaden, Eingabe runter vorne schwerer Schlag">🔥 Feueratem</button>
+        <button class="chip" data-prompt="Weise ihm eine 3-Treffer-Schlagkombo mit 15 Schaden zu">👊 3er-Kombo</button>
+        <button class="chip" data-prompt="Schwere Kick-Kombo mit 4 Treffern und 22 Schaden">🦵 Kick-Kombo</button>
+        <button class="chip" data-prompt="Mach ihn rot und lass ihn leuchten, dazu eine Schattenaura">🎨 Rot + Aura</button>
+        <button class="chip" data-prompt="Eissplitter-Projektil mit 18 Schaden, 8 Startup-Frames">🧊 Eisprojektil</button>
+        <button class="chip" data-prompt="Setz die Lebenspunkte auf 150 und mach ihn schneller">💪 Tanky</button>
+        <button class="chip" data-prompt="Blitzschlag als Special, 30 Schaden, betäubt den Gegner">⚡ Blitz</button>
+        <button class="chip" data-prompt="Lade das Profil Cyber-Scorpion">🦂 Cyber-Scorpion</button>
+        <button class="chip" data-prompt="Mach ihn zum Radioactive Bio-Mech">☢️ Bio-Mech</button>
+      </div>
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <input id="chat-input" type="text" placeholder="z. B. „Gib ihm einen Bodenstampfer mit Staubwolke, 28 Schaden“">
+        <button type="submit">Senden</button>
+      </form>
+      <p class="hint">Erkennt Deutsch &amp; Englisch: Element (Feuer/Eis/Blitz/Gift/Schatten/Blut/Bier/Münze/Boden), Schaden, Frames, Trefferzahl, Eingabefolgen („runter vorne schwerer Schlag“ oder <code>236HP</code>), Farben, Größe, HP, Tempo, „entferne …“.</p>
+    </section>
+  </aside>
+</main>
+
+<script type="module" src="src/lab/main.js"></script>
+</body>
+</html>

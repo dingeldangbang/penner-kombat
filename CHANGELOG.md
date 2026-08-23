@@ -1,6 +1,43 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### KI-Werkstatt: GLB-Upload, 480p-Sperre und Chat-gesteuerte Move-Konfiguration
+- **`web/lab.html` + `web/src/lab/`**: komplette Runtime-AI-Config-Pipeline.
+  Nutzer lädt ein `.glb`, beschreibt im Chat den Wunsch, die KI antwortet mit
+  strukturiertem JSON, das die laufende Three.js-Schleife sofort übernimmt —
+  **kein KI-Code wird ausgeführt, nur Daten**.
+- **480p-Render-Sperre** (`res480.js`): Backbuffer fest auf 854×480,
+  `setPixelRatio(1)`, CSS streckt auf 100 %. Presets bis herunter zu 144p,
+  `clampTo480p()` klemmt jeden Wunsch aufs Pixelbudget.
+- **Zwei KI-Backends** (`aiEngine.js`): regelbasierter Offline-Parser für Deutsch
+  und Englisch (kein API-Key nötig) sowie OpenAI-kompatibles LLM mit erzwungenem
+  JSON-Schema; bei Ausfall automatischer Rückfall auf den lokalen Parser.
+- **Härtung** (`schema.js`): Framedaten und Schaden werden auf Balance-Grenzen
+  geklemmt, erfundene Assetnamen auf existierende gemappt, Eingabefolgen
+  normalisiert (`236HP` und „runter vorne schwerer Schlag“), unbekannte Felder
+  verworfen.
+- **Laufzeit-Bindung** (`fighter.js`, `AIConfigurableFighter` alias
+  `LiveFighterEngine`): Move-Katalog, Framedaten, Materialien und Werte werden
+  live in die Schleife geschrieben; `injectAiConfiguration()` nimmt rohes JSON.
+- **Asset-Bibliothek** (`assetLibrary.js`): 14 VFX-Pakete, 15 synthetisierte
+  Audio-Pools, 9 Hitbox-Primitive, Status-Effekte, Manifest für den Systemprompt.
+- **Vier High-Impact-Kampfprofile** (`presets.js`, auch als
+  `web/assets/fighter-profiles.json`): Cyber-Scorpion (Chrom, Magnet-Grab mit
+  bildschirmlangem Kasten, 4-Treffer-Overload), Toxic Blood-Ghoulem (nasse
+  Blutoptik, Guard-Break-Kegel, träge Brutal Carnage), Voodoo Shadow-Priest
+  (Void-Aura, AoE unter den Gegner-Koordinaten, Distanz-Starter),
+  Radioactive Bio-Mech (Neongrün, Meltdown Slam mit 46 Frames Recovery,
+  Wandbounce-Kombo).
+- **Server** (`server/src/ai-proxy.js`): liefert `web/` statisch aus und proxyt
+  `POST /api/ai/config` an einen OpenAI-kompatiblen Endpunkt — der API-Key bleibt
+  serverseitig.
+- **Tests**: 26 Pipeline-Tests, 16 Engine-Tests mit echtem three.js, 12
+  jsdom-Oberflächentests (`npm test`, `npm run test:ui`) — zusammen mit der
+  bestehenden Simulation **65 Tests grün**. Optionaler Browser-Abnahmelauf:
+  `Tools/lab_browser_check.mjs`.
+- Doku: [docs/AI_LAB.md](docs/AI_LAB.md) und Abnahmebericht
+  [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md).
+
 ### Cover-Look und PWA für die Browser-Fassung
 - **`web/src/cover.js`**: Hinterhof-Kulisse im Stil des Artworks, komplett gezeichnet —
   Backstein, Wäscheleine mit Wind, flackernde Laternen, Neonschild „Zum Blauen Eimer",

@@ -38,6 +38,15 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 | `rolf` | Rolf | Summoner | Ratten beschwören |
 | `kalle` | Kalle | Grappler | Greifattacken, Münze fangen |
 
+### KI-Werkstatt (Browser, `web/lab.html`)
+- **Eigenes `.glb` hochladen** (Drag & Drop), Modell wird auf 1,8 m normalisiert, GLB-Animationsclips werden erkannt
+- **Rendering hart auf 480p gesperrt** (854×480 Backbuffer, `setPixelRatio(1)`, CSS streckt) — gleiche Last auf 4K-Monitor und Handy
+- **Chat statt Engine-Wissen**: „Gib ihm einen Feueratem mit 25 Schaden“ → die KI liefert **validiertes JSON**, die Game-Loop lädt es sofort
+- Zwei Backends: lokaler Regel-Parser (ohne API-Key, Deutsch + Englisch) oder OpenAI-kompatibles LLM über `server/src/ai-proxy.js`
+- **4 fertige Kampfprofile** per Klick: Cyber-Scorpion, Toxic Blood-Ghoulem, Voodoo Shadow-Priest, Radioactive Bio-Mech
+- Asset-Bibliothek (14 VFX, 15 Sounds, 9 Hitbox-Formen), Move-Katalog mit Frame-Daten, Hitbox-Anzeige, JSON-Export/Import
+- 65 Tests grün — siehe [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md)
+
 ### Systeme
 - **Arena** `ArenaManager`: umkippbare Props, Explosionen, Stage-Fatality, Mops-Napf
 - **Story-Modus**: `StoryManager`, `DialogueSystem`, `ChapterData`, 4 Enden (A–D)
@@ -142,6 +151,8 @@ HUD und alle Effekte laufen trotzdem vollständig.
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/WEB.md](docs/WEB.md) | **Browser-Fassung in `web/`** — sofort spielbar, gleiche Kampfwerte, 11 Tests grün |
+| [docs/AI_LAB.md](docs/AI_LAB.md) | **KI-Werkstatt (`web/lab.html`)** — eigenes `.glb` hochladen, Moves per Chat bauen, harte 480p-Render-Sperre, 4 fertige Kampfprofile |
+| [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md) | Abnahmebericht der KI-Werkstatt: 65 Tests, was geprüft ist und was nicht |
 | [docs/HANDY.md](docs/HANDY.md) | **Auf dem Handy spielen**: APK oder WebGL aus der CI, Touch, Leistungsstufen |
 | [docs/MODELLE.md](docs/MODELLE.md) | **GLB-Import**: Editor-Menü (Prefabs) und F7-Menü im Spiel, Skalierung, Grenzen |
 | [docs/SPIELEN.md](docs/SPIELEN.md) | **Vom Repo zum laufenden Kampf** — MVP-Anleitung, Steuerung, Fehlerbehebung |

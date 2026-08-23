@@ -1,7 +1,10 @@
 // Service Worker: macht die Browser-Fassung offline spielbar (inkl. 3D Pose Arena).
-const CACHE = 'penner-kombat-v2';
+const CACHE = 'penner-kombat-v3';
 const FILES = [
-  './', './index.html', './3d.html', './style.css', './manifest.webmanifest',
+  './', './index.html', './3d.html', './lab.html', './style.css', './manifest.webmanifest',
+  './src/lab/lab.css', './src/lab/main.js', './src/lab/res480.js', './src/lab/aiEngine.js',
+  './src/lab/schema.js', './src/lab/assetLibrary.js', './src/lab/fighter.js',
+  './src/lab/vfx.js', './src/lab/audioPool.js', './src/lab/inputBuffer.js', './src/lab/placeholder.js',
   './assets/icon.svg',
   './src/main.js', './src/sim.js', './src/data.js',
   './src/render.js', './src/input.js', './src/audio.js', './src/cover.js',

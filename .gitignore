@@ -52,3 +52,7 @@ crashlytics-build.properties
 server/node_modules/
 server/package-lock.json
 server/npm-debug.log*
+
+# Web-Fassung (Node)
+web/node_modules/
+web/package-lock.json

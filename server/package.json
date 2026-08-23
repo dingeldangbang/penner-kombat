@@ -2,7 +2,7 @@
   "name": "penner-kombat-relay",
   "version": "1.0.0",
   "private": true,
-  "description": "WebSocket-Relay für Penner Kombat: Räume, Spiegelung von Zustands- und Aktionsnachrichten.",
+  "description": "WebSocket-Relay für Penner Kombat: Räume, Spiegelung von Zustands- und Aktionsnachrichten. Zusätzlich: statischer Webserver + LLM-Proxy für die KI-Werkstatt (src/ai-proxy.js).",
   "license": "CC-BY-NC-4.0",
   "type": "commonjs",
   "main": "src/relay.js",
@@ -12,7 +12,8 @@
   "scripts": {
     "start": "node src/relay.js",
     "dev": "node --watch src/relay.js",
-    "test": "node test/smoke.test.js"
+    "test": "node test/smoke.test.js",
+    "lab": "node src/ai-proxy.js"
   },
   "dependencies": {
     "ws": "^8.18.0"
