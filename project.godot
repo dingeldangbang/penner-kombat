@@ -6,7 +6,7 @@ config/name="PennerKombat"
 config/version="1.0.0"
 config/description="Dynamic GLB Combat System with OpenAI Integration"
 run/main_scene="res://scenes/ui/Editor.tscn"
-config/icon="res://web/assets/icon.svg"
+config/icon="res://icon.svg"
 
 [display]
 window/size/viewport_width=1920
