@@ -50,6 +50,15 @@ jobs:
       - name: Preflight (Szenen/Ressourcen prüfen)
         run: python3 Tools/godot_preflight.py
 
+      - name: GDScript-Struktur prüfen
+        run: python3 Tools/gdscript_lint.py
+
+      - name: Kämpfer-Riege prüfen (Hitbox-Aufhängung)
+        run: python3 Tools/check_roster.py
+
+      - name: Match- und Arcade-Logik simulieren
+        run: python3 Tools/simulate_match.py
+
       - name: Java 17 einrichten
         uses: actions/setup-java@v4
         with:

@@ -5,7 +5,7 @@ config_version=5
 config/name="PennerKombat"
 config/version="1.0.0"
 config/description="Dynamic GLB Combat System with OpenAI Integration"
-run/main_scene="res://scenes/ui/Editor.tscn"
+run/main_scene="res://scenes/ui/MainMenu.tscn"
 config/icon="res://icon.svg"
 
 [display]
@@ -53,3 +53,4 @@ xray_uniform={"type":"color","value":Color(0, 0, 0, 0)}
 
 [autoload]
 GlobalData="*res://scripts/autoload/GlobalData.gd"
+GameState="*res://scripts/autoload/GameState.gd"

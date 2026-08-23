@@ -60,6 +60,40 @@ func _ready() -> void:
 	_load_config()
 	_set_default_prompt()
 	_update_skill_preview()
+	_add_back_button()
+
+
+## Der Editor war eine Sackgasse: einmal drin, fuehrte ohne Tastatur kein Weg
+## zurueck. Der Knopf liegt in einem eigenen CanvasLayer, damit er unabhaengig
+## vom Panel-Layout immer oben rechts sitzt.
+func _add_back_button() -> void:
+	var layer: CanvasLayer = CanvasLayer.new()
+	layer.name = "BackLayer"
+	layer.layer = 30
+	add_child(layer)
+
+	var back: Button = Button.new()
+	back.name = "BackButton"
+	back.text = "MENÜ"
+	back.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	back.offset_left = -150.0
+	back.offset_top = 14.0
+	back.offset_right = -16.0
+	back.offset_bottom = 74.0
+	back.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	back.add_theme_font_size_override("font_size", 24)
+	back.pressed.connect(_back_to_menu)
+	layer.add_child(back)
+
+
+func _back_to_menu() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_back_to_menu()
+		get_viewport().set_input_as_handled()
 
 
 func _setup_systems() -> void:
@@ -588,6 +622,11 @@ func _on_play_pressed() -> void:
 		_set_status("Bitte zuerst gültiges Skill-Profil erstellen", Color(1, 0.3, 0.3))
 		return
 	GlobalData.set_player_data(_skill_data, _loaded_entity, _current_file_path, _current_profile_name)
+	# Der Arena mitteilen, dass diesmal die selbst gebaute Figur antritt.
+	GameState.use_custom_player = true
+	GameState.mode = "versus"
+	var pool: Array[String] = FighterRoster.ids()
+	GameState.opponent_fighter = pool[randi() % pool.size()]
 	get_tree().change_scene_to_file("res://scenes/combat/Arena.tscn")
 
 

@@ -36,12 +36,17 @@ func _process(delta: float) -> void:
 			_reset_combo()
 
 
-func update_health(health_p1: float, health_p2: float, max_health: float = 100.0) -> void:
-	var safe_max: float = maxf(max_health, 0.001)
-	health_bar_p1.value = health_p1 / safe_max * 100.0
-	health_bar_p2.value = health_p2 / safe_max * 100.0
-	_update_health_color(health_bar_p1, health_p1, safe_max)
-	_update_health_color(health_bar_p2, health_p2, safe_max)
+func update_health(health_p1: float, health_p2: float, max_health: float = 100.0,
+		max_health_p2: float = -1.0) -> void:
+	# Die Kaempfer der Riege haben unterschiedliche Lebenspunkte (70 bis 150).
+	# Mit einem gemeinsamen Maximum zeigte der Balken des schwaecheren Kaempfers
+	# Unsinn an. max_health_p2 < 0 heisst "wie P1" (alte Aufrufe bleiben gueltig).
+	var safe_max_p1: float = maxf(max_health, 0.001)
+	var safe_max_p2: float = safe_max_p1 if max_health_p2 < 0.0 else maxf(max_health_p2, 0.001)
+	health_bar_p1.value = health_p1 / safe_max_p1 * 100.0
+	health_bar_p2.value = health_p2 / safe_max_p2 * 100.0
+	_update_health_color(health_bar_p1, health_p1, safe_max_p1)
+	_update_health_color(health_bar_p2, health_p2, safe_max_p2)
 
 
 func _update_health_color(bar: ProgressBar, health: float, max_health: float) -> void:
@@ -196,3 +201,43 @@ func show_match_result(winner: String) -> void:
 	label.scale = Vector2.ZERO
 	tween.tween_property(label, "scale", Vector2.ONE * 1.15, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "scale", Vector2.ONE, 0.2)
+
+
+func set_fighter_names(p1_name: String, p2_name: String) -> void:
+	var l1: Label = get_node_or_null("Root/HealthBars/P1/P1Label") as Label
+	var l2: Label = get_node_or_null("Root/HealthBars/P2/P2Label") as Label
+	if l1:
+		l1.text = p1_name
+	if l2:
+		l2.text = p2_name
+
+
+func announce(text: String, hold: float = 1.1) -> void:
+	"""Kurzer Einblender in der Bildmitte (Rundenstart, K.O., Arcade-Fortschritt)."""
+	var existing: Node = $Root.get_node_or_null("Announcer")
+	if existing:
+		existing.queue_free()
+
+	var center: CenterContainer = CenterContainer.new()
+	center.name = "Announcer"
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Root.add_child(center)
+
+	var label: Label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 64)
+	label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	label.add_theme_constant_override("outline_size", 10)
+	center.add_child(label)
+
+	label.scale = Vector2(0.6, 0.6)
+	label.modulate.a = 0.0
+	var tween: Tween = create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.15)
+	tween.parallel().tween_property(label, "scale", Vector2.ONE, 0.25) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(hold)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(center.queue_free)
