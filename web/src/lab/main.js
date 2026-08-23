@@ -30,7 +30,24 @@ const STORE_KEY = 'pk_lab_v1';
 // ---------------------------------------------------------------------------
 
 const canvas = $('#lab-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+
+// WebGL-Check, bevor Three.js einen kryptischen Fehler wirft
+if (window.PK_APP && !window.PK_APP.checkWebGL()) {
+  window.PK_APP.fatal(
+    'Kein WebGL verfügbar',
+    'Dein Browser oder Gerät stellt keinen WebGL-Kontext bereit. Aktiviere die Hardwarebeschleunigung ' +
+    'oder probiere einen aktuellen Chrome/Firefox/Safari. Die 2D-Arena läuft auch ohne WebGL.',
+  );
+  throw new Error('WebGL nicht verfügbar');
+}
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+} catch (err) {
+  if (window.PK_APP) window.PK_APP.fatal('Renderer konnte nicht starten', String(err && err.message || err));
+  throw err;
+}
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.BasicShadowMap;

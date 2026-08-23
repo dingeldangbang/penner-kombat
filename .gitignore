@@ -56,3 +56,6 @@ server/npm-debug.log*
 # Web-Fassung (Node)
 web/node_modules/
 web/package-lock.json
+
+# Web-App-Build (Tools/build_web_app.sh)
+release/

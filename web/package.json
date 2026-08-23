@@ -1,12 +1,12 @@
 {
   "name": "penner-kombat-3d",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Penner Kombat 3D — Le Binde vs Mojo Bob Pose Arena, 100% spielbare Kombos",
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8000",
     "serve:3d": "python3 -m http.server 8000",
-    "test": "node --test test/sim.test.mjs test/lab.test.mjs test/engine.test.mjs",
+    "test": "node --test test/sim.test.mjs test/lab.test.mjs test/engine.test.mjs test/app.test.mjs",
     "cap:init": "npx cap init \"Penner Kombat 3D\" com.dingelanggames.pennerkombat --web-dir=.",
     "cap:add": "npx cap add android",
     "cap:sync": "npx cap sync",
@@ -14,7 +14,9 @@
     "lab": "node ../server/src/ai-proxy.js",
     "test:ui": "node --import ./test/helpers/register.mjs --test test/ui.dom.test.mjs",
     "test:all": "npm test && npm run test:ui",
-    "check:browser": "node ../Tools/lab_browser_check.mjs"
+    "check:browser": "node ../Tools/lab_browser_check.mjs",
+    "build": "../Tools/build_web_app.sh",
+    "build:full": "../Tools/build_web_app.sh --with-tests"
   },
   "dependencies": {
     "@capacitor/core": "^5.7.0",

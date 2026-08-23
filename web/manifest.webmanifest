@@ -1,14 +1,44 @@
 {
+  "id": "/penner-kombat/",
   "name": "LETAL PENNER KOMBAT",
   "short_name": "Penner Kombat",
-  "description": "Kämpfe wie ein Penner — gewinne wie ein König.",
+  "description": "2.5D-Prügler im Browser: 2D-Arena, 3D-Pose-Arena und die KI-Werkstatt — eigenes .glb hochladen und Moves per Chat bauen. Offline spielbar.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "orientation": "landscape",
   "background_color": "#1A1C2A",
   "theme_color": "#8B0000",
+  "lang": "de",
+  "dir": "ltr",
+  "categories": ["games", "entertainment"],
   "icons": [
-    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
-  ]
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "KI-Werkstatt",
+      "short_name": "Werkstatt",
+      "description": "Eigenes .glb hochladen und Moves per Chat bauen",
+      "url": "./lab.html",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "3D-Pose-Arena",
+      "short_name": "3D-Arena",
+      "description": "Le Binde vs Mojo Bob in 3D",
+      "url": "./3d.html",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "2D-Arena",
+      "short_name": "2D-Arena",
+      "description": "Alle 9 Kämpfer, klassische 2.5D-Ansicht",
+      "url": "./index.html",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

@@ -38,6 +38,13 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 | `rolf` | Rolf | Summoner | Ratten beschwören |
 | `kalle` | Kalle | Grappler | Greifattacken, Münze fangen |
 
+### Fertige Web-App (`web/`, installierbar)
+- **PWA**: installierbar auf Desktop und Handy, Vollbild-Querformat, drei App-Shortcuts (Werkstatt, 3D, 2D)
+- **Komplett offline** nach dem ersten Start — three.js liegt lokal in `web/vendor/`, kein CDN
+- Ein Paket-Build mit harten Auslieferungsprüfungen: `Tools/build_web_app.sh --with-tests` → `release/penner-kombat-web-1.1.0.zip` (324 KB)
+- Deploy-Workflow für GitHub Pages liegt bereit: `docs/ci/pages-deploy.yml`
+- Anleitung: **[docs/APP.md](docs/APP.md)**
+
 ### KI-Werkstatt (Browser, `web/lab.html`)
 - **Eigenes `.glb` hochladen** (Drag & Drop), Modell wird auf 1,8 m normalisiert, GLB-Animationsclips werden erkannt
 - **Rendering hart auf 480p gesperrt** (854×480 Backbuffer, `setPixelRatio(1)`, CSS streckt) — gleiche Last auf 4K-Monitor und Handy
@@ -152,6 +159,7 @@ HUD und alle Effekte laufen trotzdem vollständig.
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/WEB.md](docs/WEB.md) | **Browser-Fassung in `web/`** — sofort spielbar, gleiche Kampfwerte, 11 Tests grün |
+| [docs/APP.md](docs/APP.md) | **Die fertige App**: installieren (PWA), Paket bauen, auf GitHub Pages/Static-Host ausliefern, Android |
 | [docs/AI_LAB.md](docs/AI_LAB.md) | **KI-Werkstatt (`web/lab.html`)** — eigenes `.glb` hochladen, Moves per Chat bauen, harte 480p-Render-Sperre, 5 Kampfprofile, X-Ray/Fatality/Ragdoll/Arena/Hitstop |
 | [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md) | Abnahmebericht der KI-Werkstatt: 81 Tests, was geprüft ist und was nicht |
 | [docs/HANDY.md](docs/HANDY.md) | **Auf dem Handy spielen**: APK oder WebGL aus der CI, Touch, Leistungsstufen |

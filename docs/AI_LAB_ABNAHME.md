@@ -1,6 +1,6 @@
 # ✅ Abnahme: KI-Werkstatt & die vier Kampfprofile
 
-Stand: 23.08.2026 · Branch `arena/01a03067-penner-kombat` · **81 Tests grün**
+Stand: 23.08.2026 · Branch `arena/01a03067-penner-kombat` · **92 Tests grün** · App-Version **1.1.0**
 
 Was hier steht, wurde **ausgeführt**, nicht behauptet. Reproduzieren:
 
@@ -20,7 +20,8 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 | KI-Pipeline (Parser, Schema, 480p, Puffer) | `web/test/lab.test.mjs` | 26 | ✅ grün |
 | Laufzeit-Engine mit echtem three.js (inkl. X-Ray, Fatality, Ragdoll, Stage, Hitstop) | `web/test/engine.test.mjs` | 27 | ✅ grün |
 | Oberfläche in jsdom (inkl. FINISH HIM, Arena-Wurf, Kino-Banner) | `web/test/ui.dom.test.mjs` | 17 | ✅ grün |
-| **Summe** | | **81** | **✅ 81/81** |
+| Auslieferung/PWA (Manifest, Offline-Cache, Vendor, App-Shell) | `web/test/app.test.mjs` | 11 | ✅ grün |
+| **Summe** | | **92** | **✅ 92/92** |
 
 ## 2 · Nachgewiesene Funktionalität
 
@@ -91,6 +92,21 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 * <kbd>E</kbd> wirft ein Arena-Objekt; ohne Objekt in Reichweite kommt eine Meldung.
 * X-Ray blendet Letterbox und Kino-Banner ein (`body.cinema`).
 
+### Auslieferbare App (v1.1.0)
+| Prüfung | Ergebnis |
+|---|---|
+| Keine CDN-Referenzen | ✅ three.js liegt lokal in `web/vendor/` (0.160.0, MIT) — geprüft über alle HTML/JS/CSS |
+| Import-Maps zeigen lokal | ✅ `lab.html` und `3d.html` mappen `three` und `three/addons/` auf `./vendor/three/…` |
+| three + GLTFLoader ladbar | ✅ real importiert: `REVISION 160`, `GLTFLoader` ist eine Klasse; GLTFLoader importiert nur `three` und relative Pfade |
+| Offline-Cache vollständig | ✅ 40 Dateien im Service Worker, jede existiert; umgekehrt ist jede `src/lab/*`-Datei gelistet |
+| Service Worker | ✅ versioniert (`v5`), `/api/` nie gecacht, Offline-Fallback, Update-Pfad (`skipWaiting`) |
+| Manifest installierbar | ✅ `id`, `scope`, `display`, maskable Icon, 3 Shortcuts — alle Ziele existieren |
+| App-Shell eingebunden | ✅ alle drei Seiten laden `src/app.js` (SW-Registrierung, Install-Prompt, WebGL-Check, Version) |
+| Keine doppelte SW-Registrierung | ✅ die alte Inline-Registrierung in `index.html` ist entfernt |
+| Build-Skript | ✅ `Tools/build_web_app.sh --with-tests` → 46 Dateien, 1,3 MB entpackt, **324 KB ZIP**, bricht bei verletzten Kriterien ab |
+| Gebautes Paket läuft eigenständig | ✅ aus `release/penner-kombat-web/` ausgeliefert: alle Seiten, Vendor, Icons, `BUILD_INFO.txt` → HTTP 200 |
+| MIME-Typen | ✅ `text/javascript`, `application/manifest+json` — Voraussetzung für Module und Installation |
+
 ### Server
 * `GET /api/ai/health` → `{"ok":true,"remoteEnabled":false,…}`
 * `POST /api/ai/config` ohne Key → `503 no_api_key` (Client wechselt still auf
@@ -105,6 +121,8 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 | GLB-Upload mit echter Datei | Kein Datei-Dialog, kein Testmodell im Repo; `GLTFLoader` ist im DOM-Test gestubbt | Beliebiges `.glb` in die Werkstatt ziehen — Modell wird auf 1,8 m normalisiert, Clips erscheinen unter „Charakter laden“, vorhandene Moves bleiben gebunden |
 | Remote-LLM gegen echte API | Kein API-Key in der Sandbox (die Fallback- und Klemm-Logik ist mit Mock-`fetch` getestet) | `OPENAI_API_KEY=sk-… node server/src/ai-proxy.js`, dann in der UI auf „Remote LLM“ stellen |
 | Audio | jsdom hat keinen `AudioContext` (Code prüft darauf und bleibt still) | Im Browser: jeder Treffer und Move spielt seinen Pool-Sound |
+| Echte Installation als PWA + Offline-Start | Braucht einen Browser mit Service-Worker-Unterstützung (in dieser Sandbox nicht installierbar); Manifest, Cache-Liste und Registrierung sind statisch geprüft | App über HTTPS oder `localhost` öffnen → „App installieren", danach Netz trennen und neu starten |
+| GitHub-Pages-Deploy | Der Sandbox-Token hat keine Admin-/Workflow-Rechte, Pages ist im Repo nicht aktiviert | `cp docs/ci/pages-deploy.yml .github/workflows/pages.yml`, Settings → Pages → „GitHub Actions" |
 
 ## 4 · Bekannte Grenzen
 

@@ -1,0 +1,70 @@
+# Penner Kombat Web-App -> GitHub Pages
+#
+# Aktivieren:
+#   1. Datei nach .github/workflows/pages.yml kopieren und committen
+#   2. Repo -> Settings -> Pages -> "Source: GitHub Actions" auswählen
+#   3. Actions -> "Web-App veröffentlichen" -> Run workflow (oder Push auf main)
+#
+# Danach liegt die App unter:
+#   https://<user>.github.io/<repo>/            (2D-Arena / Startseite)
+#   https://<user>.github.io/<repo>/lab.html    (KI-Werkstatt)
+#
+# Hinweis: Auf Pages läuft kein Node-Prozess, der KI-Chat nutzt also den
+# lokalen Regel-Parser. Für ein echtes LLM zusätzlich server/src/ai-proxy.js
+# irgendwo hosten und in der Werkstatt unter "Remote LLM" die URL eintragen.
+
+name: Web-App veröffentlichen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Abhängigkeiten (three für Engine-Tests, jsdom für UI-Tests)
+        working-directory: web
+        run: npm install --no-audit --no-fund
+      - name: Tests
+        working-directory: web
+        run: |
+          npm test
+          npm run test:ui
+
+  build-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: App bauen (inkl. Auslieferungs-Prüfungen)
+        run: Tools/build_web_app.sh
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: release/penner-kombat-web
+      - id: deployment
+        uses: actions/deploy-pages@v4

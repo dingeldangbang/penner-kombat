@@ -1,6 +1,28 @@
 # Changelog
 
 ## [Unveröffentlicht]
+### Auslieferbare Web-App (v1.1.0): PWA, offline, ein Paket
+- **three.js liegt jetzt lokal** in `web/vendor/three/` (0.160.0, MIT) — die
+  Import-Maps von `lab.html` und `3d.html` zeigen nicht mehr auf unpkg. Damit
+  läuft die App ohne Internet und ohne fremde Infrastruktur.
+- **`web/src/app.js` (App-Shell)**: Service-Worker-Registrierung, Update-Hinweis
+  bei neuer Version, „App installieren"-Knopf (`beforeinstallprompt`),
+  WebGL-Check mit verständlicher Fehlermeldung statt schwarzem Bild,
+  Versionsanzeige — als klassisches Skript, damit es auch bei Modulfehlern greift.
+- **Service Worker v5**: App-Shell wird vollständig vorgeladen, Navigation
+  network-first mit Cache- und Offline-Fallback, restliche Dateien cache-first
+  mit Hintergrund-Auffrischung, `/api/` wird nie gecacht, Navigation Preload an.
+- **`manifest.webmanifest`** erweitert: `id`, `display_override`, Kategorien,
+  maskable Icon (`assets/icon-maskable.svg`) und drei Shortcuts
+  (KI-Werkstatt, 3D-Arena, 2D-Arena).
+- **`web/offline.html`** als freundliche Offline-Karte.
+- **`Tools/build_web_app.sh`**: baut `release/penner-kombat-web/` samt ZIP und
+  `BUILD_INFO.txt` — und bricht ab, wenn eine Auslieferungsbedingung verletzt
+  ist (CDN-Referenz, fehlende SW-Datei, kaputtes Manifest, Syntaxfehler).
+  Mit `--with-tests` laufen zusätzlich alle 81 Tests.
+- **`docs/ci/pages-deploy.yml`**: fertiger GitHub-Pages-Workflow (erst Tests,
+  dann Build, dann Deploy).
+- Doku: **[docs/APP.md](docs/APP.md)** — installieren, hosten, ausliefern.
 ### KI-Werkstatt: GLB-Upload, 480p-Sperre und Chat-gesteuerte Move-Konfiguration
 - **`web/lab.html` + `web/src/lab/`**: komplette Runtime-AI-Config-Pipeline.
   Nutzer lädt ein `.glb`, beschreibt im Chat den Wunsch, die KI antwortet mit

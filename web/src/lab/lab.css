@@ -240,3 +240,6 @@ body.cinema .letterbox { height: 9%; }
 .tag.cinematic { background: rgba(0, 191, 255, 0.2); color: var(--neon); }
 .tag.fatality { background: rgba(255, 34, 34, 0.22); color: #ff6b6b; }
 .tag.stage { background: rgba(255, 215, 0, 0.18); color: var(--gold); }
+
+.badge.install { background: rgba(0, 191, 255, 0.18); border-color: rgba(0, 191, 255, 0.4); color: var(--neon); cursor: pointer; font-weight: 600; }
+.badge.install:hover { background: rgba(0, 191, 255, 0.3); }

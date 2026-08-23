@@ -125,7 +125,10 @@ async function handleAi(req, res) {
 
 function serveStatic(req, res, urlPath) {
   let rel = decodeURIComponent(urlPath.split('?')[0]);
-  if (rel === '/') rel = '/lab.html';
+  // Startseite der App; fällt auf die Werkstatt zurück, wenn nur sie vorhanden ist
+  if (rel === '/' || rel === '') {
+    rel = fs.existsSync(path.join(WEB_ROOT, 'index.html')) ? '/index.html' : '/lab.html';
+  }
   const full = path.resolve(path.join(WEB_ROOT, rel));
   if (!full.startsWith(WEB_ROOT)) { res.writeHead(403); return res.end('Forbidden'); }
 
@@ -158,7 +161,9 @@ const server = http.createServer((req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, HOST, () => {
-    log(`KI-Werkstatt läuft auf http://${HOST}:${PORT}/lab.html`);
+    log(`Penner Kombat App läuft auf http://${HOST}:${PORT}/`);
+    log(`  Startseite/2D: /index.html · 3D-Arena: /3d.html · KI-Werkstatt: /lab.html`);
+    log(`  Ausgeliefert aus: ${WEB_ROOT}`);
     log(`Remote-LLM: ${API_KEY ? 'aktiv (' + DEFAULT_MODEL + ')' : 'aus — lokaler Parser im Browser'}`);
   });
 }
