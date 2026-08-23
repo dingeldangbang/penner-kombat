@@ -1,0 +1,221 @@
+[gd_scene load_steps=7 format=3 uid="uid://mainui001"]
+
+[ext_resource type="Script" path="res://scripts/ui/MainUI.gd" id="1_mainui"]
+[ext_resource type="Script" path="res://scripts/ui/VirtualJoystick.gd" id="2_joystick"]
+
+[sub_resource type="StyleBoxFlat" id="style_panel"]
+bg_color = Color(0.05, 0.04, 0.06, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.6, 0.2, 0.2, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="style_button_normal"]
+bg_color = Color(0.6, 0.15, 0.15, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="style_button_pressed"]
+bg_color = Color(0.4, 0.1, 0.1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="style_input"]
+bg_color = Color(0.1, 0.08, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.4, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="MainUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mainui")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.06, 0.1, 1)
+
+[node name="MainPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -300.0
+offset_right = 350.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("style_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="Title" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 32
+text = "🩸 PENNER KOMBAT - MOBILE"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Dynamic GLB Combat System"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ApiKeyLabel" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+text = "OpenAI API Key:"
+
+[node name="ApiKeyInput" type="LineEdit" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("style_input")
+secret = true
+placeholder_text = "Enter your OpenAI API key..."
+
+[node name="DescriptionLabel" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+text = "Skill Description:"
+
+[node name="DescriptionInput" type="TextEdit" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/normal = SubResource("style_input")
+placeholder_text = "Describe the skills, combos, and VFX you want..."
+text = "A slow but powerful brawler with heavy punches, fire VFX, and a devastating uppercut combo."
+
+[node name="FileLabel" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+text = "GLB/GLTF File:"
+
+[node name="FileContainer" type="HBoxContainer" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="FileInput" type="LineEdit" parent="MainPanel/VBoxContainer/FileContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("style_input")
+placeholder_text = "Select a .glb or .gltf file..."
+
+[node name="FileButton" type="Button" parent="MainPanel/VBoxContainer/FileContainer"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("style_button_normal")
+theme_override_styles/pressed = SubResource("style_button_pressed")
+text = "Browse"
+
+[node name="StatusLabel" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+text = "Ready"
+horizontal_alignment = 1
+
+[node name="ActionContainer" type="HBoxContainer" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpawnButton" type="Button" parent="MainPanel/VBoxContainer/ActionContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("style_button_normal")
+theme_override_styles/pressed = SubResource("style_button_pressed")
+text = "🚀 Spawn & Bind"
+
+[node name="TestButton" type="Button" parent="MainPanel/VBoxContainer/ActionContainer"]
+layout_mode = 2
+theme_override_styles/normal = SubResource("style_button_normal")
+theme_override_styles/pressed = SubResource("style_button_pressed")
+text = "Test AI"
+
+[node name="ProgressBar" type="ProgressBar" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 0.0
+
+[node name="LogOutput" type="TextEdit" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 2
+theme_override_styles/normal = SubResource("style_input")
+editable = false
+
+
+[node name="TouchControls" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VirtualJoystick" type="Control" parent="TouchControls"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = -240.0
+offset_right = 240.0
+offset_bottom = -60.0
+grow_vertical = 0
+script = ExtResource("2_joystick")
+
+[node name="AttackButton" type="Button" parent="TouchControls"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -190.0
+offset_right = -60.0
+offset_bottom = -60.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/normal = SubResource("style_button_normal")
+theme_override_styles/pressed = SubResource("style_button_pressed")
+theme_override_font_sizes/font_size = 24
+text = "ATTACK"
