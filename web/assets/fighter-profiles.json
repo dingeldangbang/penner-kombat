@@ -81,7 +81,53 @@
         "statusEffect": "stun"
       }
     ],
-    "notes": "Chrom + Elektro-Aura, Magnet-Grab zieht heran, Overload als schnelle 4-Treffer-Kette."
+    "cinematicMoves": [
+      {
+        "name": "Circuit Breaker X-Ray",
+        "inputSequence": [
+          "LIGHT_PUNCH",
+          "BLOCK"
+        ],
+        "triggerCondition": "METERS_FULL",
+        "cinematicZoomFrame": 12,
+        "slowMotionFactor": 0.14,
+        "boneTarget": "FOREARM",
+        "cameraPath": "orbit_victim",
+        "damage": 34,
+        "hitstopFrames": 9,
+        "shakeStrength": 1.3,
+        "vfxAsset": "electricity",
+        "sfxAsset": "bone_crack",
+        "durationFrames": 96,
+        "animationClipName": "xray_strike"
+      }
+    ],
+    "fatalities": [
+      {
+        "name": "Nano Disassembly",
+        "distance": "CLOSE",
+        "inputSequence": [
+          "FORWARD",
+          "DOWN",
+          "FORWARD",
+          "LIGHT_PUNCH"
+        ],
+        "finisherType": "DISMEMBERMENT",
+        "vfxExplosionAsset": "electricity",
+        "sfxAsset": "gore_squelch",
+        "slowMotionFactor": 0.22,
+        "cameraPath": "side_slide",
+        "ragdoll": true,
+        "durationFrames": 150
+      }
+    ],
+    "impactProfile": {
+      "lightHitstopFrames": 2,
+      "heavyHitstopFrames": 6,
+      "shakeStrength": 0.9,
+      "zoomPunch": true
+    },
+    "notes": "Chrom + Elektro-Aura, Magnet-Grab zieht heran, Overload als schnelle 4-Treffer-Kette, X-Ray auf den Unterarm, Nano-Zerlegung als Fatality."
   },
   "toxic_ghoulem": {
     "requestType": "BATCH",
@@ -163,7 +209,78 @@
         "statusEffect": "corrode"
       }
     ],
-    "notes": "Guard-Break-Kegel, nasse Blutoptik, langsamer aber extrem belohnender Schwerangriff."
+    "cinematicMoves": [
+      {
+        "name": "Ribcage Rupture X-Ray",
+        "inputSequence": [
+          "HEAVY_PUNCH",
+          "BLOCK"
+        ],
+        "triggerCondition": "METERS_FULL",
+        "cinematicZoomFrame": 18,
+        "slowMotionFactor": 0.12,
+        "boneTarget": "RIBCAGE",
+        "cameraPath": "push_in_face",
+        "damage": 40,
+        "hitstopFrames": 12,
+        "shakeStrength": 1.8,
+        "vfxAsset": "bone_shards",
+        "sfxAsset": "bone_crack",
+        "durationFrames": 110
+      }
+    ],
+    "fatalities": [
+      {
+        "name": "Acid Meltdown",
+        "distance": "MEDIUM",
+        "inputSequence": [
+          "DOWN",
+          "DOWN",
+          "FORWARD",
+          "HEAVY_KICK"
+        ],
+        "finisherType": "MELTDOWN",
+        "vfxExplosionAsset": "acid_corrosive",
+        "sfxAsset": "acid_sizzle",
+        "slowMotionFactor": 0.3,
+        "cameraPath": "low_angle_rise",
+        "ragdoll": true,
+        "durationFrames": 180
+      }
+    ],
+    "stageInteractions": [
+      {
+        "object": "burning_barrel",
+        "role": "THROWABLE",
+        "position": [
+          -4.5,
+          -1.5
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "GRAB"
+        ]
+      },
+      {
+        "object": "gas_bottle",
+        "role": "THROWABLE",
+        "position": [
+          4.6,
+          1.2
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "GRAB"
+        ]
+      }
+    ],
+    "impactProfile": {
+      "lightHitstopFrames": 3,
+      "heavyHitstopFrames": 9,
+      "shakeStrength": 1.4,
+      "zoomPunch": true
+    },
+    "notes": "Guard-Break-Kegel, nasse Blutoptik, Rippenbruch-X-Ray, Säure-Auflösung als Fatality, brennendes Fass und Gasflasche in der Arena."
   },
   "voodoo_priest": {
     "requestType": "BATCH",
@@ -243,7 +360,52 @@
         "statusEffect": "slow"
       }
     ],
-    "notes": "AoE unter dem Gegner, Distanz-Starter mit langem Cancel-Fenster."
+    "cinematicMoves": [
+      {
+        "name": "Soul Extraction X-Ray",
+        "inputSequence": [
+          "LIGHT_KICK",
+          "BLOCK"
+        ],
+        "triggerCondition": "METERS_FULL",
+        "cinematicZoomFrame": 10,
+        "slowMotionFactor": 0.1,
+        "boneTarget": "SPINE_T3",
+        "cameraPath": "low_angle_rise",
+        "damage": 31,
+        "hitstopFrames": 7,
+        "shakeStrength": 1,
+        "vfxAsset": "soul_release",
+        "sfxAsset": "void_whisper",
+        "durationFrames": 120
+      }
+    ],
+    "fatalities": [
+      {
+        "name": "Soul Harvest",
+        "distance": "FAR",
+        "inputSequence": [
+          "BACK",
+          "BACK",
+          "DOWN",
+          "HEAVY_PUNCH"
+        ],
+        "finisherType": "SOUL_RIP",
+        "vfxExplosionAsset": "soul_release",
+        "sfxAsset": "void_whisper",
+        "slowMotionFactor": 0.18,
+        "cameraPath": "orbit_victim",
+        "ragdoll": true,
+        "durationFrames": 165
+      }
+    ],
+    "impactProfile": {
+      "lightHitstopFrames": 2,
+      "heavyHitstopFrames": 4,
+      "shakeStrength": 0.7,
+      "zoomPunch": true
+    },
+    "notes": "AoE unter dem Gegner, Distanz-Starter, Seelen-X-Ray und Seelenernte als Finisher."
   },
   "bio_mech": {
     "requestType": "BATCH",
@@ -325,6 +487,247 @@
         "statusEffect": "wallbounce"
       }
     ],
-    "notes": "Panzer-Werte, Schockwelle mit 46 Frames Recovery, Wandbounce-Kombo."
+    "cinematicMoves": [
+      {
+        "name": "Reactor Crush X-Ray",
+        "inputSequence": [
+          "HEAVY_KICK",
+          "BLOCK"
+        ],
+        "triggerCondition": "METERS_FULL",
+        "cinematicZoomFrame": 20,
+        "slowMotionFactor": 0.1,
+        "boneTarget": "PELVIS",
+        "cameraPath": "push_in_face",
+        "damage": 46,
+        "hitstopFrames": 14,
+        "shakeStrength": 2.2,
+        "vfxAsset": "radiation_burst",
+        "sfxAsset": "quake_boom",
+        "durationFrames": 130
+      }
+    ],
+    "fatalities": [
+      {
+        "name": "Core Detonation",
+        "distance": "CLOSE",
+        "inputSequence": [
+          "DOWN",
+          "DOWN",
+          "DOWN",
+          "HEAVY_PUNCH"
+        ],
+        "finisherType": "EXPLOSION",
+        "vfxExplosionAsset": "gore_explosion",
+        "sfxAsset": "barrel_burst",
+        "slowMotionFactor": 0.35,
+        "cameraPath": "side_slide",
+        "ragdoll": true,
+        "durationFrames": 200
+      }
+    ],
+    "stageInteractions": [
+      {
+        "object": "shopping_cart",
+        "role": "THROWABLE",
+        "position": [
+          -5,
+          1.8
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "GRAB"
+        ]
+      },
+      {
+        "object": "wall_ledge",
+        "role": "ESCAPE_PAD",
+        "position": [
+          5.5,
+          -2.2
+        ],
+        "interactionInput": [
+          "BACK",
+          "UP"
+        ]
+      },
+      {
+        "object": "neon_sign",
+        "role": "HAZARD",
+        "position": [
+          0.5,
+          -5
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "HEAVY_PUNCH"
+        ]
+      }
+    ],
+    "impactProfile": {
+      "lightHitstopFrames": 4,
+      "heavyHitstopFrames": 12,
+      "shakeStrength": 2,
+      "zoomPunch": true
+    },
+    "notes": "Panzer-Werte, Schockwelle mit 46 Frames Recovery, Wandbounce-Kombo, Reaktor-X-Ray und Kern-Detonation."
+  },
+  "nicro_viper": {
+    "requestType": "UPDATE_CHARACTER_SPECS",
+    "profileName": "Nicro-Viper",
+    "archetype": "Hardcore-Finisher · X-Ray & Fatality",
+    "visualOverrides": {
+      "tintColor": "#22ff55",
+      "emissiveColor": "#9dff33",
+      "emissiveIntensity": 0.7,
+      "metalness": 0.4,
+      "roughness": 0.2,
+      "scale": 1.05,
+      "auraVfx": "acid_spray"
+    },
+    "stats": {
+      "maxHP": 120,
+      "moveSpeed": 5.8,
+      "defense": 1.1,
+      "jumpForce": 10
+    },
+    "combos": [
+      {
+        "name": "Volt Strike",
+        "inputSequence": [
+          "LIGHT_PUNCH",
+          "HEAVY_PUNCH"
+        ],
+        "totalDamage": 18,
+        "hits": 2,
+        "startupFrames": 5,
+        "hitStunFrames": 16,
+        "recoveryFrames": 12,
+        "cancelWindowFrames": 16,
+        "animationClipName": "punch_combo_2",
+        "hitboxShape": "medium_sphere",
+        "sfxAsset": "whoosh_heavy",
+        "vfxAsset": "electricity"
+      }
+    ],
+    "specialAttacks": [
+      {
+        "name": "Acid Spit",
+        "inputSequence": [
+          "DOWN",
+          "FORWARD",
+          "HEAVY_KICK"
+        ],
+        "vfxAsset": "acid_spray",
+        "sfxAsset": "acid_sizzle",
+        "hitboxShape": "wide_cone",
+        "damage": 30,
+        "startupFrames": 12,
+        "activeFrames": 6,
+        "recoveryFrames": 18,
+        "projectile": true,
+        "statusEffect": "corrode",
+        "spawnAt": "self",
+        "animationClipName": "cast_forward"
+      }
+    ],
+    "cinematicMoves": [
+      {
+        "name": "Spine Shatter X-Ray",
+        "inputSequence": [
+          "LIGHT_PUNCH",
+          "BLOCK"
+        ],
+        "triggerCondition": "METERS_FULL",
+        "cinematicZoomFrame": 14,
+        "slowMotionFactor": 0.15,
+        "boneTarget": "SPINE_T3",
+        "cameraPath": "orbit_victim",
+        "damage": 38,
+        "hitstopFrames": 11,
+        "shakeStrength": 1.6,
+        "vfxAsset": "bone_shards",
+        "sfxAsset": "bone_crack",
+        "durationFrames": 120,
+        "animationClipName": "xray_strike"
+      }
+    ],
+    "fatalities": [
+      {
+        "name": "Acid Meltdown",
+        "distance": "MEDIUM",
+        "inputSequence": [
+          "DOWN",
+          "DOWN",
+          "FORWARD",
+          "HEAVY_KICK"
+        ],
+        "finisherType": "DISMEMBERMENT",
+        "vfxExplosionAsset": "acid_corrosive",
+        "sfxAsset": "gore_squelch",
+        "slowMotionFactor": 0.2,
+        "cameraPath": "low_angle_rise",
+        "ragdoll": true,
+        "durationFrames": 190,
+        "animationClipName": "fatality_finish"
+      }
+    ],
+    "stageInteractions": [
+      {
+        "object": "burning_barrel",
+        "role": "THROWABLE",
+        "position": [
+          -4.2,
+          -2
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "GRAB"
+        ]
+      },
+      {
+        "object": "gas_bottle",
+        "role": "THROWABLE",
+        "position": [
+          4.4,
+          2
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "GRAB"
+        ]
+      },
+      {
+        "object": "wall_ledge",
+        "role": "ESCAPE_PAD",
+        "position": [
+          -6,
+          3
+        ],
+        "interactionInput": [
+          "BACK",
+          "UP"
+        ]
+      },
+      {
+        "object": "wooden_crate",
+        "role": "THROWABLE",
+        "position": [
+          2,
+          -4.5
+        ],
+        "interactionInput": [
+          "FORWARD",
+          "GRAB"
+        ]
+      }
+    ],
+    "impactProfile": {
+      "lightHitstopFrames": 3,
+      "heavyHitstopFrames": 8,
+      "shakeStrength": 1.5,
+      "zoomPunch": true
+    },
+    "notes": "Elektro-Combo, Säurespucken, Spine-Shatter-X-Ray und Acid Meltdown — inklusive interaktiver Arena."
   }
 }

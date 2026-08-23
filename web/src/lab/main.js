@@ -17,6 +17,9 @@ import { AIEngine } from './aiEngine.js';
 import { manifest, VFX_LIBRARY, AUDIO_LIBRARY, HITBOX_LIBRARY } from './assetLibrary.js';
 import { buildPlaceholderFighter, buildDummy } from './placeholder.js';
 import { PRESET_LIST, presetConfigs } from './presets.js';
+import { CinematicDirector } from './cinematic.js';
+import { RagdollSystem } from './ragdoll.js';
+import { StageProps } from './stage.js';
 import * as AudioPool from './audioPool.js';
 
 const $ = (s) => document.querySelector(s);
@@ -85,6 +88,10 @@ dummy.position.set(2.6, 0, 0);
 scene.add(dummy);
 let dummyHP = 100;
 
+const director = new CinematicDirector(camera, { position: camera.position.clone(), lookAt: new THREE.Vector3(1.2, 1.05, 0) });
+const ragdoll = new RagdollSystem(scene, particles);
+const stage = new StageProps(scene, particles);
+
 let fighterRoot = buildPlaceholderFighter();
 scene.add(fighterRoot);
 let fighter = new AIConfigurableFighter(fighterRoot, { scene, particles });
@@ -93,6 +100,16 @@ wireFighter();
 // ---------------------------------------------------------------------------
 //  KI-Engine
 // ---------------------------------------------------------------------------
+
+stage.on('hit', ({ object, damage, sfx }) => {
+  dummyHP = Math.max(0, dummyHP - damage);
+  $('#dummy-hp').style.width = dummyHP + '%';
+  $('#dummy-hp-label').textContent = `Dummy ${dummyHP} HP`;
+  flash(`${object} · ${damage} DMG`);
+  AudioPool.play(sfx || 'impact_metal');
+  director.impact({ frames: 4, strength: 1.0, zoom: 0.25 });
+  fighter.addMeter(8);
+});
 
 const settings = loadSettings();
 const ai = new AIEngine(settings.ai);
@@ -199,6 +216,7 @@ function renderCatalog() {
   $('#move-count').textContent = entries.length;
   if (!entries.length) {
     list.innerHTML = '<p class="empty">Noch keine Moves. Beschreib im Chat, was der Charakter können soll.</p>';
+    renderHardcore();
     return;
   }
   list.innerHTML = entries.map(([name, d]) => `
@@ -223,6 +241,48 @@ function renderCatalog() {
     delete fighter.moveCatalog[b.dataset.del];
     renderCatalog(); saveSettings();
   }));
+  renderHardcore();
+}
+
+/** X-Ray-, Fatality- und Arena-Panel. */
+function renderHardcore() {
+  const xr = Object.entries(fighter.cinematics);
+  $('#xray-list').innerHTML = xr.length ? xr.map(([n, d]) => `
+    <div class="move xray">
+      <div class="move-head"><b>${esc(n)}</b><span class="tag cinematic">X-RAY</span></div>
+      <div class="seq">${d.inputSequence.map((s2) => `<kbd>${esc(s2)}</kbd>`).join('<span>→</span>')}</div>
+      <div class="meta">${d.damage} DMG · ${esc(d.boneTarget)} · Slow-Mo ${d.slowMotionFactor}× · Zoom bei Frame ${d.cinematicZoomFrame} · ${esc(d.triggerCondition)}</div>
+      <div class="move-actions"><button data-xray="${esc(n)}">▶ Testen</button></div>
+    </div>`).join('') : '<p class="empty">Kein X-Ray. Frag die KI: „Gib ihm einen X-Ray auf die Wirbelsäule“.</p>';
+
+  const ft = Object.entries(fighter.fatalities);
+  $('#fatality-list').innerHTML = ft.length ? ft.map(([n, d]) => `
+    <div class="move fatality">
+      <div class="move-head"><b>${esc(n)}</b><span class="tag fatality">FATALITY</span></div>
+      <div class="seq">${d.inputSequence.map((s2) => `<kbd>${esc(s2)}</kbd>`).join('<span>→</span>')}</div>
+      <div class="meta">${esc(d.finisherType)} · ${esc(d.distance)} · Ragdoll ${d.ragdoll ? 'an' : 'aus'} · ${esc(d.vfxExplosionAsset)}</div>
+      <div class="move-actions"><button data-fatality="${esc(n)}">▶ Testen</button></div>
+    </div>`).join('') : '<p class="empty">Keine Fatality. Frag die KI: „Fatality mit Explosion“.</p>';
+
+  const props = fighter.stageInteractions || [];
+  $('#stage-list').innerHTML = props.length ? props.map((o) => `
+    <div class="move stage">
+      <div class="move-head"><b>${esc(o.object)}</b><span class="tag stage">${esc(o.role)}</span></div>
+      <div class="meta">${o.damage} DMG · Position ${o.position.map((v) => v.toFixed(1)).join(' / ')}</div>
+    </div>`).join('') : '<p class="empty">Keine Arena-Objekte gesetzt.</p>';
+
+  const ip = fighter.impactProfile;
+  $('#impact-info').textContent = `leicht ${ip.lightHitstopFrames}f · schwer ${ip.heavyHitstopFrames}f · Shake ${ip.shakeStrength} · Zoom ${ip.zoomPunch ? 'an' : 'aus'}`;
+
+  $('#xray-list').querySelectorAll('[data-xray]').forEach((b) => b.addEventListener('click', () => {
+    const n = b.dataset.xray;
+    fighter.meter = 100;                       // Testknopf füllt die Leiste
+    fighter.executeCinematic(n, fighter.cinematics[n]);
+  }));
+  $('#fatality-list').querySelectorAll('[data-fatality]').forEach((b) => b.addEventListener('click', () => {
+    const n = b.dataset.fatality;
+    fighter.executeFatality(n, fighter.fatalities[n]);
+  }));
 }
 
 function wireFighter() {
@@ -232,15 +292,112 @@ function wireFighter() {
     $('#dummy-hp').style.width = dummyHP + '%';
     $('#dummy-hp-label').textContent = `Dummy ${dummyHP} HP`;
     flash(`${name} · ${damage} DMG${status && status !== 'none' ? ' · ' + status : ''}${guardBreak ? ' · GUARD BREAK' : ''}${wallBounce ? ' · WALL BOUNCE' : ''}`);
-    if (dummyHP === 0) setTimeout(() => { dummyHP = 100; $('#dummy-hp').style.width = '100%'; $('#dummy-hp-label').textContent = 'Dummy 100 HP'; }, 900);
+    if (dummyHP === 0) {
+      const hasFatality = Object.keys(fighter.fatalities).length > 0;
+      if (hasFatality && !fighter.finisherMode) {
+        fighter.setFinisherMode(true);
+        AudioPool.play('finish_him');
+        const fh = $('#finish-him');
+        fh.classList.add('show');
+        const list = Object.entries(fighter.fatalities)
+          .map(([n, f]) => `${n}: ${f.inputSequence.join(' → ')}`).join(' · ');
+        fh.innerHTML = `FINISH HIM!<small>${esc(list)}</small>`;
+        addMsg('sys', `🔥 <b>FINISH HIM!</b> — ${esc(list)}`);
+      } else if (!hasFatality) {
+        setTimeout(resetDummy, 900);
+      }
+    }
+  });
+  fighter.on('finisher-mode', ({ active }) => {
+    $('#state-label').textContent = active ? 'FINISH HIM!' : 'bereit';
   });
   fighter.on('move', ({ name, phase }) => {
     if (phase === 'startup') $('#state-label').textContent = `▶ ${name}`;
-    if (phase === 'idle') $('#state-label').textContent = 'bereit';
+    if (phase === 'idle') $('#state-label').textContent = fighter.finisherMode ? 'FINISH HIM!' : 'bereit';
   });
   fighter.on('input', ({ buffer }) => {
     $('#buffer-view').textContent = buffer.slice(-8).join(' → ') || '—';
   });
+
+  // --- Wucht: Hitstop, Shake, Zoom bei jedem Treffer ---
+  fighter.on('hit', ({ damage, cinematic }) => {
+    const ip = fighter.impactProfile;
+    const heavy = cinematic || damage >= 20;
+    director.impact({
+      frames: heavy ? ip.heavyHitstopFrames : ip.lightHitstopFrames,
+      strength: ip.shakeStrength * (heavy ? 1.4 : 0.8),
+      zoom: ip.zoomPunch ? (heavy ? 0.45 : 0.18) : 0,
+    });
+  });
+
+  // --- Meter / Leiste ---
+  fighter.on('meter', ({ meter, full }) => {
+    $('#meter-fill').style.width = meter + '%';
+    $('#meter-label').textContent = full ? 'X-RAY BEREIT' : `Leiste ${Math.round(meter)} %`;
+    $('#meter-label').classList.toggle('ready', full);
+  });
+
+  fighter.on('blocked', ({ name, reason }) => flash(`${name}: ${reason}`));
+
+  // --- X-Ray / Cinematic ---
+  fighter.on('cinematic', (ev) => {
+    AudioPool.initAudio(); AudioPool.resumeAudio();
+    director.play({
+      path: ev.cameraPath, victim: dummy.position, attacker: fighterRoot.position,
+      durationFrames: ev.durationFrames, slowMotionFactor: ev.slowMotionFactor,
+      zoomFrame: ev.zoomFrame, label: ev.name, kind: 'xray',
+    });
+    showCinemaBanner(`X-RAY · ${ev.name}`, `${ev.boneTarget} · ${ev.damage} DMG`);
+    addMsg('sys', `🦴 <b>${esc(ev.name)}</b> — Zeitlupe ${ev.slowMotionFactor}×, Kamera „${esc(ev.cameraPath)}", Ziel ${esc(ev.boneTarget)}.`);
+  });
+  fighter.on('cinematic-end', () => hideCinemaBanner());
+
+  // --- Fatality ---
+  fighter.on('fatality', (ev) => {
+    AudioPool.initAudio(); AudioPool.resumeAudio();
+    director.play({
+      path: ev.cameraPath, victim: dummy.position, attacker: fighterRoot.position,
+      durationFrames: ev.durationFrames, slowMotionFactor: ev.slowMotionFactor,
+      zoomFrame: 20, label: ev.name, kind: 'fatality',
+    });
+    const dir = dummy.position.clone().sub(fighterRoot.position).setY(0).normalize();
+    if (ev.ragdoll) ragdoll.explode(dummy, ev.finisherType, dir);
+    if (particles) particles.spawn(ev.vfxExplosionAsset, dummy.position.clone().setY(1.2), { scale: 1.3 });
+    showCinemaBanner(`FATALITY · ${ev.name}`, ev.finisherType);
+    addMsg('sys', `💀 <b>FATALITY: ${esc(ev.name)}</b> — ${esc(ev.finisherType)}, Ragdoll ${ev.ragdoll ? 'an' : 'aus'}.`);
+  });
+  fighter.on('fatality-end', () => {
+    hideCinemaBanner();
+    setTimeout(() => { ragdoll.clear(); resetDummy(); }, 1400);
+  });
+
+  // --- Arena-Objekte aus dem JSON aufbauen ---
+  fighter.on('stage', ({ interactions }) => {
+    const n = stage.build(interactions);
+    $('#stage-label').textContent = n ? `${n} Arena-Objekte` : 'keine Arena-Objekte';
+  });
+}
+
+function showCinemaBanner(title, sub) {
+  const el = $('#cinema-banner');
+  el.innerHTML = `<b>${esc(title)}</b><small>${esc(sub || '')}</small>`;
+  el.classList.add('show');
+  document.body.classList.add('cinema');
+}
+function hideCinemaBanner() {
+  $('#cinema-banner').classList.remove('show');
+  document.body.classList.remove('cinema');
+}
+
+function resetDummy() {
+  dummyHP = 100;
+  dummy.position.set(2.6, 0, 0);
+  dummy.rotation.set(0, 0, 0);
+  dummy.visible = true;
+  $('#dummy-hp').style.width = '100%';
+  $('#dummy-hp-label').textContent = 'Dummy 100 HP';
+  fighter.setFinisherMode(false);
+  $('#finish-him').classList.remove('show');
 }
 
 let flashTimer = 0;
@@ -339,8 +496,24 @@ const KEYMAP = {
   ShiftLeft: 'BLOCK', KeyG: 'GRAB', Space: 'SPECIAL',
 };
 
+/** Arena-Interaktionen liegen auf eigenen Tasten (E = werfen, Q = Wandsprung). */
+const STAGE_KEYS = { KeyE: 'THROWABLE', KeyQ: 'ESCAPE_PAD', KeyR: 'HAZARD' };
+
+function useStage(role) {
+  const res = stage.interact(fighterRoot.position, dummy.position, role);
+  if (!res) { flash('Kein Objekt in Reichweite'); return; }
+  flash(`${res.type}: ${res.object}${res.damage ? ' · ' + res.damage + ' DMG' : ''}`);
+  if (res.type === 'ESCAPE') director.impact({ frames: 1, strength: 0.3, zoom: 0.1 });
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  if (STAGE_KEYS[e.code]) {
+    e.preventDefault();
+    AudioPool.initAudio(); AudioPool.resumeAudio();
+    useStage(STAGE_KEYS[e.code]);
+    return;
+  }
   const token = KEYMAP[e.code];
   if (!token) return;
   e.preventDefault();
@@ -457,6 +630,14 @@ $('#import-input').addEventListener('change', async (e) => {
 });
 $('#btn-reset').addEventListener('click', () => {
   fighter.reset();
+  ragdoll.clear();
+  stage.clear();
+  director.cancel();
+  hideCinemaBanner();
+  resetDummy();
+  $('#meter-fill').style.width = '0%';
+  $('#meter-label').textContent = 'Leiste 0 %';
+  $('#stage-label').textContent = 'keine Arena-Objekte';
   $('#profile-label').textContent = 'Profil: —';
   presetList.querySelectorAll('.preset').forEach((b) => b.classList.remove('active'));
   renderCatalog(); saveSettings();
@@ -492,17 +673,26 @@ const size0 = resLock.size;
 $('#res-readout').textContent = `${size0.width}×${size0.height}`;
 
 function tick(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const rawDt = Math.min(0.05, (now - last) / 1000);
   last = now;
+
+  // Der Regisseur entscheidet über Hitstop (dt = 0) und Zeitlupe
+  const dt = director.update(rawDt);
 
   if (fighterRoot.userData.animate) fighterRoot.userData.animate(now / 1000);
   fighter.update(dt, dummy);
   particles.update(dt);
+  ragdoll.update(dt);
+  stage.update(dt, dummy);
 
-  // Kamera atmet leicht, Dummy schaut zurück
-  camera.position.x = 3.4 + Math.sin(now / 4200) * 0.35;
-  camera.lookAt(1.2, 1.05, 0);
-  dummy.rotation.y = Math.sin(now / 1800) * 0.12 - 0.5;
+  // Ruhekamera nur, wenn keine Kamerafahrt läuft
+  if (!director.isPlaying) {
+    const camX = 3.4 + Math.sin(now / 4200) * 0.35;
+    camera.position.set(camX, 2.3, 5.6);
+    camera.lookAt(1.2, 1.05, 0);
+    director.setHome(camera.position, new THREE.Vector3(1.2, 1.05, 0));
+    if (!ragdoll.active) dummy.rotation.y = Math.sin(now / 1800) * 0.12 - 0.5;
+  }
 
   renderer.render(scene, camera);
 
@@ -519,5 +709,9 @@ requestAnimationFrame(tick);
 window.PK_LAB = {
   get fighter() { return fighter; },
   ai, scene, particles, resLock, sendPrompt, loadPreset,
+  director, ragdoll, stage, useStage,
+  get dummyHP() { return dummyHP; },
+  set dummyHP(v) { dummyHP = v; },
+  dummy,
   presets: presetConfigs(),
 };

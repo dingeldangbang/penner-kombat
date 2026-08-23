@@ -95,16 +95,17 @@ test('UI: Seite bootet, 480p-Sperre steht, Loop rendert', maybe, async () => {
   assert.equal(lab.resLock.preset, '480p');
 });
 
-test('UI: alle vier Kampfprofile sind klickbar und binden Moves', maybe, async () => {
+test('UI: alle Kampfprofile sind klickbar und binden Moves', maybe, async () => {
   const { doc, lab } = await boot();
   const buttons = [...doc.querySelectorAll('[data-preset]')];
-  assert.equal(buttons.length, 4);
+  assert.equal(buttons.length, 5);
 
   const expected = {
     cyber_scorpion: { moves: ['Magnet Grab', 'Nano Bolt', 'Overload'], hp: 95 },
     toxic_ghoulem: { moves: ['Acid Vomit', 'Blood Geyser', 'Brutal Carnage'], hp: 185 },
     voodoo_priest: { moves: ['Abyssal Rift', 'Shadow Step', 'Soul Reap'], hp: 88 },
     bio_mech: { moves: ['Meltdown Slam', 'Fallout Cloud', 'Heavy Core Smash'], hp: 220 },
+    nicro_viper: { moves: ['Acid Spit', 'Volt Strike'], hp: 120 },
   };
 
   for (const [id, exp] of Object.entries(expected)) {
@@ -240,9 +241,111 @@ test('UI: Asset-Bibliothek und Tabs sind gefüllt', maybe, async () => {
   assert.ok(doc.querySelector('#panel-moves').classList.contains('hidden'));
 });
 
-test('UI: Export der vier Profile funktioniert ohne Fehler', maybe, async () => {
+test('UI: Export aller Profile funktioniert ohne Fehler', maybe, async () => {
   const { doc, lab } = await boot();
   click(doc, '#btn-export-presets');
   click(doc, '#btn-export');
-  assert.equal(Object.keys(lab.presets).length, 4);
+  assert.equal(Object.keys(lab.presets).length, 5);
+});
+
+// ---------------------------------------------------------------------------
+//  Hardcore-Oberfläche: Leiste, X-Ray, FINISH HIM, Fatality, Arena
+// ---------------------------------------------------------------------------
+
+test('UI: Nicro-Viper füllt Hardcore-Panel und Arena', maybe, async () => {
+  const { doc, lab } = await boot();
+  click(doc, '[data-preset="nicro_viper"]');
+
+  assert.equal(doc.querySelectorAll('#xray-list .move').length, 1);
+  assert.equal(doc.querySelectorAll('#fatality-list .move').length, 1);
+  assert.equal(doc.querySelectorAll('#stage-list .move').length, 4);
+  assert.ok(doc.querySelector('#xray-list').textContent.includes('SPINE_T3'));
+  assert.ok(doc.querySelector('#fatality-list').textContent.includes('DISMEMBERMENT'));
+  assert.match(doc.querySelector('#stage-label').textContent, /4 Arena-Objekte/);
+  assert.ok(doc.querySelector('#impact-info').textContent.includes('8f'));
+  assert.equal(lab.stage.props.length, 4, 'Arena-Objekte nicht in der Szene');
+});
+
+test('UI: X-Ray blockiert ohne Leiste, läuft mit voller Leiste', maybe, async () => {
+  const { doc, lab } = await boot();
+  click(doc, '[data-preset="nicro_viper"]');
+  const press = (code) => doc.defaultView.dispatchEvent(
+    new doc.defaultView.KeyboardEvent('keydown', { code, bubbles: true, cancelable: true }),
+  );
+
+  press('KeyJ'); press('ShiftLeft');
+  assert.equal(lab.fighter.state.phase, 'idle', 'X-Ray darf ohne Meter nicht starten');
+  assert.ok(doc.querySelector('#hit-flash').textContent.includes('Leiste'));
+
+  lab.fighter.meter = 100;
+  press('KeyJ'); press('ShiftLeft');
+  assert.equal(lab.fighter.state.phase, 'cinematic');
+  assert.ok(lab.director.isPlaying, 'Kamerafahrt läuft nicht');
+  assert.ok(doc.querySelector('#cinema-banner').classList.contains('show'));
+  assert.ok(doc.body.classList.contains('cinema'), 'Letterbox fehlt');
+  assert.ok(doc.querySelector('#chat-log').textContent.includes('Zeitlupe'));
+});
+
+test('UI: Dummy auf 0 HP löst FINISH HIM aus, Fatality zündet Ragdoll', maybe, async () => {
+  const { doc, lab } = await boot();
+  click(doc, '[data-preset="nicro_viper"]');
+
+  // Treffer bis 0 HP simulieren
+  lab.dummy.position.set(1.4, 0, 0);
+  for (let i = 0; i < 12 && lab.dummyHP > 0; i++) {
+    lab.fighter.executeSpecialMove('Acid Spit', lab.fighter.moveCatalog['Acid Spit']);
+    for (let f = 0; f < 90; f++) lab.fighter.update(1 / 60, lab.dummy);
+  }
+  assert.equal(lab.dummyHP, 0, 'Dummy nicht besiegt');
+  assert.ok(lab.fighter.finisherMode, 'FINISH-HIM-Modus nicht aktiv');
+  assert.ok(doc.querySelector('#finish-him').classList.contains('show'));
+  assert.match(doc.querySelector('#state-label').textContent, /FINISH HIM/);
+
+  // Fatality-Eingabe: DOWN DOWN FORWARD HEAVY_KICK => S S D M
+  const press = (code) => doc.defaultView.dispatchEvent(
+    new doc.defaultView.KeyboardEvent('keydown', { code, bubbles: true, cancelable: true }),
+  );
+  press('KeyS'); press('KeyS'); press('KeyD'); press('KeyM');
+  assert.equal(lab.fighter.state.phase, 'fatality', 'Fatality nicht gestartet');
+  assert.ok(lab.ragdoll.active, 'Ragdoll nicht aktiv');
+  assert.equal(lab.dummy.visible, false, 'Opfer muss durch Ragdoll ersetzt sein');
+  assert.ok(lab.ragdoll.parts.length >= 3, 'zu wenige Körperteile');
+  assert.ok(doc.querySelector('#chat-log').textContent.includes('FATALITY'));
+});
+
+test('UI: Arena-Objekt per Taste E werfen', maybe, async () => {
+  const { doc, lab } = await boot();
+  click(doc, '[data-preset="nicro_viper"]');
+  const before = lab.stage.flying.length;
+
+  // Kämpfer neben das Fass stellen
+  lab.fighter.model.position.set(-4.2, 0, -2.0);
+  doc.defaultView.dispatchEvent(new doc.defaultView.KeyboardEvent('keydown', { code: 'KeyE', bubbles: true, cancelable: true }));
+  assert.equal(lab.stage.flying.length, before + 1, 'kein Objekt geworfen');
+  assert.ok(doc.querySelector('#hit-flash').textContent.includes('THROW'));
+
+  // Ohne Objekt in Reichweite kommt eine Meldung
+  lab.fighter.model.position.set(0, 0, 0);
+  doc.defaultView.dispatchEvent(new doc.defaultView.KeyboardEvent('keydown', { code: 'KeyE', bubbles: true, cancelable: true }));
+  assert.ok(doc.querySelector('#hit-flash').textContent.includes('Reichweite'));
+});
+
+test('UI: Chat baut X-Ray, Fatality und Arena live ein', maybe, async () => {
+  const { doc, lab } = await boot();
+  const send = async (text) => {
+    doc.querySelector('#chat-input').value = text;
+    doc.querySelector('#chat-form').dispatchEvent(new doc.defaultView.Event('submit', { bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 40));
+  };
+
+  await send('Gib ihm einen X-Ray auf den Schädel mit 42 Schaden');
+  assert.equal(Object.values(lab.fighter.cinematics)[0].boneTarget, 'SKULL');
+  assert.equal(doc.querySelectorAll('#xray-list .move').length, 1);
+
+  await send('Fatality mit Enthauptung');
+  assert.equal(Object.values(lab.fighter.fatalities)[0].finisherType, 'DECAPITATION');
+
+  await send('Stell eine Holzkiste und einen Mauervorsprung in die Arena');
+  assert.equal(lab.stage.props.length, 2);
+  assert.match(doc.querySelector('#stage-label').textContent, /2 Arena-Objekte/);
 });

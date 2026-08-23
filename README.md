@@ -43,9 +43,10 @@ Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** d
 - **Rendering hart auf 480p gesperrt** (854×480 Backbuffer, `setPixelRatio(1)`, CSS streckt) — gleiche Last auf 4K-Monitor und Handy
 - **Chat statt Engine-Wissen**: „Gib ihm einen Feueratem mit 25 Schaden“ → die KI liefert **validiertes JSON**, die Game-Loop lädt es sofort
 - Zwei Backends: lokaler Regel-Parser (ohne API-Key, Deutsch + Englisch) oder OpenAI-kompatibles LLM über `server/src/ai-proxy.js`
-- **4 fertige Kampfprofile** per Klick: Cyber-Scorpion, Toxic Blood-Ghoulem, Voodoo Shadow-Priest, Radioactive Bio-Mech
-- Asset-Bibliothek (14 VFX, 15 Sounds, 9 Hitbox-Formen), Move-Katalog mit Frame-Daten, Hitbox-Anzeige, JSON-Export/Import
-- 65 Tests grün — siehe [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md)
+- **5 fertige Kampfprofile** per Klick: Cyber-Scorpion, Toxic Blood-Ghoulem, Voodoo Shadow-Priest, Radioactive Bio-Mech, Nicro-Viper
+- **Hardcore-Mechaniken**: X-Ray-/Cinematic-Moves (Leiste, Zeitlupe, Kamerafahrt, Knochenziel), **Fatalities** mit Ragdoll-Zerlegung, interaktive Arena-Objekte (werfen, Wandsprung, Hazard) und **Hitstop** für echte Trefferwucht
+- Asset-Bibliothek (20 VFX, 21 Sounds, 9 Hitbox-Formen), Move-Katalog mit Frame-Daten, Hitbox-Anzeige, JSON-Export/Import
+- 81 Tests grün — siehe [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md)
 
 ### Systeme
 - **Arena** `ArenaManager`: umkippbare Props, Explosionen, Stage-Fatality, Mops-Napf
@@ -151,8 +152,8 @@ HUD und alle Effekte laufen trotzdem vollständig.
 | [docs/SOUNDTRACK.md](docs/SOUNDTRACK.md) | Alle 31 Musik-Tracks |
 | [docs/STRATEGY.md](docs/STRATEGY.md) | Strategieguide für jeden Charakter |
 | [docs/WEB.md](docs/WEB.md) | **Browser-Fassung in `web/`** — sofort spielbar, gleiche Kampfwerte, 11 Tests grün |
-| [docs/AI_LAB.md](docs/AI_LAB.md) | **KI-Werkstatt (`web/lab.html`)** — eigenes `.glb` hochladen, Moves per Chat bauen, harte 480p-Render-Sperre, 4 fertige Kampfprofile |
-| [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md) | Abnahmebericht der KI-Werkstatt: 65 Tests, was geprüft ist und was nicht |
+| [docs/AI_LAB.md](docs/AI_LAB.md) | **KI-Werkstatt (`web/lab.html`)** — eigenes `.glb` hochladen, Moves per Chat bauen, harte 480p-Render-Sperre, 5 Kampfprofile, X-Ray/Fatality/Ragdoll/Arena/Hitstop |
+| [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md) | Abnahmebericht der KI-Werkstatt: 81 Tests, was geprüft ist und was nicht |
 | [docs/HANDY.md](docs/HANDY.md) | **Auf dem Handy spielen**: APK oder WebGL aus der CI, Touch, Leistungsstufen |
 | [docs/MODELLE.md](docs/MODELLE.md) | **GLB-Import**: Editor-Menü (Prefabs) und F7-Menü im Spiel, Skalierung, Grenzen |
 | [docs/SPIELEN.md](docs/SPIELEN.md) | **Vom Repo zum laufenden Kampf** — MVP-Anleitung, Steuerung, Fehlerbehebung |

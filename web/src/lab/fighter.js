@@ -27,6 +27,11 @@ export class AIConfigurableFighter {
     this.particles = deps.particles;
 
     this.moveCatalog = {};      // name -> {kind, sequence, damage, startup, active, recovery, vfxType, sfx, hitbox, ...}
+    this.cinematics = {};       // X-Ray-/Kino-Moves (Meter-gebunden)
+    this.fatalities = {};       // Finisher, nur im FINISH-HIM-Modus
+    this.meter = 0;             // 0..100, füllt sich durch Treffer
+    this.finisherMode = false;  // "FINISH HIM!"
+    this.impactProfile = { lightHitstopFrames: 2, heavyHitstopFrames: 5, shakeStrength: 0.8, zoomPunch: true };
     this.stats = { maxHP: 100, moveSpeed: 5, defense: 1, jumpForce: 9.5 };
     this.hp = this.stats.maxHP;
 
@@ -166,10 +171,37 @@ export class AIConfigurableFighter {
       changes.push('Werte: ' + Object.entries(cfg.stats).map(([k, v]) => `${k}=${v}`).join(', '));
     }
 
+    // 4b) X-Ray-/Cinematic-Moves
+    for (const c of cfg.cinematicMoves || []) {
+      this.cinematics[c.name] = { ...c, kind: 'cinematic' };
+      changes.push(`X-Ray „${c.name}" (${c.inputSequence.join(' → ')}, ${c.damage} DMG, ${c.boneTarget}, Slow-Mo ${c.slowMotionFactor})`);
+    }
+
+    // 4c) Fatalities
+    for (const f of cfg.fatalities || []) {
+      this.fatalities[f.name] = { ...f, kind: 'fatality' };
+      changes.push(`Fatality „${f.name}" (${f.inputSequence.join(' → ')}, ${f.finisherType}, ${f.distance})`);
+    }
+
+    // 4d) Stage-Interaktionen (die Arena baut sie, wir merken sie uns)
+    if (cfg.stageInteractions) {
+      this.stageInteractions = cfg.stageInteractions;
+      changes.push('Arena-Objekte: ' + cfg.stageInteractions.map((o) => `${o.object} (${o.role})`).join(', '));
+      this.emit('stage', { interactions: cfg.stageInteractions });
+    }
+
+    // 4e) Wucht-Profil
+    if (cfg.impactProfile) {
+      this.impactProfile = { ...this.impactProfile, ...cfg.impactProfile };
+      changes.push(`Hitstop: leicht ${this.impactProfile.lightHitstopFrames}f, schwer ${this.impactProfile.heavyHitstopFrames}f`);
+    }
+
     // 5) Entfernen
     for (const name of cfg.removeMoves || []) {
-      const key = Object.keys(this.moveCatalog).find((k) => k.toLowerCase() === String(name).toLowerCase());
-      if (key) { delete this.moveCatalog[key]; changes.push(`„${key}" entfernt`); }
+      for (const table of [this.moveCatalog, this.cinematics, this.fatalities]) {
+        const key = Object.keys(table).find((k) => k.toLowerCase() === String(name).toLowerCase());
+        if (key) { delete table[key]; changes.push(`„${key}" entfernt`); }
+      }
     }
 
     this.emit('configured', { cfg, changes, catalog: this.moveCatalog });
@@ -198,11 +230,17 @@ export class AIConfigurableFighter {
         });
       }
     }
+    const cinematicMoves = Object.values(this.cinematics).map(({ kind, ...c }) => c);
+    const fatalities = Object.values(this.fatalities).map(({ kind, ...f }) => f);
     return {
       requestType: 'BATCH',
       profileName: this.profileName || undefined,
       archetype: this.archetype || undefined,
       combos, specialAttacks: specials, stats: { ...this.stats },
+      cinematicMoves: cinematicMoves.length ? cinematicMoves : undefined,
+      fatalities: fatalities.length ? fatalities : undefined,
+      stageInteractions: this.stageInteractions || undefined,
+      impactProfile: { ...this.impactProfile },
     };
   }
 
@@ -217,15 +255,109 @@ export class AIConfigurableFighter {
     return this.checkInputs();
   }
 
-  /** Prüft, ob der Puffer eine KI-generierte Sequenz abschließt. */
+  /**
+   * Prüft, ob der Puffer eine KI-generierte Sequenz abschließt.
+   * Reihenfolge: Fatality (nur im Finisher-Modus) → X-Ray (nur mit Meter) → Move.
+   */
   checkInputs() {
     if (this.state.phase !== 'idle') return null;
     const tokens = this.inputBuffer.recent(6);
+
+    if (this.finisherMode) {
+      const fat = bestMatch(tokens, this.#seqTable(this.fatalities));
+      if (fat) {
+        this.inputBuffer.consume();
+        this.executeFatality(fat.name, this.fatalities[fat.name]);
+        return fat.name;
+      }
+    }
+
+    const cine = bestMatch(tokens, this.#seqTable(this.cinematics));
+    if (cine) {
+      const data = this.cinematics[cine.name];
+      if (this.canTriggerCinematic(data)) {
+        this.inputBuffer.consume();
+        this.executeCinematic(cine.name, data);
+        return cine.name;
+      }
+      this.emit('blocked', {
+        name: cine.name,
+        reason: data.triggerCondition === 'METERS_FULL'
+          ? `Leiste erst bei 100 % (aktuell ${Math.round(this.meter)} %)`
+          : data.triggerCondition === 'LOW_HEALTH' ? 'Nur unter 30 % HP' : 'Bedingung nicht erfüllt',
+      });
+    }
+
     const hit = bestMatch(tokens, this.moveCatalog);
     if (!hit) return null;
     this.inputBuffer.consume();
     this.executeSpecialMove(hit.name, hit.data);
     return hit.name;
+  }
+
+  #seqTable(table) {
+    return Object.fromEntries(Object.entries(table).map(([k, v]) => [k, { sequence: v.inputSequence }]));
+  }
+
+  /** Bedingung des X-Ray-Moves erfüllt? */
+  canTriggerCinematic(data) {
+    switch (data.triggerCondition) {
+      case 'METERS_FULL': return this.meter >= 100;
+      case 'LOW_HEALTH': return this.hp / this.stats.maxHP <= 0.3;
+      case 'COUNTER_HIT': return this.state.phase === 'idle';
+      default: return true;
+    }
+  }
+
+  /** Meter füllen (Treffer geben, Treffer kassieren). */
+  addMeter(amount) {
+    const before = this.meter;
+    this.meter = Math.max(0, Math.min(100, this.meter + amount));
+    if (this.meter !== before) this.emit('meter', { meter: this.meter, full: this.meter >= 100 });
+    return this.meter;
+  }
+
+  /** „FINISH HIM!" ein-/ausschalten. */
+  setFinisherMode(on) {
+    this.finisherMode = !!on;
+    this.emit('finisher-mode', { active: this.finisherMode, moves: Object.keys(this.fatalities) });
+  }
+
+  /** X-Ray/Cinematic: Zeitlupe, Kamerafahrt, Knochenbruch. */
+  executeCinematic(name, data) {
+    this.meter = 0;
+    this.emit('meter', { meter: 0, full: false });
+    this.state = { phase: 'cinematic', move: { name, ...data, kind: 'cinematic' }, timer: data.durationFrames / 60, hitApplied: false };
+    this.playClip(data.animationClipName);
+    if (data.sfxAsset) AudioPool.play(data.sfxAsset);
+    AudioPool.play('slowmo_drone');
+    this.emit('cinematic', {
+      name, kind: 'xray', data,
+      boneTarget: data.boneTarget,
+      cameraPath: data.cameraPath,
+      slowMotionFactor: data.slowMotionFactor,
+      zoomFrame: data.cinematicZoomFrame,
+      durationFrames: data.durationFrames,
+      damage: data.damage,
+    });
+    return name;
+  }
+
+  /** Fatality: Finisher-Kamera, Gore, Ragdoll. */
+  executeFatality(name, data) {
+    this.state = { phase: 'fatality', move: { name, ...data, kind: 'fatality' }, timer: data.durationFrames / 60, hitApplied: false };
+    this.playClip(data.animationClipName);
+    if (data.sfxAsset) AudioPool.play(data.sfxAsset);
+    this.emit('fatality', {
+      name, kind: 'fatality', data,
+      finisherType: data.finisherType,
+      cameraPath: data.cameraPath,
+      slowMotionFactor: data.slowMotionFactor,
+      durationFrames: data.durationFrames,
+      vfxExplosionAsset: data.vfxExplosionAsset,
+      ragdoll: data.ragdoll,
+    });
+    return name;
   }
 
   executeSpecialMove(name, moveData) {
@@ -268,6 +400,39 @@ export class AIConfigurableFighter {
     if (this.state.phase === 'idle') return;
 
     this.state.timer -= dt;
+
+    // Kino-Phasen laufen als Ganzes ab; der Treffer sitzt beim Zoom-Frame
+    if (this.state.phase === 'cinematic' || this.state.phase === 'fatality') {
+      const mv = this.state.move;
+      const elapsed = mv.durationFrames / 60 - this.state.timer;
+      if (!this.state.hitApplied && elapsed >= (mv.cinematicZoomFrame ?? 8) / 60) {
+        this.state.hitApplied = true;
+        if (this.particles && target) {
+          this.particles.spawn(mv.vfxAsset || mv.vfxExplosionAsset || 'bone_shards',
+            target.position.clone().setY(1.2), { scale: 1.1 });
+        }
+        this.emit('hit', {
+          name: mv.name,
+          damage: mv.damage ?? 0,
+          status: 'knockdown',
+          hits: 1,
+          cinematic: this.state.phase,
+          boneTarget: mv.boneTarget,
+          hitStun: 30,
+          guardBreak: true,
+          wallBounce: false,
+        });
+      }
+      if (this.state.timer <= 0) {
+        const finished = this.state.phase;
+        this.state = { phase: 'idle', move: null, timer: 0, hitApplied: false };
+        this.playIdle();
+        this.emit('move', { name: mv.name, phase: 'idle', data: mv });
+        this.emit(finished === 'fatality' ? 'fatality-end' : 'cinematic-end', { name: mv.name });
+      }
+      return;
+    }
+
     if (this.state.timer > 0) return;
     const mv = this.state.move;
 
@@ -314,6 +479,7 @@ export class AIConfigurableFighter {
       if (dist <= range) {
         const dmg = (mv.damage || 0);
         this.reactTarget(mv, target, dir);
+        this.addMeter(mv.kind === 'combo' ? 6 + (mv.hits || 1) * 2 : 12);
         this.emit('hit', {
           name: mv.name, damage: dmg, status: mv.status, hits: mv.hits || 1,
           guardBreak: !!mv.guardBreak, wallBounce: !!mv.wallBounce,
@@ -409,6 +575,13 @@ export class AIConfigurableFighter {
   /** Setzt Optik & Katalog auf den Ausgangszustand zurück. */
   reset() {
     this.moveCatalog = {};
+    this.cinematics = {};
+    this.fatalities = {};
+    this.stageInteractions = null;
+    this.meter = 0;
+    this.finisherMode = false;
+    this.profileName = '';
+    this.archetype = '';
     this.aura = null;
     this.stats = { maxHP: 100, moveSpeed: 5, defense: 1, jumpForce: 9.5 };
     this.hp = this.stats.maxHP;

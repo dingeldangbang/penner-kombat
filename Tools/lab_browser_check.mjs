@@ -13,6 +13,9 @@
  *   5. Chat-Prompt erzeugt einen Move und rendert ihn in die Liste
  *   6. Tastatur-Eingabefolge löst einen Special aus
  *   7. Auflösungsumschaltung greift auf den Puffer durch
+ *   8. X-Ray: Leiste, Zeitlupe, Kamerafahrt
+ *   9. Fatality: FINISH HIM, Ragdoll-Teile fliegen
+ *  10. Arena-Objekt werfen
  *
  * Voraussetzung (bewusst KEINE Repo-Abhängigkeit):
  *   npm install puppeteer      # z. B. global oder in einem Temp-Ordner
@@ -128,6 +131,60 @@ check('Umschalten auf 240p greift durch', small.w === 426 && small.h === 240, `$
 
 await page.select('#opt-resolution', '480p');
 await new Promise((r) => setTimeout(r, 300));
+
+// 8 — X-Ray mit Kamerafahrt
+await page.click('[data-preset="nicro_viper"]');
+await new Promise((r) => setTimeout(r, 250));
+await page.evaluate(() => { window.PK_LAB.fighter.meter = 100; });
+await page.keyboard.press('KeyJ');
+await page.keyboard.press('ShiftLeft');
+await new Promise((r) => setTimeout(r, 400));
+const xray = await page.evaluate(() => ({
+  phase: window.PK_LAB.fighter.state.phase,
+  playing: window.PK_LAB.director.isPlaying,
+  timeScale: window.PK_LAB.director.timeScale,
+  banner: document.querySelector('#cinema-banner').classList.contains('show'),
+  camY: window.PK_LAB.director.camera.position.y,
+}));
+check('X-Ray startet Zeitlupe und Kamerafahrt',
+  xray.phase === 'cinematic' && xray.playing && xray.timeScale < 1 && xray.banner,
+  `phase=${xray.phase}, timeScale=${xray.timeScale}, camY=${xray.camY.toFixed(2)}`);
+await page.screenshot({ path: process.env.LAB_SHOT_XRAY || '/tmp/lab-xray.png' });
+await new Promise((r) => setTimeout(r, 2200));
+
+// 9 — FINISH HIM + Fatality + Ragdoll
+await page.evaluate(() => {
+  const L = window.PK_LAB;
+  L.dummy.position.set(1.4, 0, 0);
+  L.fighter.on('hit', () => {});
+  L.dummyHP = 1;
+  L.fighter.executeSpecialMove('Acid Spit', L.fighter.moveCatalog['Acid Spit']);
+});
+await new Promise((r) => setTimeout(r, 1200));
+const finish = await page.evaluate(() => ({
+  mode: window.PK_LAB.fighter.finisherMode,
+  banner: document.querySelector('#finish-him').classList.contains('show'),
+}));
+check('Dummy besiegt löst FINISH HIM aus', finish.mode && finish.banner, `mode=${finish.mode}`);
+
+for (const code of ['KeyS', 'KeyS', 'KeyD', 'KeyM']) await page.keyboard.press(code);
+await new Promise((r) => setTimeout(r, 500));
+const fatality = await page.evaluate(() => ({
+  phase: window.PK_LAB.fighter.state.phase,
+  parts: window.PK_LAB.ragdoll.parts.length,
+  victimVisible: window.PK_LAB.dummy.visible,
+}));
+check('Fatality startet Ragdoll', fatality.phase === 'fatality' && fatality.parts >= 3 && !fatality.victimVisible,
+  `${fatality.parts} Teile, Opfer sichtbar: ${fatality.victimVisible}`);
+await page.screenshot({ path: process.env.LAB_SHOT_FATALITY || '/tmp/lab-fatality.png' });
+await new Promise((r) => setTimeout(r, 3500));
+
+// 10 — Arena-Objekt werfen
+await page.evaluate(() => { window.PK_LAB.fighter.model.position.set(-4.2, 0, -2.0); });
+await page.keyboard.press('KeyE');
+await new Promise((r) => setTimeout(r, 200));
+const thrown = await page.evaluate(() => window.PK_LAB.stage.flying.length);
+check('Arena-Objekt lässt sich werfen', thrown >= 1, thrown + ' fliegend');
 
 await page.screenshot({ path: process.env.LAB_SHOT || '/tmp/lab-check.png' });
 

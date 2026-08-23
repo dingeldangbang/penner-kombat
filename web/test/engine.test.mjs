@@ -22,8 +22,8 @@ const { validateConfig } = await import('../src/lab/schema.js');
 
 // --- Profile: reine Datenprüfung (läuft immer) ------------------------------
 
-test('Profile: alle vier validieren ohne Warnungen', () => {
-  assert.equal(PRESET_LIST.length, 4);
+test('Profile: alle validieren ohne Warnungen', () => {
+  assert.equal(PRESET_LIST.length, 5);
   for (const p of PRESET_LIST) {
     const res = validateConfig(p.config);
     assert.ok(res.ok, `${p.name} ungültig`);
@@ -266,7 +266,7 @@ test('Engine: Export/Reimport erhält alle Moves verlustfrei', maybe, async () =
   for (const p of PRESET_LIST) fighter.injectAiConfiguration(p.config);
   const exported = fighter.exportConfiguration();
   const total = Object.keys(fighter.moveCatalog).length;
-  assert.equal(total, 12, 'alle vier Profile zusammen = 8 Specials + 4 Combos');
+  assert.equal(total, 14, 'alle fünf Profile zusammen = 9 Specials + 5 Combos');
 
   const res = validateConfig(exported);
   assert.ok(res.ok);
@@ -300,4 +300,243 @@ test('Engine: Chat-Prompt lädt Profil und bindet es an die Engine', maybe, asyn
   fighter.applyAiConfiguration(res.config);
   assert.ok(fighter.moveCatalog['Acid Vomit']);
   assert.equal(fighter.stats.maxHP, 185);
+});
+
+// ---------------------------------------------------------------------------
+//  Hardcore-Stufe: X-Ray, Fatality, Ragdoll, Stage, Hitstop
+// ---------------------------------------------------------------------------
+
+test('Hardcore: Doku-JSON (Spine Shatter + Acid Meltdown) validiert 1:1', () => {
+  const res = validateConfig({
+    cinematicMoves: [{
+      name: 'Spine Shatter X-Ray', inputSequence: ['LIGHT_PUNCH', 'BLOCK'],
+      triggerCondition: 'METERS_FULL', cinematicZoomFrame: 14,
+      slowMotionFactor: 0.15, boneTarget: 'SPINE_T3',
+    }],
+    fatalities: [{
+      name: 'Acid Meltdown', distance: 'MEDIUM',
+      inputSequence: ['DOWN', 'DOWN', 'FORWARD', 'HEAVY_KICK'],
+      finisherType: 'DISMEMBERMENT', vfxExplosionAsset: 'acid_spit_corrosive',
+    }],
+  });
+  assert.ok(res.ok);
+  const x = res.config.cinematicMoves[0];
+  assert.equal(x.boneTarget, 'SPINE_T3');
+  assert.equal(x.slowMotionFactor, 0.15);
+  assert.equal(x.cinematicZoomFrame, 14);
+  const f = res.config.fatalities[0];
+  assert.equal(f.finisherType, 'DISMEMBERMENT');
+  assert.equal(f.distance, 'MEDIUM');
+  assert.equal(f.vfxExplosionAsset, 'acid_corrosive', 'erfundener VFX-Name muss gemappt werden');
+  assert.equal(f.ragdoll, true);
+});
+
+test('Hardcore: Schema klemmt irrsinnige Kino-Werte', () => {
+  const { config } = validateConfig({
+    cinematicMoves: [{ name: 'Overkill', damage: 9999, slowMotionFactor: 0, hitstopFrames: 999, boneTarget: 'LEBER' }],
+    fatalities: [{ name: 'X', finisherType: 'TELEPORT_TO_MARS' }],
+  });
+  assert.equal(config.cinematicMoves[0].damage, 90);
+  assert.equal(config.cinematicMoves[0].slowMotionFactor, 0.05);
+  assert.equal(config.cinematicMoves[0].hitstopFrames, 30);
+  assert.equal(config.cinematicMoves[0].boneTarget, 'SPINE_T3');
+  assert.equal(config.fatalities[0].finisherType, 'EXPLOSION');
+});
+
+test('Hardcore: alle fünf Profile bringen X-Ray und Fatality mit', () => {
+  assert.equal(PRESET_LIST.length, 5);
+  for (const p of PRESET_LIST) {
+    const cfg = validateConfig(p.config).config;
+    assert.equal(cfg.cinematicMoves.length, 1, p.name + ' ohne X-Ray');
+    assert.equal(cfg.fatalities.length, 1, p.name + ' ohne Fatality');
+    assert.ok(cfg.impactProfile, p.name + ' ohne Wucht-Profil');
+  }
+  const viper = validateConfig(PRESETS.nicro_viper.config).config;
+  assert.equal(viper.stageInteractions.length, 4);
+  assert.equal(viper.fatalities[0].name, 'Acid Meltdown');
+  assert.equal(viper.cinematicMoves[0].name, 'Spine Shatter X-Ray');
+});
+
+test('Hardcore: X-Ray feuert nur mit voller Leiste', maybe, async () => {
+  const { fighter, dummy } = await makeRig();
+  fighter.injectAiConfiguration(PRESETS.nicro_viper.config);
+
+  const blocked = [];
+  fighter.on('blocked', (b) => blocked.push(b));
+  let cine = null;
+  fighter.on('cinematic', (c) => { cine = c; });
+
+  fighter.pushInput('LIGHT_PUNCH');
+  fighter.pushInput('BLOCK');
+  assert.equal(cine, null, 'X-Ray darf ohne Meter nicht starten');
+  assert.equal(blocked.length, 1);
+  assert.match(blocked[0].reason, /Leiste/);
+
+  fighter.meter = 100;
+  fighter.pushInput('LIGHT_PUNCH');
+  fighter.pushInput('BLOCK');
+  assert.ok(cine, 'X-Ray startet mit voller Leiste nicht');
+  assert.equal(cine.boneTarget, 'SPINE_T3');
+  assert.equal(cine.slowMotionFactor, 0.15);
+  assert.equal(fighter.state.phase, 'cinematic');
+  assert.equal(fighter.meter, 0, 'Leiste muss verbraucht werden');
+
+  // Treffer sitzt beim Zoom-Frame, danach zurück in idle
+  let hit = null;
+  fighter.on('hit', (h) => { hit = h; });
+  runFrames(fighter, dummy, 4);
+  assert.ok(hit && hit.cinematic === 'cinematic');
+  assert.equal(hit.boneTarget, 'SPINE_T3');
+  assert.equal(fighter.state.phase, 'idle');
+});
+
+test('Hardcore: Treffer füllen die Leiste', maybe, async () => {
+  const { fighter, dummy } = await makeRig();
+  fighter.injectAiConfiguration(PRESETS.nicro_viper.config);
+  dummy.position.set(1.6, 0, 0);
+  assert.equal(fighter.meter, 0);
+
+  ['DOWN', 'FORWARD', 'HEAVY_KICK'].forEach((t) => fighter.pushInput(t));
+  runFrames(fighter, dummy);
+  assert.ok(fighter.meter > 0, 'Leiste füllt sich nicht');
+});
+
+test('Hardcore: Fatality nur im FINISH-HIM-Modus', maybe, async () => {
+  const { fighter, dummy } = await makeRig();
+  fighter.injectAiConfiguration(PRESETS.nicro_viper.config);
+
+  let fat = null;
+  fighter.on('fatality', (f) => { fat = f; });
+  ['DOWN', 'DOWN', 'FORWARD', 'HEAVY_KICK'].forEach((t) => fighter.pushInput(t));
+  assert.equal(fat, null, 'Fatality darf im Normalzustand nicht zünden');
+  fighter.state = { phase: 'idle', move: null, timer: 0, hitApplied: false };
+  fighter.inputBuffer.clear();
+
+  fighter.setFinisherMode(true);
+  ['DOWN', 'DOWN', 'FORWARD', 'HEAVY_KICK'].forEach((t) => fighter.pushInput(t));
+  assert.ok(fat, 'Fatality zündet im Finisher-Modus nicht');
+  assert.equal(fat.finisherType, 'DISMEMBERMENT');
+  assert.equal(fat.ragdoll, true);
+  assert.equal(fighter.state.phase, 'fatality');
+
+  let ended = false;
+  fighter.on('fatality-end', () => { ended = true; });
+  runFrames(fighter, dummy, 6);
+  assert.ok(ended, 'Fatality endet nicht');
+});
+
+test('Hardcore: Ragdoll zerlegt das Opfer und lässt Teile fallen', maybe, async () => {
+  const { scene, dummy, spawned } = await makeRig();
+  const { RagdollSystem } = await import('../src/lab/ragdoll.js');
+  const particles = { spawn: (name, pos) => spawned.push({ name, pos: pos.clone() }) };
+  const rag = new RagdollSystem(scene, particles);
+
+  const info = rag.explode(dummy, 'EXPLOSION', new THREE.Vector3(1, 0, 0));
+  assert.equal(info.parts, 6, 'EXPLOSION muss 6 Teile abtrennen');
+  assert.equal(dummy.visible, false, 'Skelett-Darstellung muss aus sein');
+  assert.ok(spawned.some((s) => s.name === 'gore_explosion'));
+
+  const y0 = rag.parts.map((p) => p.mesh.position.y);
+  for (let i = 0; i < 120; i++) rag.update(1 / 60);
+  const settled = rag.parts.every((p) => p.mesh.position.y >= 0.17 && p.mesh.position.y < 2.5);
+  assert.ok(settled, 'Teile müssen auf dem Boden landen, nicht durchfallen');
+  assert.ok(rag.parts.some((p, i) => Math.abs(p.mesh.position.y - y0[i]) > 0.01), 'Physik bewegt nichts');
+
+  rag.clear();
+  assert.equal(dummy.visible, true);
+  assert.equal(rag.parts.length, 0);
+});
+
+test('Hardcore: Stage-Objekte werden gebaut, geworfen und treffen', maybe, async () => {
+  const { scene, dummy, spawned } = await makeRig();
+  const { StageProps } = await import('../src/lab/stage.js');
+  const particles = { spawn: (n, p) => spawned.push({ name: n, pos: p.clone() }) };
+  const stage = new StageProps(scene, particles);
+
+  const cfg = validateConfig(PRESETS.nicro_viper.config).config;
+  const built = stage.build(cfg.stageInteractions);
+  assert.equal(built, 4);
+
+  const hits = [];
+  stage.on('hit', (h) => hits.push(h));
+  dummy.position.set(-3.0, 0, -2.0);
+  const res = stage.interact(new THREE.Vector3(-4.2, 0, -2.0), dummy.position, 'THROWABLE');
+  assert.ok(res && res.type === 'THROW', 'Wurf nicht ausgelöst');
+  assert.equal(res.object, 'burning_barrel');
+
+  for (let i = 0; i < 180 && !hits.length; i++) stage.update(1 / 60, dummy);
+  assert.equal(hits.length, 1, 'Geworfenes Objekt trifft nicht');
+  assert.ok(hits[0].damage >= 10);
+
+  // Wandsprung
+  const esc = stage.interact(new THREE.Vector3(-6.0, 0, 3.0), dummy.position, 'ESCAPE_PAD');
+  assert.equal(esc.type, 'ESCAPE');
+  // Nichts in Reichweite
+  assert.equal(stage.interact(new THREE.Vector3(0, 0, 0), dummy.position, 'HAZARD'), null);
+  stage.clear();
+});
+
+test('Hardcore: Regisseur friert bei Hitstop ein und dehnt in Zeitlupe', maybe, async () => {
+  const { CinematicDirector } = await import('../src/lab/cinematic.js');
+  const camera = new THREE.PerspectiveCamera(52, 16 / 9, 0.1, 100);
+  camera.position.set(3, 2, 5);
+  const dir = new CinematicDirector(camera, { position: camera.position.clone(), lookAt: new THREE.Vector3() });
+
+  assert.equal(dir.update(1 / 60), 1 / 60, 'Normalbetrieb darf dt nicht verändern');
+
+  dir.hitstop(5);
+  assert.equal(dir.update(1 / 60), 0, 'Hitstop muss die Spielzeit anhalten');
+  for (let i = 0; i < 5; i++) dir.update(1 / 60);
+  assert.ok(dir.update(1 / 60) > 0, 'Hitstop muss auslaufen');
+
+  dir.play({
+    path: 'orbit_victim', victim: new THREE.Vector3(2, 0, 0), attacker: new THREE.Vector3(0, 0, 0),
+    durationFrames: 60, slowMotionFactor: 0.2, zoomFrame: 6, label: 'Test X-Ray',
+  });
+  assert.ok(dir.isPlaying);
+  assert.ok(Math.abs(dir.update(1 / 60) - (1 / 60) * 0.2) < 1e-9, 'Zeitlupe skaliert dt nicht');
+  const camDuringXray = camera.position.clone();
+  for (let i = 0; i < 70; i++) dir.update(1 / 60);
+  assert.ok(!dir.isPlaying, 'Kamerafahrt endet nicht');
+  assert.ok(camera.position.distanceTo(camDuringXray) > 0.1, 'Kamera bewegt sich nicht');
+  assert.ok(camera.position.distanceTo(new THREE.Vector3(3, 2, 5)) < 0.001, 'Kamera kehrt nicht heim');
+  assert.equal(dir.timeScale, 1);
+});
+
+test('Hardcore: Export/Reimport erhält X-Ray, Fatality, Arena und Wucht', maybe, async () => {
+  const { fighter } = await makeRig();
+  fighter.injectAiConfiguration(PRESETS.nicro_viper.config);
+  const exported = fighter.exportConfiguration();
+  assert.equal(exported.cinematicMoves.length, 1);
+  assert.equal(exported.fatalities.length, 1);
+  assert.equal(exported.stageInteractions.length, 4);
+  assert.equal(exported.impactProfile.heavyHitstopFrames, 8);
+
+  const res = validateConfig(exported);
+  assert.ok(res.ok);
+  const { fighter: fresh } = await makeRig();
+  fresh.applyAiConfiguration(res.config);
+  assert.ok(fresh.cinematics['Spine Shatter X-Ray']);
+  assert.ok(fresh.fatalities['Acid Meltdown']);
+  assert.equal(fresh.impactProfile.shakeStrength, 1.5);
+});
+
+test('Hardcore: Chat-Prompts erzeugen X-Ray, Fatality und Arena', maybe, async () => {
+  const { AIEngine } = await import('../src/lab/aiEngine.js');
+  const { fighter } = await makeRig();
+  const ai = new AIEngine({ mode: 'local' });
+
+  const x = await ai.request('Gib ihm einen X-Ray Move auf die Rippen mit 40 Schaden');
+  fighter.applyAiConfiguration(x.config);
+  const xray = Object.values(fighter.cinematics)[0];
+  assert.equal(xray.boneTarget, 'RIBCAGE');
+  assert.equal(xray.damage, 40);
+
+  const f = await ai.request('Fatality die den Gegner mit Säure auflöst');
+  fighter.applyAiConfiguration(f.config);
+  assert.equal(Object.values(fighter.fatalities)[0].finisherType, 'MELTDOWN');
+
+  const s = await ai.request('Stell brennende Fässer und eine Gasflasche in die Arena');
+  fighter.applyAiConfiguration(s.config);
+  assert.deepEqual(fighter.stageInteractions.map((o) => o.object), ['burning_barrel', 'gas_bottle']);
 });

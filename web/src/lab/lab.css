@@ -196,3 +196,47 @@ details summary { cursor: pointer; color: var(--neon); font-size: 12px; margin: 
 .preset b { display: block; font-size: 12.5px; }
 .preset small { color: var(--muted); font-size: 10.5px; display: block; line-height: 1.4; }
 .preset.active { box-shadow: 0 0 0 1px var(--accent, var(--gold)) inset; }
+
+/* ---------------- Hardcore: Meter, Kino, Fatality ---------------- */
+.meter-label { display: block; margin-top: 6px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.meter-label.ready { color: var(--gold); text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+.bar.meter { height: 6px; }
+.bar.meter .fill { width: 0%; background: linear-gradient(90deg, #00bfff, #ffd700); }
+
+.cinema-banner {
+  position: absolute; top: 12%; left: 50%; transform: translate(-50%, -10px);
+  text-align: center; opacity: 0; transition: 0.2s; pointer-events: none;
+}
+.cinema-banner.show { opacity: 1; transform: translate(-50%, 0); }
+.cinema-banner b {
+  display: block; font-size: 20px; letter-spacing: 3px; color: #fff;
+  text-shadow: 0 0 14px var(--blood), 0 2px 4px #000;
+}
+.cinema-banner small { color: var(--gold); letter-spacing: 2px; font-size: 11px; }
+
+.letterbox {
+  position: absolute; left: 0; right: 0; height: 0; background: #000;
+  transition: height 0.25s ease; pointer-events: none;
+}
+.letterbox.top { top: 0; }
+.letterbox.bottom { bottom: 0; }
+body.cinema .letterbox { height: 9%; }
+
+.finish-him {
+  position: absolute; top: 44%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+  font-size: 26px; font-weight: 900; letter-spacing: 4px; color: #ff2222;
+  text-shadow: 0 0 18px #8B0000, 0 3px 6px #000; text-align: center;
+  opacity: 0; transition: 0.2s; pointer-events: none;
+}
+.finish-him.show { opacity: 1; transform: translate(-50%, -50%) scale(1); animation: fhpulse 0.8s infinite alternate; }
+.finish-him small { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 1px; color: var(--gold); font-weight: 600; }
+@keyframes fhpulse { to { text-shadow: 0 0 30px #ff0000, 0 3px 6px #000; } }
+
+.move-list.small .move { padding: 8px; }
+.move-list.small .meta { font-size: 10.5px; }
+.move.xray { border-left-color: var(--neon); }
+.move.fatality { border-left-color: #ff2222; }
+.move.stage { border-left-color: var(--gold); }
+.tag.cinematic { background: rgba(0, 191, 255, 0.2); color: var(--neon); }
+.tag.fatality { background: rgba(255, 34, 34, 0.22); color: #ff6b6b; }
+.tag.stage { background: rgba(255, 215, 0, 0.18); color: var(--gold); }

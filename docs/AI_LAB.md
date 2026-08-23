@@ -209,6 +209,18 @@ fighter.injectAiConfiguration(PRESETS.cyber_scorpion.config);
 | 🧟 **Toxic Blood-Ghoulem** | Heavy Bruiser | Karmesin-Violett, nass (`roughness 0.08`) | **Acid Vomit** — `wide_cone`, `guardBreak: true`, zersetzt normales Blocken | **Brutal Carnage** — 16 Startup-Frames, 34 Frames Hitstun, 42 DMG |
 | 🕯️ **Voodoo Shadow-Priest** | Zoning Teleporter | Pechschwarz + Void-Aura | **Abyssal Rift** — `aoe_sphere` mit `spawnAt: ground_target`, also exakt unter den Koordinaten des Gegners | **Soul Reap** — leichter Kick aus Distanz, 30 Frames Cancel-Fenster |
 | ☢️ **Radioactive Bio-Mech** | Juggernaut | Neongrün, `emissiveIntensity 1.4`, Scale 1.3 | **Meltdown Slam** — `shockwave_ring`, 26/20/**46** Frames, 38 DMG, 50 Meter | **Heavy Core Smash** — `wallBounce: true`, 34 DMG |
+| 🐍 **Nicro-Viper** | Hardcore-Finisher | Giftgrün, `roughness 0.2` (MKX-Schweiß) | **Acid Spit** — Kegel, 30 DMG, `corrode` | **Volt Strike** — `LP → HP`, 18 DMG |
+
+Jedes Profil bringt zusätzlich **einen X-Ray-Move und eine Fatality** mit,
+Ghoulem, Bio-Mech und Nicro-Viper außerdem interaktive Arena-Objekte:
+
+| Profil | X-Ray | Fatality | Arena |
+|---|---|---|---|
+| Cyber-Scorpion | Circuit Breaker (FOREARM, orbit) | Nano Disassembly (DISMEMBERMENT) | — |
+| Toxic Blood-Ghoulem | Ribcage Rupture (RIBCAGE, push-in) | Acid Meltdown (MELTDOWN) | Fass, Gasflasche |
+| Voodoo Shadow-Priest | Soul Extraction (SPINE_T3, Untersicht) | Soul Harvest (SOUL_RIP) | — |
+| Radioactive Bio-Mech | Reactor Crush (PELVIS, push-in) | Core Detonation (EXPLOSION) | Einkaufswagen, Mauervorsprung, Neonschild |
+| Nicro-Viper | Spine Shatter (SPINE_T3, orbit) | Acid Meltdown (DISMEMBERMENT) | Fass, Gasflasche, Vorsprung, Kiste |
 
 Dafür wurden Bibliothek und Schema erweitert:
 
@@ -222,6 +234,97 @@ Dafür wurden Bibliothek und Schema erweitert:
 
 Die Reaktion des Gegners ist sichtbar: `pull` zieht den Dummy heran,
 `wallbounce`/`launch` schleudert ihn weg, `knockdown` kippt ihn.
+
+## 🩸 Hardcore-Stufe: X-Ray, Fatalities, Ragdoll, Arena, Hitstop
+
+Das ist der Teil, der aus der Tech-Demo ein Kampfspiel macht. Alles wird von
+derselben validierten JSON-Pipeline gesteuert — die KI darf brutal sein, aber
+nicht ungeklemmt.
+
+### X-Ray / Cinematic Moves
+
+```json
+"cinematicMoves": [
+  {
+    "name": "Spine Shatter X-Ray",
+    "inputSequence": ["LIGHT_PUNCH", "BLOCK"],
+    "triggerCondition": "METERS_FULL",
+    "cinematicZoomFrame": 14,
+    "slowMotionFactor": 0.15,
+    "boneTarget": "SPINE_T3",
+    "cameraPath": "orbit_victim",
+    "damage": 38,
+    "hitstopFrames": 11,
+    "durationFrames": 120
+  }
+]
+```
+
+* `triggerCondition`: `METERS_FULL` (Leiste voll) · `LOW_HEALTH` (≤ 30 % HP) ·
+  `COUNTER_HIT` · `ALWAYS`. Ist sie nicht erfüllt, meldet die Engine ein
+  `blocked`-Event statt zu feuern — die Leiste steht im Viewport.
+* `boneTarget`: `SKULL JAW SPINE_T3 RIBCAGE PELVIS FEMUR KNEE FOREARM SHOULDER`
+* `cameraPath`: `orbit_victim` (umkreist) · `push_in_face` (harter Zoom) ·
+  `low_angle_rise` (Untersicht) · `side_slide`
+* Beim Zoom-Frame sitzt der Treffer, die Leiste wird verbraucht, danach kehrt
+  die Kamera automatisch in die Ruhelage zurück.
+
+### Fatalities & Ragdoll
+
+```json
+"fatalities": [
+  {
+    "name": "Acid Meltdown",
+    "distance": "MEDIUM",
+    "inputSequence": ["DOWN", "DOWN", "FORWARD", "HEAVY_KICK"],
+    "finisherType": "DISMEMBERMENT",
+    "vfxExplosionAsset": "acid_corrosive",
+    "ragdoll": true
+  }
+]
+```
+
+Fatalities zünden **nur** im `FINISH HIM!`-Zustand (Gegner auf 0 HP). Dann:
+
+1. `fighter.setFinisherMode(true)` schaltet die Fatality-Sequenzen scharf,
+   der Banner blendet auf und nennt die Eingaben.
+2. Bei Treffer schaltet `ragdoll.js` die normale Darstellung des Opfers ab und
+   ersetzt sie durch lose Körperteile — Verlet-Integration mit Schwerkraft,
+   Boden-Dämpfung, Drehimpuls und Arena-Grenze.
+3. `finisherType` bestimmt, was abgetrennt wird:
+   `DECAPITATION` (Kopf) · `EXPLOSION` (alles, 6 Teile) · `DISMEMBERMENT`
+   (Gliedmaßen) · `MELTDOWN` (Auflösung) · `SOUL_RIP` · `INCINERATION`.
+
+### Stage Interactions
+
+```json
+"stageInteractions": [
+  { "object": "burning_barrel", "role": "THROWABLE", "position": [-4.2, -2.0] },
+  { "object": "wall_ledge", "role": "ESCAPE_PAD", "position": [-6.0, 3.0] }
+]
+```
+
+Objekte: `burning_barrel`, `wooden_crate`, `gas_bottle`, `wall_ledge`,
+`neon_sign`, `shopping_cart`. Rollen: `THROWABLE` (greifen und werfen, fliegt
+ballistisch und macht Schaden), `ESCAPE_PAD` (Wandsprung), `HAZARD` (schadet in
+Reichweite).
+**Tasten:** <kbd>E</kbd> werfen · <kbd>Q</kbd> Wandsprung · <kbd>R</kbd> Hazard.
+
+### Hitstop — das Geheimnis der Wucht
+
+```json
+"impactProfile": { "lightHitstopFrames": 3, "heavyHitstopFrames": 8, "shakeStrength": 1.5, "zoomPunch": true }
+```
+
+`cinematic.js` ist der Regisseur der Game-Loop:
+
+```js
+const dt = director.update(rawDt);   // 0 während Hitstop, × slowMotionFactor in Zeitlupe
+```
+
+Bei einem Treffer friert die Spiellogik für n Frames komplett ein, während
+Kamera-Shake und Zoom-Stoß weiterlaufen — genau das erzeugt das MKX-Gefühl.
+Zeitlupe, Kamerafahrt und Letterbox laufen über denselben Regisseur.
 
 ## Export / Import
 

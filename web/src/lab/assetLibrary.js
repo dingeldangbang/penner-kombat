@@ -25,6 +25,11 @@ export const VFX_LIBRARY = {
   void_rift:           { label: 'Abgrundriss',       color: 0x120024, color2: 0xaa33ff, count: 160, speed: 3.0,  life: 1.2, gravity: -2.5, size: 0.28, blend: 'normal', travels: false },
   radiation_burst:     { label: 'Radioaktiver Ausbruch', color: 0x66ff00, color2: 0xdfffa0, count: 170, speed: 8.5, life: 1.0, gravity: 3.0, size: 0.20, blend: 'add',   travels: false },
   acid_spray:          { label: 'Säurespucke',       color: 0x7fff2a, color2: 0x2a5c00, count: 150, speed: 6.5,  life: 0.9, gravity: 5.0,  size: 0.17, blend: 'normal', travels: true, cone: 0.7 },
+  bone_shards:         { label: 'Knochensplitter',   color: 0xf2e8d5, color2: 0xc9a227, count: 90,  speed: 7.5,  life: 1.1, gravity: 16.0, size: 0.13, blend: 'normal', travels: false },
+  gore_explosion:      { label: 'Gore-Explosion',    color: 0x7a0010, color2: 0xff3344, count: 260, speed: 10.0, life: 1.4, gravity: 15.0, size: 0.19, blend: 'normal', travels: false },
+  acid_corrosive:      { label: 'Ätzende Auflösung', color: 0x9dff33, color2: 0x1e3d00, count: 200, speed: 4.0,  life: 1.6, gravity: 2.0,  size: 0.24, blend: 'normal', travels: false },
+  soul_release:        { label: 'Seelenaustritt',    color: 0x88ccff, color2: 0xffffff, count: 140, speed: 2.6,  life: 1.8, gravity: -3.0, size: 0.22, blend: 'add',    travels: false },
+  ember_storm:         { label: 'Funkensturm',       color: 0xff8800, color2: 0xffee88, count: 180, speed: 6.0,  life: 1.3, gravity: -1.0, size: 0.14, blend: 'add',    travels: false },
 };
 
 /** Audio-Pools — synthetisiert in audioPool.js (WebAudio, keine Dateien nötig). */
@@ -44,6 +49,11 @@ export const AUDIO_LIBRARY = {
   void_whisper:  { label: 'Void-Flüstern',   type: 'tone',  freq: 320,  dur: 0.70, gain: 0.22, sweep: -260 },
   geiger_click:  { label: 'Geigerzähler',    type: 'noise', freq: 3200, dur: 0.28, gain: 0.20, sweep: -1200 },
   quake_boom:    { label: 'Erdbeben',        type: 'thud',  freq: 70,   dur: 0.75, gain: 0.40, sweep: -45  },
+  bone_crack:    { label: 'Knochenbruch',    type: 'noise', freq: 950,  dur: 0.22, gain: 0.38, sweep: -700 },
+  gore_squelch:  { label: 'Gore-Platzen',    type: 'noise', freq: 420,  dur: 0.45, gain: 0.40, sweep: -300 },
+  slowmo_drone:  { label: 'Zeitlupen-Drone', type: 'tone',  freq: 140,  dur: 1.20, gain: 0.24, sweep: -60  },
+  finish_him:    { label: 'Finish-Him-Stinger', type: 'tone', freq: 210, dur: 1.00, gain: 0.34, sweep: -120 },
+  barrel_burst:  { label: 'Fass-Explosion',  type: 'thud',  freq: 110,  dur: 0.55, gain: 0.38, sweep: -70  },
 };
 
 /** Hitbox-Formen — Kollisions-Primitive, vom Kampfmanager ausgewertet. */
@@ -66,10 +76,50 @@ export const INPUT_TOKENS = [
   'BLOCK', 'GRAB', 'SPECIAL',
 ];
 
+/**
+ * X-Ray-/Cinematic-Bausteine: Knochenziele, Auslösebedingungen und Kamerapfade.
+ * Die KI wählt nur Namen — Kurven und Kamerafahrt stecken in cinematic.js.
+ */
+export const BONE_TARGETS = ['SKULL', 'JAW', 'SPINE_T3', 'RIBCAGE', 'PELVIS', 'FEMUR', 'KNEE', 'FOREARM', 'SHOULDER'];
+
+export const TRIGGER_CONDITIONS = ['METERS_FULL', 'LOW_HEALTH', 'COUNTER_HIT', 'ALWAYS'];
+
+export const CAMERA_PATHS = {
+  orbit_victim:   { label: 'Umkreist das Opfer',   type: 'orbit',  radius: 2.4, height: 1.5, turns: 0.75 },
+  push_in_face:   { label: 'Harter Zoom ins Gesicht', type: 'push', from: 4.2, to: 1.1, height: 1.6 },
+  low_angle_rise: { label: 'Untersicht, Aufstieg', type: 'rise',   from: 0.35, to: 2.6, radius: 2.8 },
+  side_slide:     { label: 'Seitliche Fahrt',      type: 'slide',  radius: 3.0, height: 1.3, arc: 0.45 },
+};
+
+/** Fatality-Ausgänge — steuern, was die Ragdoll-/Gore-Stufe macht. */
+export const FINISHER_TYPES = {
+  DECAPITATION: { label: 'Enthauptung',   gore: 'bone_shards',    detach: ['head'],                    force: 9 },
+  EXPLOSION:    { label: 'Explosion',     gore: 'gore_explosion', detach: ['head', 'armL', 'armR', 'legL', 'legR', 'torso'], force: 14 },
+  DISMEMBERMENT:{ label: 'Zerstückelung', gore: 'gore_explosion', detach: ['armL', 'armR', 'legL'],    force: 11 },
+  MELTDOWN:     { label: 'Auflösung',     gore: 'acid_corrosive', detach: ['torso', 'head'],           force: 4 },
+  SOUL_RIP:     { label: 'Seelenraub',    gore: 'soul_release',   detach: ['head'],                    force: 6 },
+  INCINERATION: { label: 'Verbrennung',   gore: 'ember_storm',    detach: ['torso', 'armL', 'armR'],   force: 7 },
+};
+
+export const FINISHER_DISTANCES = ['CLOSE', 'MEDIUM', 'FAR'];
+
+/** Interaktive Arena-Objekte (Stage Interactions). */
+export const STAGE_OBJECTS = {
+  burning_barrel: { label: 'Brennendes Fass', role: 'THROWABLE',  damage: 18, vfx: 'fire_blast',   sfx: 'barrel_burst', color: 0x8a3b12, size: [0.55, 0.9, 0.55] },
+  wooden_crate:   { label: 'Holzkiste',       role: 'THROWABLE',  damage: 12, vfx: 'dust_burst',   sfx: 'impact_metal', color: 0x8b6b3d, size: [0.7, 0.7, 0.7] },
+  gas_bottle:     { label: 'Gasflasche',      role: 'THROWABLE',  damage: 22, vfx: 'ember_storm',  sfx: 'barrel_burst', color: 0xb02020, size: [0.36, 1.1, 0.36] },
+  wall_ledge:     { label: 'Mauervorsprung',  role: 'ESCAPE_PAD', damage: 9,  vfx: 'dust_burst',   sfx: 'whoosh_heavy', color: 0x555a68, size: [1.6, 0.35, 0.7] },
+  neon_sign:      { label: 'Neonschild',      role: 'HAZARD',     damage: 15, vfx: 'electricity',  sfx: 'zap',          color: 0x00bfff, size: [1.2, 0.6, 0.2] },
+  shopping_cart:  { label: 'Einkaufswagen',   role: 'THROWABLE',  damage: 14, vfx: 'dust_burst',   sfx: 'impact_metal', color: 0x9aa0b5, size: [0.8, 0.8, 0.6] },
+};
+
+export const STAGE_ROLES = ['THROWABLE', 'ESCAPE_PAD', 'HAZARD'];
+
 /** Fallback-Posen/Clips, falls das GLB keine passende Animation mitbringt. */
 export const ANIMATION_LIBRARY = [
   'idle', 'walk', 'punch_combo_1', 'punch_combo_2', 'kick_combo_1',
   'heavy_swing', 'uppercut', 'cast_forward', 'ground_slam', 'hit_react', 'block', 'death',
+  'xray_grab', 'xray_strike', 'fatality_windup', 'fatality_finish', 'stage_throw',
 ];
 
 /** Status-Effekte, die ein Move zusätzlich anhängen kann. */
@@ -98,6 +148,13 @@ export function manifest() {
     animationClips: ANIMATION_LIBRARY,
     statusEffects: STATUS_EFFECTS,
     spawnPoints: SPAWN_POINTS,
+    boneTargets: BONE_TARGETS,
+    triggerConditions: TRIGGER_CONDITIONS,
+    cameraPaths: Object.keys(CAMERA_PATHS),
+    finisherTypes: Object.keys(FINISHER_TYPES),
+    finisherDistances: FINISHER_DISTANCES,
+    stageObjects: Object.keys(STAGE_OBJECTS),
+    stageRoles: STAGE_ROLES,
     materialOverrides: ['tintColor', 'emissiveColor', 'emissiveIntensity', 'metalness', 'roughness', 'scale', 'wireframe', 'auraVfx'],
   };
 }

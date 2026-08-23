@@ -6,12 +6,20 @@
  * Es gibt keinen Pfad, auf dem KI-Text als Code ausgeführt wird — nur Daten.
  */
 
-import { INPUT_TOKENS, STATUS_EFFECTS, SPAWN_POINTS, ANIMATION_LIBRARY, resolveAsset } from './assetLibrary.js';
+import {
+  INPUT_TOKENS, STATUS_EFFECTS, SPAWN_POINTS, ANIMATION_LIBRARY, resolveAsset,
+  BONE_TARGETS, TRIGGER_CONDITIONS, CAMERA_PATHS, FINISHER_TYPES, FINISHER_DISTANCES,
+  STAGE_OBJECTS, STAGE_ROLES,
+} from './assetLibrary.js';
 
 export const REQUEST_TYPES = [
   'UPDATE_ABILITIES',
   'UPDATE_VISUALS',
   'UPDATE_STATS',
+  'UPDATE_CHARACTER_SPECS',
+  'UPDATE_CINEMATICS',
+  'UPDATE_FATALITIES',
+  'UPDATE_STAGE',
   'REMOVE_MOVE',
   'BATCH',
   'NOOP',
@@ -31,6 +39,12 @@ const LIMITS = {
   scale: [0.2, 3],
   sequence: [1, 6],
   moves: [0, 12],
+  cinematicDamage: [10, 90],
+  zoomFrame: [1, 120],
+  slowMotion: [0.05, 1],
+  hitstopFrames: [0, 30],
+  shake: [0, 3],
+  stageObjects: [0, 8],
 };
 
 const clamp = (v, [lo, hi], dflt) => {
@@ -204,6 +218,93 @@ export function validateConfig(input) {
     if (Object.keys(out).length) cfg.stats = out;
   }
 
+  // --- X-Ray / Cinematic Moves ---
+  if (Array.isArray(data.cinematicMoves) && data.cinematicMoves.length) {
+    cfg.cinematicMoves = data.cinematicMoves.slice(0, 6).map((c, i) => {
+      const sequence = normalizeSequence(c.inputSequence || c.sequence);
+      const bone = BONE_TARGETS.includes(String(c.boneTarget || '').toUpperCase())
+        ? String(c.boneTarget).toUpperCase() : 'SPINE_T3';
+      if (c.boneTarget && bone !== String(c.boneTarget).toUpperCase()) warnings.push(`Knochenziel "${c.boneTarget}" unbekannt -> SPINE_T3.`);
+      const trigger = TRIGGER_CONDITIONS.includes(String(c.triggerCondition || '').toUpperCase())
+        ? String(c.triggerCondition).toUpperCase() : 'METERS_FULL';
+      const cam = CAMERA_PATHS[c.cameraPath] ? c.cameraPath : 'orbit_victim';
+      return {
+        name: slug(c.name, `X-Ray ${i + 1}`),
+        inputSequence: sequence.length ? sequence : ['LIGHT_PUNCH', 'BLOCK'],
+        triggerCondition: trigger,
+        cinematicZoomFrame: Math.round(clamp(c.cinematicZoomFrame, LIMITS.zoomFrame, 14)),
+        slowMotionFactor: clamp(c.slowMotionFactor, LIMITS.slowMotion, 0.15),
+        boneTarget: bone,
+        cameraPath: cam,
+        damage: clamp(c.damage, LIMITS.cinematicDamage, 33),
+        hitstopFrames: Math.round(clamp(c.hitstopFrames, LIMITS.hitstopFrames, 8)),
+        shakeStrength: clamp(c.shakeStrength, LIMITS.shake, 1.2),
+        vfxAsset: resolveAsset('vfx', c.vfxAsset) || 'bone_shards',
+        sfxAsset: resolveAsset('audio', c.sfxAsset) || 'bone_crack',
+        durationFrames: Math.round(clamp(c.durationFrames, [20, 240], 90)),
+        animationClipName: String(c.animationClipName || 'xray_strike').slice(0, 64),
+      };
+    });
+  }
+
+  // --- Fatalities / Finisher ---
+  if (Array.isArray(data.fatalities) && data.fatalities.length) {
+    cfg.fatalities = data.fatalities.slice(0, 6).map((f, i) => {
+      const sequence = normalizeSequence(f.inputSequence || f.sequence);
+      const typeKey = String(f.finisherType || '').toUpperCase();
+      const type = FINISHER_TYPES[typeKey] ? typeKey : 'EXPLOSION';
+      if (f.finisherType && type !== typeKey) warnings.push(`Finisher-Typ "${f.finisherType}" unbekannt -> EXPLOSION.`);
+      const dist = FINISHER_DISTANCES.includes(String(f.distance || '').toUpperCase())
+        ? String(f.distance).toUpperCase() : 'CLOSE';
+      return {
+        name: slug(f.name, `Fatality ${i + 1}`),
+        inputSequence: sequence.length ? sequence : ['DOWN', 'DOWN', 'DOWN', 'HEAVY_PUNCH'],
+        distance: dist,
+        finisherType: type,
+        vfxExplosionAsset: resolveAsset('vfx', f.vfxExplosionAsset) || FINISHER_TYPES[type].gore,
+        sfxAsset: resolveAsset('audio', f.sfxAsset) || 'gore_squelch',
+        slowMotionFactor: clamp(f.slowMotionFactor, LIMITS.slowMotion, 0.25),
+        cameraPath: CAMERA_PATHS[f.cameraPath] ? f.cameraPath : 'push_in_face',
+        ragdoll: f.ragdoll != null ? !!f.ragdoll : true,
+        durationFrames: Math.round(clamp(f.durationFrames, [30, 300], 150)),
+        animationClipName: String(f.animationClipName || 'fatality_finish').slice(0, 64),
+      };
+    });
+  }
+
+  // --- Stage Interactions ---
+  if (Array.isArray(data.stageInteractions) && data.stageInteractions.length) {
+    cfg.stageInteractions = data.stageInteractions.slice(0, LIMITS.stageObjects[1]).map((o, i) => {
+      const key = STAGE_OBJECTS[o.object] ? o.object
+        : Object.keys(STAGE_OBJECTS).find((k) => k.includes(String(o.object || '').toLowerCase())) || 'wooden_crate';
+      if (o.object && key !== o.object) warnings.push(`Arena-Objekt "${o.object}" unbekannt -> ${key}.`);
+      const role = STAGE_ROLES.includes(String(o.role || '').toUpperCase())
+        ? String(o.role).toUpperCase() : STAGE_OBJECTS[key].role;
+      const pos = Array.isArray(o.position) && o.position.length >= 2
+        ? [clamp(o.position[0], [-9, 9], 0), clamp(o.position[1] ?? 0, [-9, 9], 0)]
+        : [i % 2 === 0 ? -3.5 - i : 3.5 + i, -1.5 + i * 0.8];
+      return {
+        object: key,
+        role,
+        position: pos,
+        damage: Math.round(clamp(o.damage, [0, 40], STAGE_OBJECTS[key].damage)),
+        interactionInput: normalizeSequence(o.interactionInput || ['FORWARD', 'GRAB']).length
+          ? normalizeSequence(o.interactionInput || ['FORWARD', 'GRAB']) : ['FORWARD', 'GRAB'],
+      };
+    });
+  }
+
+  // --- Hitstop-/Wucht-Profil ---
+  if (data.impactProfile && typeof data.impactProfile === 'object') {
+    const ip = data.impactProfile;
+    cfg.impactProfile = {
+      lightHitstopFrames: Math.round(clamp(ip.lightHitstopFrames, LIMITS.hitstopFrames, 2)),
+      heavyHitstopFrames: Math.round(clamp(ip.heavyHitstopFrames, LIMITS.hitstopFrames, 5)),
+      shakeStrength: clamp(ip.shakeStrength, LIMITS.shake, 0.8),
+      zoomPunch: ip.zoomPunch != null ? !!ip.zoomPunch : true,
+    };
+  }
+
   // --- Entfernen ---
   if (Array.isArray(data.removeMoves) && data.removeMoves.length) {
     cfg.removeMoves = data.removeMoves.slice(0, 12).map((n) => String(n).slice(0, 48));
@@ -213,7 +314,8 @@ export function validateConfig(input) {
   if (data.archetype) cfg.archetype = String(data.archetype).slice(0, 64);
   if (data.notes) cfg.notes = String(data.notes).slice(0, 400);
 
-  const touched = ['combos', 'specialAttacks', 'visualOverrides', 'stats', 'removeMoves']
+  const touched = ['combos', 'specialAttacks', 'visualOverrides', 'stats', 'removeMoves',
+    'cinematicMoves', 'fatalities', 'stageInteractions', 'impactProfile']
     .filter((k) => cfg[k]);
   if (!touched.length) {
     cfg.requestType = 'NOOP';

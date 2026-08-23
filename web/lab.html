@@ -25,6 +25,7 @@
     <span class="badge" id="fps-readout">– FPS</span>
     <span class="badge" id="state-label">bereit</span>
     <span class="badge" id="profile-label">Profil: —</span>
+    <span class="badge" id="stage-label">keine Arena-Objekte</span>
     <a class="badge link" href="3d.html">→ 3D-Spiel</a>
     <a class="badge link" href="index.html">→ 2D-Spiel</a>
   </div>
@@ -91,8 +92,14 @@
         <div class="dummy-bar">
           <span id="dummy-hp-label">Dummy 100 HP</span>
           <div class="bar"><div id="dummy-hp" class="fill"></div></div>
+          <span id="meter-label" class="meter-label">Leiste 0 %</span>
+          <div class="bar meter"><div id="meter-fill" class="fill"></div></div>
         </div>
         <div id="hit-flash" class="hit-flash"></div>
+        <div id="cinema-banner" class="cinema-banner"></div>
+        <div id="finish-him" class="finish-him"></div>
+        <div class="letterbox top"></div>
+        <div class="letterbox bottom"></div>
       </div>
     </div>
 
@@ -112,6 +119,8 @@
         <button data-token="HEAVY_PUNCH">HP<small>K</small></button>
         <button data-token="LIGHT_KICK">LK<small>N</small></button>
         <button data-token="HEAVY_KICK">HK<small>M</small></button>
+        <button data-token="BLOCK">BL<small>⇧</small></button>
+        <button data-token="GRAB">GR<small>G</small></button>
       </div>
     </div>
 
@@ -120,6 +129,7 @@
         <button class="tab active" data-tab="moves">Moves (<span id="move-count">0</span>)</button>
         <button class="tab" data-tab="json">Letztes KI-JSON</button>
         <button class="tab" data-tab="lib">Asset-Bibliothek</button>
+        <button class="tab" data-tab="hardcore">X-Ray &amp; Fatalities</button>
         <button class="tab" data-tab="arch">Architektur</button>
       </div>
 
@@ -139,6 +149,20 @@
           <div><h3>Hitbox-Formen</h3><ul id="lib-hitbox" class="lib"></ul></div>
         </div>
         <details><summary>Manifest, das im Systemprompt landet</summary><pre id="lib-manifest" class="json"></pre></details>
+      </div>
+
+      <div id="panel-hardcore" class="tab-panel hidden">
+        <p class="hint">X-Ray-Moves brauchen eine volle Leiste, Fatalities nur im <b>FINISH HIM!</b>-Zustand (Dummy auf 0 HP). Beides läuft über dieselbe validierte JSON-Pipeline.</p>
+        <div class="lib-grid">
+          <div><h3>X-Ray / Cinematic</h3><div id="xray-list" class="move-list small"></div></div>
+          <div><h3>Fatalities</h3><div id="fatality-list" class="move-list small"></div></div>
+        </div>
+        <h3 style="margin-top:12px">Arena-Objekte</h3>
+        <div id="stage-list" class="move-list small"></div>
+        <p class="hint" style="margin-top:10px">
+          Arena-Tasten: <kbd>E</kbd> Objekt werfen · <kbd>Q</kbd> Wandsprung · <kbd>R</kbd> Hazard auslösen.
+          Wucht-Profil: <span id="impact-info">—</span>
+        </p>
       </div>
 
       <div id="panel-arch" class="tab-panel hidden">
@@ -175,6 +199,10 @@
         <button class="chip" data-prompt="Blitzschlag als Special, 30 Schaden, betäubt den Gegner">⚡ Blitz</button>
         <button class="chip" data-prompt="Lade das Profil Cyber-Scorpion">🦂 Cyber-Scorpion</button>
         <button class="chip" data-prompt="Mach ihn zum Radioactive Bio-Mech">☢️ Bio-Mech</button>
+        <button class="chip" data-prompt="Lade das Profil Nicro-Viper">🐍 Nicro-Viper</button>
+        <button class="chip" data-prompt="Gib ihm einen X-Ray Move auf die Wirbelsäule mit 35 Schaden">🦴 X-Ray</button>
+        <button class="chip" data-prompt="Fatality mit Explosion, Eingabe runter runter runter schwerer Schlag">💀 Fatality</button>
+        <button class="chip" data-prompt="Stell brennende Fässer und eine Gasflasche in die Arena">🛢️ Arena-Objekte</button>
       </div>
       <form id="chat-form" class="chat-form" autocomplete="off">
         <input id="chat-input" type="text" placeholder="z. B. „Gib ihm einen Bodenstampfer mit Staubwolke, 28 Schaden“">

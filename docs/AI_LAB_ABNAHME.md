@@ -1,6 +1,6 @@
 # ✅ Abnahme: KI-Werkstatt & die vier Kampfprofile
 
-Stand: 23.08.2026 · Branch `arena/01a03067-penner-kombat`
+Stand: 23.08.2026 · Branch `arena/01a03067-penner-kombat` · **81 Tests grün**
 
 Was hier steht, wurde **ausgeführt**, nicht behauptet. Reproduzieren:
 
@@ -18,9 +18,9 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 |---|---|---:|---|
 | Kampfsimulation (Bestand) | `web/test/sim.test.mjs` | 11 | ✅ grün |
 | KI-Pipeline (Parser, Schema, 480p, Puffer) | `web/test/lab.test.mjs` | 26 | ✅ grün |
-| Laufzeit-Engine mit echtem three.js | `web/test/engine.test.mjs` | 16 | ✅ grün |
-| Oberfläche in jsdom | `web/test/ui.dom.test.mjs` | 12 | ✅ grün |
-| **Summe** | | **65** | **✅ 65/65** |
+| Laufzeit-Engine mit echtem three.js (inkl. X-Ray, Fatality, Ragdoll, Stage, Hitstop) | `web/test/engine.test.mjs` | 27 | ✅ grün |
+| Oberfläche in jsdom (inkl. FINISH HIM, Arena-Wurf, Kino-Banner) | `web/test/ui.dom.test.mjs` | 17 | ✅ grün |
+| **Summe** | | **81** | **✅ 81/81** |
 
 ## 2 · Nachgewiesene Funktionalität
 
@@ -58,6 +58,24 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 | Keine kollidierenden Eingaben | ✅ pro Profil eindeutige Sequenzen |
 | Alle vier gleichzeitig geladen | ✅ 12 Moves, Export → Reimport verlustfrei |
 
+### Hardcore-Stufe (X-Ray, Fatality, Ragdoll, Arena, Hitstop)
+| Prüfung | Ergebnis |
+|---|---|
+| Doku-JSON (Spine Shatter + Acid Meltdown) 1:1 übernommen | ✅ Werte unverändert, `acid_spit_corrosive` → `acid_corrosive` gemappt |
+| Irrsinnige Kino-Werte geklemmt | ✅ `damage 9999 → 90`, `hitstopFrames 999 → 30`, `boneTarget LEBER → SPINE_T3`, `finisherType TELEPORT_TO_MARS → EXPLOSION` |
+| X-Ray ohne Leiste | ✅ feuert **nicht**, meldet „Leiste erst bei 100 %" |
+| X-Ray mit voller Leiste | ✅ Zeitlupe 0,15×, Kamerafahrt läuft, Leiste wird auf 0 verbraucht, Treffer sitzt am Zoom-Frame |
+| Leiste füllt sich durch Treffer | ✅ 12 pro Special, 6 + 2/Treffer pro Combo |
+| Fatality im Normalzustand | ✅ zündet **nicht** |
+| Fatality nach „FINISH HIM!" | ✅ zündet, `DISMEMBERMENT`, Ragdoll an, Ende sauber |
+| Ragdoll-Physik | ✅ `EXPLOSION` = 6 Teile, Opfer unsichtbar, Teile fallen und bleiben auf dem Boden (kein Durchfallen), `clear()` stellt alles wieder her |
+| Stage: Wurf | ✅ Fass fliegt ballistisch, trifft den Dummy, meldet Schaden |
+| Stage: Wandsprung / nichts in Reichweite | ✅ `ESCAPE` bzw. `null` + Meldung |
+| Hitstop friert die Spielzeit | ✅ `director.update()` liefert exakt `0` während des Hitstops, danach wieder normal |
+| Zeitlupe skaliert dt | ✅ `1/60 × 0,2`; Kamera bewegt sich auf der Kurve und kehrt exakt in die Ruhelage zurück |
+| Chat-Prompts | ✅ „X-Ray auf die Rippen" → `RIBCAGE`, „Fatality mit Säure" → `MELTDOWN`, „Fässer und Gasflasche in die Arena" → 2 Objekte |
+| Export/Reimport der Hardcore-Blöcke | ✅ X-Ray, Fatality, Arena und Wucht-Profil verlustfrei |
+
 ### Oberfläche
 * Vier Profil-Buttons injizieren per Klick, Profil-Label und JSON-Tab folgen.
 * Tastatur `A · D · G` löst *Magnet Grab* aus, vier Touch-Taps auf `LP` lösen
@@ -66,7 +84,12 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 * Reset räumt Katalog, Label und Liste auf; Material kehrt exakt zum
   Ausgangszustand zurück (Farbe, Metalness, Roughness).
 * Konfiguration überlebt einen Reload (`localStorage: pk_lab_v1`).
-* Asset-Bibliothek zeigt 14 VFX, 15 Audio-Pools, 9 Hitbox-Formen; Tabs schalten.
+* Asset-Bibliothek zeigt 20 VFX, 21 Audio-Pools, 9 Hitbox-Formen; Tabs schalten.
+* Hardcore-Tab: X-Ray-, Fatality- und Arena-Karten mit Framedaten und Testknöpfen.
+* Dummy auf 0 HP → **FINISH HIM!**-Banner mit Eingabeliste, Statuszeile folgt;
+  Fatality-Eingabe `S · S · D · M` startet Kamerafahrt und Ragdoll.
+* <kbd>E</kbd> wirft ein Arena-Objekt; ohne Objekt in Reichweite kommt eine Meldung.
+* X-Ray blendet Letterbox und Kino-Banner ein (`body.cinema`).
 
 ### Server
 * `GET /api/ai/health` → `{"ok":true,"remoteEnabled":false,…}`
@@ -78,7 +101,7 @@ node ../server/src/ai-proxy.js   # http://localhost:8080/lab.html
 
 | Punkt | Grund | Wie du es prüfst |
 |---|---|---|
-| Echtes WebGL-Bild, GPU-Framerate | Kein Browser installierbar — Chrome-Download (storage.googleapis.com) und Debian-Repos sind in dieser Sandbox gesperrt | `node Tools/lab_browser_check.mjs` nach `npm install puppeteer` — prüft Puffergröße, Rendering, Profile, Chat, Tastatur, Auflösung und legt einen Screenshot ab |
+| Echtes WebGL-Bild, GPU-Framerate, Kamerafahrt in Bewegung | Kein Browser installierbar — Chrome-Download (storage.googleapis.com) und Debian-Repos sind in dieser Sandbox gesperrt | `node Tools/lab_browser_check.mjs` nach `npm install puppeteer` — prüft Puffergröße, Rendering, Profile, Chat, Tastatur, Auflösung, X-Ray-Kamerafahrt und Fatality-Ragdoll und legt Screenshots ab |
 | GLB-Upload mit echter Datei | Kein Datei-Dialog, kein Testmodell im Repo; `GLTFLoader` ist im DOM-Test gestubbt | Beliebiges `.glb` in die Werkstatt ziehen — Modell wird auf 1,8 m normalisiert, Clips erscheinen unter „Charakter laden“, vorhandene Moves bleiben gebunden |
 | Remote-LLM gegen echte API | Kein API-Key in der Sandbox (die Fallback- und Klemm-Logik ist mit Mock-`fetch` getestet) | `OPENAI_API_KEY=sk-… node server/src/ai-proxy.js`, dann in der UI auf „Remote LLM“ stellen |
 | Audio | jsdom hat keinen `AudioContext` (Code prüft darauf und bleibt still) | Im Browser: jeder Treffer und Move spielt seinen Pool-Sound |

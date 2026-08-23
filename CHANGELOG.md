@@ -35,6 +35,19 @@
   jsdom-Oberflächentests (`npm test`, `npm run test:ui`) — zusammen mit der
   bestehenden Simulation **65 Tests grün**. Optionaler Browser-Abnahmelauf:
   `Tools/lab_browser_check.mjs`.
+- **Hardcore-Stufe**: X-Ray-/Cinematic-Moves (`cinematicMoves`) mit Meter-Bedingung,
+  Zeitlupe, Knochenziel und vier Kamerafahrten; **Fatalities** (`fatalities`) mit
+  sechs Finisher-Typen und Ragdoll-Zerlegung (`ragdoll.js`: Verlet-Physik,
+  Schwerkraft, Boden-Dämpfung); **Stage Interactions** (`stage.js`: Fässer,
+  Kisten, Gasflaschen, Mauervorsprung, Neonschild — werfen, Wandsprung, Hazard);
+  **Hitstop/Time Dilation/Screen-Shake** über den Regisseur `cinematic.js`, der
+  der Game-Loop das skalierte `dt` liefert.
+- **Fünftes Profil „Nicro-Viper"** mit Spine-Shatter-X-Ray, Acid Meltdown und
+  vollständig bespielbarer Arena; alle anderen Profile bekamen ebenfalls je
+  einen X-Ray und eine Fatality.
+- **FINISH HIM!**: Gegner auf 0 HP schaltet die Fatality-Eingaben scharf, Banner
+  nennt die Kombination, danach Ragdoll und automatischer Reset.
+- Tests auf **81 grün** erweitert (27 Engine-, 17 UI-Tests).
 - Doku: [docs/AI_LAB.md](docs/AI_LAB.md) und Abnahmebericht
   [docs/AI_LAB_ABNAHME.md](docs/AI_LAB_ABNAHME.md).
 

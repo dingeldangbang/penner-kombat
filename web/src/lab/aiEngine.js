@@ -34,10 +34,15 @@ export function buildSystemPrompt(extra = {}) {
       specialAttacks: [{ name: 'string', inputSequence: ['DOWN', 'FORWARD', 'HEAVY_PUNCH'], vfxAsset: 'fire_particle_stream', sfxAsset: 'fire_roar', hitboxShape: 'wide_cone', damage: 25, startupFrames: 12, activeFrames: 30, recoveryFrames: 18, projectile: true, statusEffect: 'burn', animationClipName: 'cast_forward' }],
       visualOverrides: { tintColor: '#ff0000', emissiveColor: '#220000', emissiveIntensity: 0.5, scale: 1.0, auraVfx: 'shadow_aura' },
       stats: { maxHP: 100, moveSpeed: 5, defense: 1, jumpForce: 9.5 },
+      cinematicMoves: [{ name: 'string', inputSequence: ['LIGHT_PUNCH', 'BLOCK'], triggerCondition: 'METERS_FULL', cinematicZoomFrame: 14, slowMotionFactor: 0.15, boneTarget: 'SPINE_T3', cameraPath: 'orbit_victim', damage: 33, hitstopFrames: 8, shakeStrength: 1.2, vfxAsset: 'bone_shards', durationFrames: 90 }],
+      fatalities: [{ name: 'string', distance: 'MEDIUM', inputSequence: ['DOWN', 'DOWN', 'FORWARD', 'HEAVY_KICK'], finisherType: 'DISMEMBERMENT', vfxExplosionAsset: 'gore_explosion', slowMotionFactor: 0.25, cameraPath: 'push_in_face', ragdoll: true, durationFrames: 150 }],
+      stageInteractions: [{ object: 'burning_barrel', role: 'THROWABLE', position: [-4.5, -1.5], damage: 18, interactionInput: ['FORWARD', 'GRAB'] }],
+      impactProfile: { lightHitstopFrames: 2, heavyHitstopFrames: 5, shakeStrength: 0.8, zoomPunch: true },
       removeMoves: ['Name'],
       notes: 'kurze deutsche Erklärung',
     }),
     'Balance-Grenzen: damage 0-60, totalDamage 0-120, startupFrames 1-60, activeFrames 1-90, maxHP 50-400.',
+    'X-Ray/cinematicMoves: damage 10-90, slowMotionFactor 0.05-1, hitstopFrames 0-30. Fatalities nur im FINISH-HIM-Zustand.',
     'Gib nur die Felder aus, die der Nutzer wirklich ändern will.',
     extra.characterName ? `Aktueller Charakter: ${extra.characterName}.` : '',
     extra.knownMoves && extra.knownMoves.length ? `Bereits vorhandene Moves: ${extra.knownMoves.join(', ')}.` : '',
@@ -231,9 +236,107 @@ export function parseLocal(text, ctx = {}) {
     notes.push(`Kombo mit ${seq.length} Treffern gebunden.`);
   }
 
+  // ---- X-Ray / Cinematic ----
+  const wantsXray = /(x-?ray|roentgen|xray|knochenbruch|kino|cinematic|zeitlupe|slow ?mo|super ?move)/.test(t);
+  if (wantsXray) {
+    const bones = {
+      wirbelsaeule: 'SPINE_T3', ruecken: 'SPINE_T3', spine: 'SPINE_T3',
+      schaedel: 'SKULL', kopf: 'SKULL', skull: 'SKULL', head: 'SKULL',
+      kiefer: 'JAW', jaw: 'JAW',
+      rippen: 'RIBCAGE', brustkorb: 'RIBCAGE', ribs: 'RIBCAGE',
+      becken: 'PELVIS', pelvis: 'PELVIS', huefte: 'PELVIS',
+      oberschenkel: 'FEMUR', femur: 'FEMUR',
+      knie: 'KNEE', knee: 'KNEE',
+      unterarm: 'FOREARM', arm: 'FOREARM',
+      schulter: 'SHOULDER', shoulder: 'SHOULDER',
+    };
+    let bone = 'SPINE_T3';
+    for (const [k, v] of Object.entries(bones)) if (t.includes(k)) { bone = v; break; }
+    const dmg = num(t, [/(\d{1,3})\s*(?:schaden|damage|dmg)/]) ?? 35;
+    const slow = num(t, [/(?:zeitlupe|slow ?mo\w*)\s*(?:auf|to|=|:)?\s*(0?\.\d+)/]) ?? 0.15;
+    out.cinematicMoves = [{
+      name: nameFrom(text) || `${bone === 'SPINE_T3' ? 'Spine Shatter' : bone.charAt(0) + bone.slice(1).toLowerCase()} X-Ray`,
+      inputSequence: parseSequence(text) || ['LIGHT_PUNCH', 'BLOCK'],
+      triggerCondition: /(immer|always|jederzeit)/.test(t) ? 'ALWAYS' : /(wenig leben|low health|angeschlagen)/.test(t) ? 'LOW_HEALTH' : 'METERS_FULL',
+      cinematicZoomFrame: num(t, [/(\d{1,2})\s*(?:zoom)/]) ?? 14,
+      slowMotionFactor: slow,
+      boneTarget: bone,
+      cameraPath: /(umkreis|orbit)/.test(t) ? 'orbit_victim' : /(untersicht|low angle)/.test(t) ? 'low_angle_rise' : /(seitlich|slide)/.test(t) ? 'side_slide' : 'push_in_face',
+      damage: dmg,
+      hitstopFrames: 10,
+      shakeStrength: 1.4,
+      vfxAsset: (findTheme(t) || {}).vfx || 'bone_shards',
+      sfxAsset: 'bone_crack',
+      durationFrames: 100,
+    }];
+    notes.push(`X-Ray auf ${bone} gebunden (${out.cinematicMoves[0].damage} DMG, Zeitlupe ${slow}×).`);
+  }
+
+  // ---- Fatality ----
+  const wantsFatality = /(fatality|finisher|finish him|todesstoss|hinrichtung|finalen? schlag)/.test(t);
+  if (wantsFatality) {
+    const types = {
+      enthaupt: 'DECAPITATION', 'kopf ab': 'DECAPITATION', decapit: 'DECAPITATION',
+      explo: 'EXPLOSION', platz: 'EXPLOSION', sprengen: 'EXPLOSION',
+      zerstueck: 'DISMEMBERMENT', dismember: 'DISMEMBERMENT', zerreiss: 'DISMEMBERMENT',
+      aufloes: 'MELTDOWN', meltdown: 'MELTDOWN', saeure: 'MELTDOWN', acid: 'MELTDOWN',
+      seele: 'SOUL_RIP', soul: 'SOUL_RIP',
+      verbrenn: 'INCINERATION', incinerat: 'INCINERATION', feuer: 'INCINERATION',
+    };
+    let type = 'EXPLOSION';
+    for (const [k, v] of Object.entries(types)) if (t.includes(k)) { type = v; break; }
+    out.fatalities = [{
+      name: nameFrom(text) || ({
+        DECAPITATION: 'Kopf ab', EXPLOSION: 'Core Detonation', DISMEMBERMENT: 'Zerstückelung',
+        MELTDOWN: 'Acid Meltdown', SOUL_RIP: 'Soul Harvest', INCINERATION: 'Verbrennung',
+      })[type],
+      distance: /(fern|far|distanz)/.test(t) ? 'FAR' : /(mittel|medium)/.test(t) ? 'MEDIUM' : 'CLOSE',
+      inputSequence: parseSequence(text) || ['DOWN', 'DOWN', 'DOWN', 'HEAVY_PUNCH'],
+      finisherType: type,
+      vfxExplosionAsset: undefined,
+      sfxAsset: 'gore_squelch',
+      slowMotionFactor: 0.25,
+      cameraPath: 'push_in_face',
+      ragdoll: true,
+      durationFrames: 160,
+    }];
+    notes.push(`Fatality „${out.fatalities[0].name}" (${type}) gebunden.`);
+  }
+
+  // ---- Arena-Objekte ----
+  const stageWords = {
+    fass: 'burning_barrel', faess: 'burning_barrel', barrel: 'burning_barrel', tonne: 'burning_barrel', tonnen: 'burning_barrel',
+    kiste: 'wooden_crate', kisten: 'wooden_crate', crate: 'wooden_crate', holzkiste: 'wooden_crate',
+    gasflasche: 'gas_bottle', gas: 'gas_bottle',
+    mauervorsprung: 'wall_ledge', vorsprung: 'wall_ledge', ledge: 'wall_ledge', wand: 'wall_ledge',
+    neon: 'neon_sign', schild: 'neon_sign',
+    einkaufswagen: 'shopping_cart', wagen: 'shopping_cart', cart: 'shopping_cart',
+  };
+  const foundStage = [...new Set(Object.entries(stageWords).filter(([k]) => t.includes(k)).map(([, v]) => v))];
+  const wantsStage = foundStage.length > 0 && /(arena|buehne|stage|stell|platzier|objekt|umgebung|interaktiv|werfen|wurf)/.test(t);
+  if (wantsStage) {
+    out.stageInteractions = foundStage.slice(0, 6).map((obj, i) => ({
+      object: obj,
+      position: [i % 2 === 0 ? -4 - i : 4 + i, -2 + i * 1.4],
+    }));
+    notes.push(`Arena-Objekte gesetzt: ${foundStage.join(', ')}.`);
+  }
+
+  // ---- Wucht / Hitstop ----
+  if (/(hitstop|wucht|einfrier|freeze frame|schwerer? treffer|impact)/.test(t)) {
+    out.impactProfile = {
+      lightHitstopFrames: num(t, [/(\d{1,2})\s*frames?\s*(?:leicht|light)/]) ?? 3,
+      heavyHitstopFrames: num(t, [/(\d{1,2})\s*frames?\s*(?:schwer|heavy)/]) ?? (num(t, [/(\d{1,2})\s*frames?/]) ?? 8),
+      shakeStrength: /(stark|heftig|brutal|krass)/.test(t) ? 1.8 : 1.0,
+      zoomPunch: !/(kein zoom|ohne zoom)/.test(t),
+    };
+    notes.push(`Wucht-Profil: ${out.impactProfile.heavyHitstopFrames} Frames Hitstop bei schweren Treffern.`);
+  }
+
   // ---- Specials ----
   const theme = findTheme(t);
-  const wantsSpecial = /(special|spezial|attacke|attack|angriff|move|faehigkeit|ability|zauber|projektil|projectile|schuss|strahl|beam)/.test(t) || (theme && !wantsCombo);
+  const wantsSpecial = (/(special|spezial|attacke|attack|angriff|move|faehigkeit|ability|zauber|projektil|projectile|schuss|strahl|beam)/.test(t)
+    || (theme && !wantsCombo)) && !wantsXray && !wantsFatality && !wantsStage;
   if (theme && wantsSpecial) {
     const dmg = num(t, [/(\d{1,3})\s*(?:schaden|damage|dmg)/, /(?:schaden|damage|dmg)\s*(?:von|of|=|:)?\s*(\d{1,3})/]) ?? 25;
     const startup = num(t, [/(\d{1,2})\s*(?:startup|anlauf)/]) ?? (dmg > 30 ? 18 : 12);
@@ -282,11 +385,16 @@ function nameFrom(text) {
 }
 
 function finish(out, notes) {
-  const touched = ['combos', 'specialAttacks', 'visualOverrides', 'stats', 'removeMoves'].filter((k) => out[k]);
+  const touched = ['combos', 'specialAttacks', 'visualOverrides', 'stats', 'removeMoves',
+    'cinematicMoves', 'fatalities', 'stageInteractions', 'impactProfile'].filter((k) => out[k]);
   if (touched.length === 1) {
     out.requestType = out.combos || out.specialAttacks ? 'UPDATE_ABILITIES'
       : out.visualOverrides ? 'UPDATE_VISUALS'
-      : out.stats ? 'UPDATE_STATS' : 'REMOVE_MOVE';
+      : out.stats ? 'UPDATE_STATS'
+      : out.cinematicMoves ? 'UPDATE_CINEMATICS'
+      : out.fatalities ? 'UPDATE_FATALITIES'
+      : out.stageInteractions || out.impactProfile ? 'UPDATE_STAGE'
+      : 'REMOVE_MOVE';
   }
   out.notes = notes.join(' ') || 'Nichts erkannt — bitte konkreter beschreiben (z. B. „Gib ihm einen Feueratem mit 25 Schaden“).';
   return out;
