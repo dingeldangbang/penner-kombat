@@ -87,6 +87,11 @@ auffallen — oder gar erst als Absturz auf dem Handy:
   `translations/translations.json` wurde von `Localization.gd` geladen, war aber
   vom `include_filter` der `export_presets.cfg` nicht erfasst. Ergebnis wäre ein
   APK ohne Übersetzungen gewesen. Der Filter ist jetzt korrigiert.
+- **Launcher-Icons**: leere Felder werden als Hinweis gemeldet, gesetzte Pfade
+  auf Existenz, PNG-Format und exakte Kantenlänge geprüft
+- **min/target SDK** stehen in `project.godot` *und* `export_presets.cfg`.
+  Laufen die Werte auseinander, gewinnt stillschweigend eine der beiden
+  Stellen — der Preflight bricht bei Abweichung ab.
 
 ## Projektdaten
 
@@ -138,6 +143,32 @@ installierst. Die Play-Pflicht zu 16 KB (seit 01.11.2025) greift erst beim
 *Hochladen* in den Store. Dann brauchst du zusätzlich `target_sdk 35+`
 (aktuell 33) und einen echten Release-Keystore — dafür ist Godot 4.7.2 die
 bessere Wahl, das setzt target SDK 36 von sich aus.
+
+## App-Icon
+
+Die drei `launcher_icons`-Felder in `export_presets.cfg` waren leer — das APK
+hätte das graue Godot-Standardicon bekommen. Die Icons sind jetzt aus
+`icon.svg` abgeleitet und liegen im Repo:
+
+| Datei | Zweck |
+|---|---|
+| `android/icons/icon_192.png` | klassisches Launcher-Icon |
+| `android/icons/icon_adaptive_fg_432.png` | Adaptive Icon, Vordergrund |
+| `android/icons/icon_adaptive_bg_432.png` | Adaptive Icon, Hintergrund |
+
+Neu erzeugen (nach einer Änderung an `icon.svg`):
+
+```bash
+python3 Tools/make_icons.py
+```
+
+Das Skript zeichnet die Motive selbst und schreibt die PNGs mit `zlib` —
+bewusst ohne ImageMagick/rsvg/Pillow, weil der SVG-Delegate von ImageMagick
+auf vielen Runnern fehlt und `convert icon.svg icon.png` dort abbricht.
+
+Beim adaptiven Vordergrund beschneidet Android auf einen Kreis von rund 66 %
+Kantenlänge; das Motiv ist entsprechend verkleinert eingesetzt, damit der
+Tropfen und das „PK"-Band nicht angeschnitten werden.
 
 ## Wenn der Build doch rot wird
 

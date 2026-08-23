@@ -21,6 +21,7 @@ Rückgabe: 0 = sauber, 1 = Befunde
 from __future__ import annotations
 
 import re
+import struct
 import sys
 from pathlib import Path
 
@@ -199,6 +200,63 @@ def check_export_filters() -> None:
 TRIPLE_RE = re.compile(r'"""(?:.|\n)*?"""|\'\'\'(?:.|\n)*?\'\'\'')
 
 
+def check_launcher_icons() -> None:
+    """Leere launcher_icons-Felder ergeben ein APK mit dem Godot-Standardicon."""
+    presets = ROOT / "export_presets.cfg"
+    if not presets.exists():
+        return
+    txt = read(presets)
+
+    fields = {
+        "launcher_icons/main_192x192": (192, "Launcher-Icon"),
+        "launcher_icons/adaptive_foreground_432x432": (432, "Adaptive Vordergrund"),
+        "launcher_icons/adaptive_background_432x432": (432, "Adaptive Hintergrund"),
+    }
+    for key, (expected, label) in fields.items():
+        m = re.search(re.escape(key) + r'\s*=\s*"([^"]*)"', txt)
+        if not m:
+            continue
+        val = m.group(1).strip()
+        if not val:
+            note(f"{label} nicht gesetzt ({key}) -- das APK bekommt das "
+                 f"Godot-Standardicon. `python3 Tools/make_icons.py` erzeugt es.")
+            continue
+        if not val.startswith("res://"):
+            fail(f"{key} muss ein res://-Pfad sein, ist aber \"{val}\".")
+            continue
+        p = ROOT / val[len("res://"):]
+        if not p.exists():
+            fail(f"{label}: {val} fehlt im Repo (aus export_presets.cfg).")
+            continue
+        # PNG-Header und Kantenlaenge pruefen.
+        data = p.read_bytes()
+        if data[:8] != b"\x89PNG\r\n\x1a\n":
+            fail(f"{label}: {val} ist keine PNG-Datei.")
+            continue
+        w, h = struct.unpack(">II", data[16:24])
+        if (w, h) != (expected, expected):
+            fail(f"{label}: {val} ist {w}x{h}, erwartet {expected}x{expected}.")
+
+
+def check_sdk_consistency() -> None:
+    """min/target SDK stehen in project.godot UND export_presets.cfg.
+    Laufen sie auseinander, gewinnt eine der beiden Stellen stillschweigend."""
+    proj = ROOT / "project.godot"
+    presets = ROOT / "export_presets.cfg"
+    if not (proj.exists() and presets.exists()):
+        return
+    ptxt, etxt = read(proj), read(presets)
+
+    for label, pkey, ekey in (
+        ("min SDK", r"min_sdk_version\s*=\s*(\d+)", r"gradle_build/min_sdk\s*=\s*(\d+)"),
+        ("target SDK", r"target_sdk_version\s*=\s*(\d+)", r"gradle_build/target_sdk\s*=\s*(\d+)"),
+    ):
+        pm, em = re.search(pkey, ptxt), re.search(ekey, etxt)
+        if pm and em and pm.group(1) != em.group(1):
+            fail(f"{label} weicht ab: project.godot={pm.group(1)}, "
+                 f"export_presets.cfg={em.group(1)}.")
+
+
 def check_misc() -> None:
     for gd in project_files("scripts/**/*.gd"):
         rel = gd.relative_to(ROOT).as_posix()
@@ -215,6 +273,8 @@ def main() -> int:
     check_res_refs()
     check_onready_paths()
     check_export_filters()
+    check_launcher_icons()
+    check_sdk_consistency()
     check_misc()
 
     if notes:

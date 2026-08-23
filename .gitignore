@@ -52,3 +52,8 @@ crashlytics-build.properties
 server/node_modules/
 server/package-lock.json
 server/npm-debug.log*
+
+# Godot
+.godot/
+*.translation
+export_presets.cfg.bak
