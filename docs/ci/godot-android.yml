@@ -1,0 +1,153 @@
+name: Android Build (Godot)
+
+# Baut ein installierbares Debug-APK aus dem Godot-4-Projekt in diesem Repo.
+#
+# Aktivieren:  bash Tools/enable_ci.sh      (kopiert diese Datei nach
+#              .github/workflows/ und committet sie)
+#
+# Auslöser:
+#   • manuell: Actions → "Android Build (Godot)" → Run workflow
+#   • automatisch bei Push auf main
+#   • bei Tag v*.*.* wird das APK zusätzlich ans Release gehängt
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # Godot-Version und Template-Version MÜSSEN exakt übereinstimmen.
+  GODOT_VERSION: 4.2.2
+  GODOT_RELEASE: stable
+  EXPORT_PRESET: Android
+  APK_NAME: pennerkombat-debug.apk
+
+jobs:
+  build:
+    name: Godot Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+
+      - name: Preflight (Szenen/Ressourcen prüfen)
+        run: python3 Tools/godot_preflight.py
+
+      - name: Java 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK einrichten
+        uses: android-actions/setup-android@v3
+
+      - name: Build-Tools installieren (apksigner/zipalign)
+        run: |
+          sdkmanager --install "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+
+      # WICHTIG: downloads.tuxfamily.org ist tot. Alle Godot-Downloads liegen
+      # seit Ende 2023 unter github.com/godotengine/godot-builds/releases.
+      - name: Godot-Editor herunterladen
+        run: |
+          set -euxo pipefail
+          TAG="${GODOT_VERSION}-${GODOT_RELEASE}"
+          BASE="https://github.com/godotengine/godot-builds/releases/download/${TAG}"
+          curl -fsSL --retry 3 -o godot.zip \
+            "${BASE}/Godot_v${TAG}_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${TAG}_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          godot --version
+
+      # Ohne Export-Templates schlägt JEDER Export fehl. Das ist der Schritt,
+      # der in den meisten kopierten Workflows fehlt.
+      - name: Export-Templates installieren
+        run: |
+          set -euxo pipefail
+          TAG="${GODOT_VERSION}-${GODOT_RELEASE}"
+          BASE="https://github.com/godotengine/godot-builds/releases/download/${TAG}"
+          curl -fsSL --retry 3 -o templates.tpz \
+            "${BASE}/Godot_v${TAG}_export_templates.tpz"
+          DEST="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE}"
+          mkdir -p "$DEST"
+          unzip -q templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates/* "$DEST"/
+          ls "$DEST" | head
+
+      - name: Debug-Keystore erzeugen
+        run: |
+          set -euxo pipefail
+          mkdir -p "$HOME/.android"
+          keytool -keyalg RSA -genkeypair \
+            -alias androiddebugkey -keypass android \
+            -keystore "$HOME/.android/debug.keystore" -storepass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -validity 9999 -deststoretype pkcs12
+
+      # Godot liest SDK-/JDK-Pfade aus den Editor-Settings, nicht aus $ANDROID_HOME.
+      - name: Editor-Settings schreiben (SDK-/JDK-Pfad)
+        run: |
+          set -euxo pipefail
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_SDK_ROOT}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          export/android/debug_keystore = "${HOME}/.android/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          EOF
+
+      # Erster Headless-Start importiert alle Assets und legt .godot/ an.
+      # Ohne diesen Schritt exportiert Godot gern ein leeres/kaputtes Paket.
+      - name: Assets importieren (.godot-Cache aufbauen)
+        run: |
+          godot --headless --editor --quit-after 200 || true
+          test -d .godot
+
+      - name: APK exportieren
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /home/runner/.android/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          set -euxo pipefail
+          mkdir -p build
+          godot --headless --verbose \
+            --export-debug "${EXPORT_PRESET}" "build/${APK_NAME}"
+          ls -lh "build/${APK_NAME}"
+
+      - name: APK prüfen
+        run: |
+          set -euxo pipefail
+          SIZE=$(stat -c%s "build/${APK_NAME}")
+          echo "APK-Größe: $SIZE Bytes"
+          # Ein leerer/abgebrochener Export erzeugt gern ein Mini-Archiv.
+          if [ "$SIZE" -lt 2000000 ]; then
+            echo "::error::APK ist verdächtig klein ($SIZE Bytes) – Export vermutlich fehlgeschlagen."
+            exit 1
+          fi
+          unzip -l "build/${APK_NAME}" | grep -E 'classes.dex|assets/' | head
+
+      - name: APK als Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: pennerkombat-debug
+          path: build/${{ env.APK_NAME }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: APK ans Release hängen (nur bei Tags)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" "build/${APK_NAME}" --clobber

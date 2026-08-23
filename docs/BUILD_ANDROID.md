@@ -1,5 +1,16 @@
 # 📱 Android-Build (APK / AAB)
 
+> **Achtung — diese Seite beschreibt den Unity-Zweig (`Assets/Scripts/`).**
+>
+> Das Repo enthält zusätzlich ein **vollständiges Godot-4-Projekt**
+> (`project.godot`, `scenes/`, `scripts/`). Der schnellste Weg zu einem
+> installierbaren APK führt über dieses Godot-Projekt und braucht **weder Unity
+> noch eine Lizenz noch irgendeine lokale Installation**:
+>
+> → **[`APK_BUILD_READY.md`](APK_BUILD_READY.md)**
+>
+> Nur weiterlesen, wenn du bewusst die Unity-Fassung bauen willst.
+
 Diese Anleitung führt vom Repo zum installierbaren `.apk`.
 
 **Zwei Wege:**

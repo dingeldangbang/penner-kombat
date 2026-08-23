@@ -8,7 +8,27 @@
 
 ---
 
+## 📱 Schnellster Weg zum APK
+
+Das Repo enthält neben dem Unity-Code ein **vollständiges Godot-4-Projekt**
+(`project.godot`, `scenes/`, `scripts/`). Daraus baut GitHub Actions ein
+installierbares APK — **ohne Unity, ohne Lizenz, ohne lokale Installation**:
+
+```bash
+bash Tools/enable_ci.sh   # Workflow aktivieren (einmalig)
+git push
+```
+
+Dann **Actions → „Android Build (Godot)" → Run workflow** und das Ergebnis unter
+**Artifacts → `pennerkombat-debug`** herunterladen.
+Details: **[docs/APK_BUILD_READY.md](docs/APK_BUILD_READY.md)**
+
+---
+
 ## ⚠️ Wichtiger Hinweis vor dem Start
+
+> Der folgende Abschnitt betrifft den **Unity-Zweig** (`Assets/Scripts/`).
+> Für das Godot-APK gilt er nicht.
 
 Dieses Repository enthält den **vollständigen, codekompletten C#-Quellcode** des Spiels, ergänzt um alle zuvor fehlenden Systeme (Hitboxen, Fatal Blow/Fatality/Brutality, Beschwörungen, Story, Netzwerk, Trophäen). Der Code ist **statisch geprüft und intern konsistent**, wurde aber in einer **kopf- und testlosen Umgebung** erstellt — es gibt **keinen Unity-Editor-Build** in diesem Repo.
 

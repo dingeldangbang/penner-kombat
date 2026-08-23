@@ -1,5 +1,35 @@
 # CI-Vorlagen
 
+> **Zuerst lesen:** Das Repo enthält **zwei** Codebasen.
+>
+> | Ordner | Engine | Status |
+> |---|---|---|
+> | `project.godot`, `scenes/`, `scripts/` | **Godot 4.2** (GDScript) | vollständig, baubar → **`godot-android.yml`** |
+> | `Assets/Scripts/` | Unity (C#) | nur Skripte, kein baubares Projekt (keine Szenen/Prefabs/Art) |
+> | `web/` | Three.js | läuft ohne Build im Browser |
+>
+> **Für ein APK nimmst du `godot-android.yml`.** Die Unity-Workflows unten
+> (`android-build.yml`, `webgl-pages.yml`, `unity-activation.yml`) gehören zur
+> Unity-Codebasis, brauchen eine Unity-Lizenz und bauen dieses Godot-Spiel
+> *nicht*.
+
+## `godot-android.yml` — APK aus dem Godot-Projekt (der aktive Weg)
+
+Baut ein installierbares Debug-APK. Keine Lizenz, keine Secrets, nichts lokal
+zu installieren.
+
+```bash
+bash Tools/enable_ci.sh
+git push
+```
+
+Danach: **Actions → „Android Build (Godot)" → Run workflow** →
+**Artifacts → `pennerkombat-debug`**.
+
+Vollständige Anleitung samt Fehlerdiagnose: [`../APK_BUILD_READY.md`](../APK_BUILD_READY.md).
+
+---
+
 ## `release-zip.yml` — ZIP automatisch ans Release hängen
 
 GitHub-Apps/Agents dürfen ohne `workflows`-Berechtigung keine Dateien unter
@@ -29,11 +59,15 @@ git archive --format=zip --prefix=penner-kombat/ -o penner-kombat-release.zip v1
 gh release upload v1.3.0 penner-kombat-release.zip --clobber
 ```
 
-## Kein APK/Unity-Build in CI
+## Kein APK aus der *Unity*-Codebasis
 
-Ein spielbares **`.apk`** lässt sich hier nicht erzeugen: Das Repo enthält nur
-`Assets/Scripts` (C#), aber **kein vollständiges Unity-Projekt** (keine
-`ProjectSettings/`, `Packages/manifest.json`, Szenen, Prefabs, Art/Audio).
+> Veraltet, soweit es das Wort „kein APK" betrifft: Aus dem **Godot**-Projekt
+> entsteht sehr wohl ein APK — siehe `godot-android.yml` oben. Der folgende
+> Absatz gilt nur für den Unity-Zweig unter `Assets/Scripts/`.
+
+Aus dem Unity-Teil lässt sich kein spielbares **`.apk`** erzeugen: Dort liegen nur
+`Assets/Scripts` (C#), aber **kein vollständiges Unity-Projekt** (Szenen, Prefabs,
+Art/Audio fehlen).
 Ein Unity-Build braucht außerdem den Unity-Editor + Android-SDK/NDK und eine
 gültige Unity-Lizenz (z. B. via `game-ci/unity-builder` mit `UNITY_LICENSE`-Secret).
 Schritte dorthin siehe [../SETUP.md](../SETUP.md) und [../RELEASE.md](../RELEASE.md).
