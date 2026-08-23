@@ -1,0 +1,217 @@
+[gd_scene load_steps=4 format=3 uid="uid://hud001"]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="style_bar_fill"]
+bg_color = Color(0.2, 0.8, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="style_bar_back"]
+bg_color = Color(0.1, 0.08, 0.12, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.2, 0.3, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="HUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HealthBars" type="HBoxContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 84.0
+grow_horizontal = 2
+theme_override_constants/separation = 280
+
+[node name="P1" type="VBoxContainer" parent="Root/HealthBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="P1Label" type="Label" parent="Root/HealthBars/P1"]
+layout_mode = 2
+text = "P1"
+
+[node name="HealthBar" type="ProgressBar" parent="Root/HealthBars/P1"]
+custom_minimum_size = Vector2(320, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 100.0
+theme_override_styles/fill = SubResource("style_bar_fill")
+theme_override_styles/background = SubResource("style_bar_back")
+
+[node name="P2" type="VBoxContainer" parent="Root/HealthBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="P2Label" type="Label" parent="Root/HealthBars/P2"]
+layout_mode = 2
+text = "P2"
+horizontal_alignment = 2
+
+[node name="HealthBar" type="ProgressBar" parent="Root/HealthBars/P2"]
+custom_minimum_size = Vector2(320, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 100.0
+theme_override_styles/fill = SubResource("style_bar_fill")
+theme_override_styles/background = SubResource("style_bar_back")
+
+[node name="Timer" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="TimerLabel" type="Label" parent="Root/Timer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "99:00"
+horizontal_alignment = 1
+
+[node name="Round" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 58.0
+offset_bottom = 90.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="RoundLabel" type="Label" parent="Root/Round"]
+layout_mode = 2
+text = "Runde 1 von 3"
+horizontal_alignment = 1
+
+[node name="ComboCounter" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -120.0
+offset_right = 250.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ComboLabel" type="Label" parent="Root/ComboCounter"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = ""
+horizontal_alignment = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Root/ComboCounter"]
+
+[node name="StatusIcons" type="HBoxContainer" parent="Root"]
+layout_mode = 1
+offset_left = 20.0
+offset_top = 90.0
+offset_right = 320.0
+offset_bottom = 130.0
+
+[node name="SpecialBars" type="HBoxContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 360.0
+offset_top = 92.0
+offset_right = -360.0
+offset_bottom = 152.0
+grow_horizontal = 2
+theme_override_constants/separation = 10
+
+[node name="MojoPanel" type="VBoxContainer" parent="Root/SpecialBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MojoBar" type="ProgressBar" parent="Root/SpecialBars/MojoPanel"]
+layout_mode = 2
+max_value = 100.0
+theme_override_styles/fill = SubResource("style_bar_fill")
+theme_override_styles/background = SubResource("style_bar_back")
+
+[node name="Label" type="Label" parent="Root/SpecialBars/MojoPanel/MojoBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "MOJO: 0/7"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PulsePanel" type="VBoxContainer" parent="Root/SpecialBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PulseBar" type="ProgressBar" parent="Root/SpecialBars/PulsePanel"]
+layout_mode = 2
+max_value = 100.0
+theme_override_styles/fill = SubResource("style_bar_fill")
+theme_override_styles/background = SubResource("style_bar_back")
+
+[node name="Label" type="Label" parent="Root/SpecialBars/PulsePanel/PulseBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "PULS: 60 bpm"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GreasePanel" type="VBoxContainer" parent="Root/SpecialBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GreaseBar" type="ProgressBar" parent="Root/SpecialBars/GreasePanel"]
+layout_mode = 2
+max_value = 100.0
+value = 100.0
+theme_override_styles/fill = SubResource("style_bar_fill")
+theme_override_styles/background = SubResource("style_bar_back")
+
+[node name="Label" type="Label" parent="Root/SpecialBars/GreasePanel/GreaseBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "FETT: 3/3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DamagePopup" type="Control" parent="Root"]
+visible = false
+layout_mode = 1
+offset_right = 120.0
+offset_bottom = 60.0
+
+[node name="DamageLabel" type="Label" parent="Root/DamagePopup"]
+layout_mode = 1
+theme_override_font_sizes/font_size = 48
+text = "-0"
+modulate = Color(1, 0.2, 0.2, 1)

@@ -1,0 +1,80 @@
+{
+  "menu_title": {
+    "de": "Penner Kombat",
+    "en": "Penner Kombat",
+    "fr": "Penner Kombat",
+    "es": "Penner Kombat"
+  },
+  "menu_play": {
+    "de": "Spielen",
+    "en": "Play",
+    "fr": "Jouer",
+    "es": "Jugar"
+  },
+  "menu_options": {
+    "de": "Optionen",
+    "en": "Options",
+    "fr": "Options",
+    "es": "Opciones"
+  },
+  "menu_quit": {
+    "de": "Beenden",
+    "en": "Quit",
+    "fr": "Quitter",
+    "es": "Salir"
+  },
+  "status_loading": {
+    "de": "Lade...",
+    "en": "Loading...",
+    "fr": "Chargement...",
+    "es": "Cargando..."
+  },
+  "status_ready": {
+    "de": "Bereit!",
+    "en": "Ready!",
+    "fr": "Prêt!",
+    "es": "Listo!"
+  },
+  "combo": {
+    "de": "KOMBO!",
+    "en": "COMBO!",
+    "fr": "COMBO!",
+    "es": "COMBO!"
+  },
+  "fatality": {
+    "de": "FATALITÄT!",
+    "en": "FATALITY!",
+    "fr": "FATALITÉ!",
+    "es": "FATALIDAD!"
+  },
+  "round": {
+    "de": "Runde %d von %d",
+    "en": "Round %d of %d",
+    "fr": "Round %d sur %d",
+    "es": "Ronda %d de %d"
+  },
+  "victory": {
+    "de": "SIEG!",
+    "en": "VICTORY!",
+    "fr": "VICTOIRE!",
+    "es": "VICTORIA!"
+  },
+  "defeat": {
+    "de": "NIEDERLAGE!",
+    "en": "DEFEAT!",
+    "fr": "DÉFAITE!",
+    "es": "DERROTA!"
+  },
+  "spawn_bind": {
+    "de": "🚀 Spawn & Binden",
+    "en": "🚀 Spawn & Bind",
+    "fr": "🚀 Générer & Lier",
+    "es": "🚀 Crear y Vincular"
+  },
+  "test_ai": {
+    "de": "KI testen",
+    "en": "Test AI",
+    "fr": "Tester IA",
+    "es": "Probar IA"
+  }
+}
