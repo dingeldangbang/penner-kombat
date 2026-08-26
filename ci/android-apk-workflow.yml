@@ -1,0 +1,75 @@
+name: Game CI — Android APK
+
+# Exports the native Godot project as an installable, debug-signed Android APK.
+# The barichello image contains Godot, matching export templates, Android SDK,
+# build-tools, JDK and the debug keystore, so no repository secrets are needed.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - arena/**
+    tags:
+      - "v*"
+    paths:
+      - "Assets/**"
+      - "android/**"
+      - "scenes/**"
+      - "scripts/**"
+      - "shaders/**"
+      - "translations/**"
+      - "project.godot"
+      - "export_presets.cfg"
+      - ".github/workflows/android-apk.yml"
+  pull_request:
+    paths:
+      - "Assets/**"
+      - "android/**"
+      - "scenes/**"
+      - "scripts/**"
+      - "shaders/**"
+      - "translations/**"
+      - "project.godot"
+      - "export_presets.cfg"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  export-apk:
+    name: Export Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: barichello/godot-ci:4.2.2
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      # Import first. This makes the export deterministic and surfaces invalid
+      # scenes/scripts before the APK export begins.
+      - name: Import project resources
+        run: godot --headless --path "$GITHUB_WORKSPACE" --editor --quit
+
+      - name: Export debug APK
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/build"
+          godot --headless --path "$GITHUB_WORKSPACE" \
+            --export-debug "Android" \
+            "$GITHUB_WORKSPACE/build/PennerKombat-debug.apk"
+          test -s "$GITHUB_WORKSPACE/build/PennerKombat-debug.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PennerKombat-Android-debug-${{ github.run_number }}
+          path: build/PennerKombat-debug.apk
+          if-no-files-found: error
+          retention-days: 30
