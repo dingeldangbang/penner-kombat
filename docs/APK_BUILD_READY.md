@@ -22,6 +22,18 @@ It runs on a pull request, on relevant pushes to `main` or `arena/**`, for
 version tags (`v*`), and can always be started from **Actions → Game CI —
 Android APK → Run workflow**.
 
+## Activating the workflow (one-time)
+
+GitHub only accepts workflow files from tokens with `workflows` permission.
+If the automated push of `.github/workflows/android-apk.yml` was rejected,
+activate the workflow manually once:
+
+1. Open
+   <https://github.com/dingeldangbang/penner-kombat/new/main?filename=.github/workflows/android-apk.yml>.
+2. Copy the raw content of [`ci/android-apk-workflow.yml`](../ci/android-apk-workflow.yml)
+   (pushable copy of the exact same file) into the editor.
+3. Click **Commit changes** — the push itself triggers the first APK build.
+
 ## Downloading the APK
 
 1. Open the successful **Game CI — Android APK** workflow run on GitHub.
