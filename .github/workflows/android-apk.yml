@@ -166,16 +166,12 @@ jobs:
   #     gesetzt → echter Release-Keystore (Godot exportiert --export-release).
   #   - Nicht gesetzt → Debug-Signatur (Keystore im CI-Image, Warnung im Log).
   release-apk:
-    name: Signed APK → GitHub Release
+    name: Export signed release APK
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container:
       image: barichello/godot-ci:4.7.2
-    # Für `gh release create/upload` (Asset anhängen) braucht dieser Job
-    # Schreibrechte auf Contents — überschreibt das Top-Level-`read`.
-    permissions:
-      contents: write
     env:
       HOME: /root
 
@@ -205,7 +201,7 @@ jobs:
             export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/tmp/pennerkombat-release.keystore
             export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$KEY_ALIAS"
             export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$KEYSTORE_PASS"
-            echo "Signiere mit Release-Keystore (Alias `$KEY_ALIAS`) …"
+            echo "Signiere mit Release-Keystore (Alias \`$KEY_ALIAS\`) …"
             godot --headless --path "$GITHUB_WORKSPACE" \
               --export-release "Android" \
               "$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
@@ -217,15 +213,41 @@ jobs:
               "$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
           fi
           test -s "$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
+          echo "APK-Größe: $(du -h "$GITHUB_WORKSPACE/build/PennerKombat-release.apk" | cut -f1)"
+
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PennerKombat-Android-release-${{ github.run_number }}
+          path: build/PennerKombat-release.apk
+          if-no-files-found: error
+
+  # Host-Runner (gh + curl vorinstalliert): erstellt/aktualisiert das GitHub
+  # Release und hängt die signierte APK als Download-Asset an.
+  publish-release:
+    name: Signed APK → GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: release-apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release APK
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+        with:
+          name: PennerKombat-Android-release-${{ github.run_number }}
+          path: build
 
       - name: Create/update GitHub Release and attach APK
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
           set -euo pipefail
           TAG="$GITHUB_REF_NAME"
-          APK="$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
+          APK="build/PennerKombat-release.apk"
+          test -s "$APK"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" --clobber
             echo "Release $TAG existierte bereits — APK aktualisiert."
