@@ -71,6 +71,12 @@ APK. Für ein produktives, signiertes AAB siehe §7 (Secrets/Release-Keystore).
 
 ## 6. Matrix Android 11–15 (CI deckt das ab)
 
+> **Verifiziert (2026-09-07, Branch `arena/01a07925-penner-kombat`):** APK- und
+> AAB-Export laufen in der CI grün (`barichello/godot-ci:4.7.2`, SDK-36-
+> und NDK-r29-Bootstrap automatisch). Der Push-Trigger baut bei jedem Push auf
+> `main`/`arena/**` das APK — der letzte erfolgreiche Run
+> `PennerKombat-Android-debug-8` (~57 MB) liegt als Artefakt auf GitHub.
+
 | Android | API | CI-Emulator-Job | APK | AAB |
 |---|---|---|---|---|
 | 11 | 30 | `emulator 30` (Default, bewährt) | ✅ | minSdk 30 ✅ |
