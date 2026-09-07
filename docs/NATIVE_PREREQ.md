@@ -1,6 +1,21 @@
 # 📱 Native App — Voraussetzungen & Bereitstellung
 
-Zwei native Wege sind im Repo vorbereitet:
+> **Aktuell (2026-09):** Das Projekt ist auf **Godot 4.7.2** migriert. Der
+> **Godot-Weg** unten (Abschnitt 0) ist der verbindliche Android-11–15-Pfad
+> (API 30–35); die Abschnitte A–F sind der **Unity-Altbestand** und nur noch
+> historisch relevant.
+
+## 0 — Godot 4.7.2 (Android 11–15, empfohlen)
+
+- **Abhängigkeiten:** OpenJDK 17 · Android SDK Platform-Tools 35+ · Build-Tools 35.0.1 + 36.1.0 · Platforms android-35 + android-36 · NDK 29.0.14206865 · CMake 3.22.1
+- **Anbindungen:** Internet/Netzstatus/Vibration/Wake-Lock-Permissions via Export-Preset; `wss://`-Relay (TLS) oder `ws://` mit `--relay`-Manifest-Patch; Immersive-Modus gegen Edge-to-edge (Android 15); 16-KB-Page-Size erfüllt (Libs unkomprimiert)
+- **Setup:** `./Tools/android_setup.sh` → `./Tools/android_check.sh` → `./Tools/install_android_build_template.sh`
+- **Builds:** `godot --headless --path . --export-debug "Android" build/PennerKombat-debug.apk` · AAB: Preset `Android AAB` · CI: `ci/android-apk-workflow.yml` (Image 4.7.2, optionaler AAB-Job)
+- **Alles Weitere:** [docs/ANDROID_11_15.md](ANDROID_11_15.md), [docs/APK_BUILD_READY.md](APK_BUILD_READY.md), [../android/README.md](../android/README.md)
+
+---
+
+Zwei weitere (ältere) Wege sind im Repo hinterlegt:
 
 1. **Unity Android (APK/AAB)** — vollwertige native App, beste Performance, Vibration, Offline
 2. **Web 3D als native Wrapper (Capacitor)** — nutzt `web/3d.html` (Le Binde vs Mojo Bob Pose-System) als native Hülle

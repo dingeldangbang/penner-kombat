@@ -1,6 +1,20 @@
 # Native App Checklist — Penner Kombat
 
-**Stand:** 2026-08-22 — Unity 2022.3.62f1 LTS + Web 3D Pose Arena
+**Stand:** 2026-09-06 — **Godot 4.7.2 (Android 11–15 / API 30–35)** — Unity-Abschnitt ist Altbestand (Migration abgeschlossen).
+
+## ✅ Android 11–15 — Godot 4.7 (aktuell)
+
+- `export_presets.cfg` → Presets `Android` (Debug-APK) + `Android AAB` (Gradle: minSdk 30, targetSdk 35, 16-KB-Page-Size)
+- `project.godot` → `[android]` minSdk 30 / targetSdk 35, Permissions INTERNET, ACCESS_NETWORK_STATE, VIBRATE, WAKE_LOCK, sensorLandscape
+- `Tools/android_setup.sh` → OpenJDK 17, SDK Platform 35+36, Build-Tools 35.0.1+36.1.0, NDK r29, CMake 3.22.1
+- `Tools/install_android_build_template.sh` → installiert `res://android/build` aus den Export-Templates (`--relay` für `ws://`)
+- `Tools/android_check.sh` → Bereitschaftscheck (APK/AAB, Permissions, 16 KB, Toolchain)
+- `ci/android-apk-workflow.yml` → `barichello/godot-ci:4.7.2`, APK + optionales AAB (workflow_dispatch `build_aab`) + optionaler Emulator-Smoke-Test (API 30–35)
+- **GitHub CLI/CD/CI:** `Tools/gh_android.sh` → Workflow aktivieren (`activate`), bauen (`build apk|aab|all`), Emulator-Test (`emulator 30–35`), Artefakte laden (`download`), Release (`release <tag>`) und installieren (`install`) — ohne lokales SDK, Details `docs/GH_CLI_CI.md`
+- Relay-Anbindung: `wss://` empfohlen; `ws://` nur mit `--relay` (Cleartext) im Gradle-Build
+- Details & Verifikation: **`docs/ANDROID_11_15.md`** · Build: `docs/APK_BUILD_READY.md` · gh-Weg: `docs/GH_CLI_CI.md`
+
+
 
 ## ✅ Was bereits bereitgestellt ist
 

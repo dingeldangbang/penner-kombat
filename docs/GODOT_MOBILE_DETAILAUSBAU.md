@@ -26,13 +26,15 @@ Diese Implementierung ergänzt das Projekt um eine lauffähige Godot-4-Mobile-Sc
 - `scripts/ui/MainUI.gd`
 - `scenes/ui/MainUI.tscn`
 
-## Android-Dateien
+## Android-Dateien (Android 11–15 / API 30–35)
 
-- `project.godot` — mobile Forward+/Mobile-Renderer-Konfiguration
-- `export_presets.cfg` — Android-Debug-Preset mit ARMv7/ARM64, Internet, Storage, Vibration und Wake-Lock
-- `android/AndroidManifest.xml` — Permissions, Vulkan/OpenGLES-Feature Flags, Godot Activity, FileProvider
-- `android/res/xml/file_paths.xml` — externe Datei-Provider-Pfade
-- `.github/workflows/android_build.yml` — Godot-CI Android Debug APK Export
+- `project.godot` — mobile Forward+/Mobile-Renderer-Konfiguration (minSdk 30, targetSdk 35)
+- `export_presets.cfg` — Preset `Android` (Debug-APK) + Preset `Android AAB` (Gradle, minSdk 30 / targetSdk 35, 16-KB-Page-Size-sicher)
+- `android/README.md` — Godot-4-Manifest-Handling, Build-Template, `ws://`-Relay (Cleartext)
+- `Tools/android_setup.sh` — OpenJDK 17 + Android SDK 30–35 (build-tools 35.0.1/36.1.0, Plattformen 35/36, NDK r29, CMake)
+- `Tools/install_android_build_template.sh` — installiert `res://android/build` aus `android_source.zip` (optional `--relay`)
+- `Tools/android_check.sh` — Android-11–15-Bereitschaftscheck
+- `ci/android-apk-workflow.yml` (`barichello/godot-ci:4.7.2`) — Godot-CI Android Debug-APK Export, optional AAB-Job
 
 ## Bedienung
 

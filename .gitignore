@@ -1,3 +1,10 @@
+# Godot
+.godot/
+android/build/
+android/.build_version
+*.jks
+*.keystore
+
 # Unity-generiert
 [Ll]ibrary/
 [Tt]emp/

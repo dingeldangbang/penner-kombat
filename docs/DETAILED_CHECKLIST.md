@@ -10,7 +10,7 @@
 |---|------------|--------|------------|--------------|
 | 1.1 | `project.godot` | ✅ | `project.godot` | Godot 4.3+ Konfiguration (Forward+, Mobile) |
 | 1.2 | Export-Presets | ✅ | `export_presets.cfg` | Android APK/AAB konfiguriert |
-| 1.3 | AndroidManifest | ✅ | `android/AndroidManifest.xml` | Internet, Storage, Vibration |
+| 1.3 | AndroidManifest | ✅ | via Export-Preset (`export_presets.cfg`) + `android/` (README) | Internet, ACCESS_NETWORK_STATE, Vibration, Wake-Lock (Android 11–15) |
 | 1.4 | Icon | ⚠️ | `icon.svg` | Platzhalter vorhanden |
 | 1.5 | Main Scene | ✅ | `scenes/ui/CharacterAssetSuite.tscn` | Neue zentrale Arbeitsoberfläche |
 

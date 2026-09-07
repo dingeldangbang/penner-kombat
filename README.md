@@ -2,7 +2,7 @@
 
 > **„Kombat der städtischen Randfiguren“** — ein humorvoller, brutaler 2.5D-Fighter in **Godot 4** (Forward+ / Mobile).
 
-[![Godot](https://img.shields.io/badge/Godot-4.3%20%2B-blue)](https://godotengine.org)
+[![Godot](https://img.shields.io/badge/Godot-4.7%20%2B-blue)](https://godotengine.org)
 [![License](https://img.shields.io/badge/License-CC_BY--NC--4.0-lightgrey)](LICENSE)
 [![Language](https://img.shields.io/badge/GDScript-Godot%204-green)]()
 
@@ -18,9 +18,32 @@ Das Repository enthält die **vollständige Godot 4 Mobile/Editor-Version** mit 
 - KI-gestützte Charakter-Erstellung via OpenAI
 - Vollständiges Kampf-System (`CombatController`, `DynamicRigger`, `ArenaController`)
 - Mobile-Optimierungen (LOD, PerformanceManager, Touch)
+- **Android 11–15 (API 30–35)**: Export-Presets, SDK-Setup, CI-APK + optionales AAB, 16-KB-Page-Size, `ws://`/`wss://`-Relay-Anbindung — Details in [docs/ANDROID_11_15.md](docs/ANDROID_11_15.md)
 - 9 spielbare Charaktere + KI + VFX + Audio
 
 ---
+
+## 📱 Android 11–15 — Schnellstart
+
+```bash
+./Tools/android_setup.sh                     # JDK-17-Check + Android SDK 30–35 installieren
+./Tools/android_check.sh                     # Bereitschaft prüfen
+./Tools/install_android_build_template.sh    # nur für AAB-/Gradle-Build (--relay für ws://)
+godot --headless --path . --export-debug "Android" build/PennerKombat-debug.apk
+```
+
+### 🐙 Alternativ: GitHub CLI / CD / CI (ohne lokales SDK)
+
+```bash
+./Tools/gh_android.sh status        # Workflow + letzte Runs
+./Tools/gh_android.sh activate      # einmalig: Workflow via gh api anlegen
+./Tools/gh_android.sh build apk     # baut in der Cloud & lädt nach build/
+./Tools/gh_android.sh emulator 35   # optional: Android-15-Emulator-Test
+./Tools/gh_android.sh release v1.1.0
+```
+
+Details: [docs/GH_CLI_CI.md](docs/GH_CLI_CI.md) · lokal:
+[docs/ANDROID_11_15.md](docs/ANDROID_11_15.md).
 
 ## 🚀 Schnellstart (5 Minuten)
 

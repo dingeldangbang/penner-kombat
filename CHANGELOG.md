@@ -1,6 +1,18 @@
 # Changelog
 
 ## [Unveröffentlicht]
+
+### Android 11–15 (API 30–35) — Abhängigkeiten & Anbindungen
+- **Engine-Ziel:** Godot 4.7.2 (targetSdk 35, 16-KB-Page-Size, NDK r29-Template); Projekt-Features auf 4.7 markiert.
+- **`export_presets.cfg`:** Preset `Android` (Debug-APK) + Preset `Android AAB` (Gradle-Build: minSdk 30 / targetSdk 35, `compress_native_libraries=false`, ausgeweitete Permissions).
+- **`project.godot`:** `[android]` minSdk 30 / targetSdk 35, Permissions Internet/Netzwerkstatus/Vibration/Wake-Lock, `sensorLandscape`; `network/relay/url` zentral für Relay-Anbindung.
+- **Manifest umgestellt:** Unity-`android/AndroidManifest.xml` + Legacy-Storage-Permissions entfernt; Godot generiert das Manifest aus dem Export-Preset (`android/README.md`).
+- **Neue Tools:** `Tools/android_setup.sh` (OpenJDK 17 + SDK/Build-Tools/Platforms 35+36/CMake/NDK r29 + Godot-Editor-Settings), `Tools/install_android_build_template.sh` (installiert `res://android/build`, optional `--relay` für `ws://`), `Tools/android_check.sh`.
+- **CI/CD via GitHub CLI:** `ci/android-apk-workflow.yml` + `.github/workflows/android-apk.yml` auf `barichello/godot-ci:4.7.2`; optionaler AAB-Job (`build_aab`) und optionaler Emulator-Smoke-Test (API 30–35, `emulator_test`/`emulator_api`); `Tools/gh_android.sh` steuert Workflow-Aktivierung (`gh api`), Builds, Download, Release und Installation komplett per `gh`.
+- **Signierte APK auf GitHub:** Tag-Job `Signed APK → GitHub Release` exportiert `PennerKombat-release.apk` mit Release-Keystore aus Secrets (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`) und veröffentlicht sie als **GitHub-Release-Asset**; ohne Secrets Debug-Signatur mit Warnung. `Tools/gh_android.sh release <tag>` nutzt genau diesen Weg; Doku in `docs/APK_BUILD_READY.md` + `docs/GH_CLI_CI.md`.
+- **Relay:** `wss://` als Produktionsweg dokumentiert; `ws://` nur im Gradle-Build mit Cleartext-Patch.
+- **Doku:** `docs/ANDROID_11_15.md` (Matrix, Abhängigkeiten, Anbindungen, Verifikation, Alternativen), `docs/GH_CLI_CI.md` (gh-CLI/CD/CI-Weg); `docs/APK_BUILD_READY.md`, `README.md`, `docs/NATIVE_PREREQ.md`, `NATIVE_APP_CHECKLIST.md`, `docs/GODOT_MOBILE_DETAILAUSBAU.md` aktualisiert.
+
 ### Cover-Look und PWA für die Browser-Fassung
 - **`web/src/cover.js`**: Hinterhof-Kulisse im Stil des Artworks, komplett gezeichnet —
   Backstein, Wäscheleine mit Wind, flackernde Laternen, Neonschild „Zum Blauen Eimer",

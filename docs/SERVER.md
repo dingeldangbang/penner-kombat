@@ -114,6 +114,18 @@ location /kombat {
 
 Clients nutzen dann `wss://deine-domain/kombat`.
 
+### Android 11–15 (API 30–35)
+
+- Die Client-URL wird an einer Stelle gesetzt: `network/relay/url` in
+  `project.godot` (gelesen von `NetworkManager.gd`/`WebSocketClient.gd`, wenn
+  deren `@export`-URL leer bleibt). Für Android **`wss://`** verwenden — Klartext
+  `ws://` ist ab API 28 blockiert.
+- Nur für lokale Entwicklung: `./Tools/install_android_build_template.sh --relay`
+  ergänzt `android:usesCleartextTraffic="true"` im Gradle-Build-Template
+  (`android/build/src/main/AndroidManifest.xml`). Für das Prebuilt-APK gilt das
+  nicht — dort bleibt `wss://` der Weg.
+- Weitere Details: [docs/ANDROID_11_15.md](ANDROID_11_15.md).
+
 ---
 
 ## Was der Relay bewusst **nicht** tut
