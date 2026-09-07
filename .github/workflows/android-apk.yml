@@ -81,6 +81,11 @@ jobs:
     timeout-minutes: 30
     container:
       image: barichello/godot-ci:4.7.2
+    # godot-ci legt Templates/Editor-Settings/Keystore unter /root ab; der
+    # Container-Job setzt HOME=/github/home → ohne diesen Wert findet Godot
+    # weder Export-Templates noch Java-SDK-Pfad.
+    env:
+      HOME: /root
 
     steps:
       - name: Check out source
@@ -117,6 +122,8 @@ jobs:
     timeout-minutes: 90
     container:
       image: barichello/godot-ci:4.7.2
+    env:
+      HOME: /root
 
     steps:
       - name: Check out source
