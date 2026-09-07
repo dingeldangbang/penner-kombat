@@ -117,7 +117,7 @@ jobs:
   # NDK r29 (as required by Godot 4.7's config.gradle).
   export-aab:
     name: Export Android AAB (optional)
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_aab == 'true'
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build_aab == 'true') || (github.event_name == 'push' && github.ref == 'refs/heads/arena/01a07925-penner-kombat')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     container:
