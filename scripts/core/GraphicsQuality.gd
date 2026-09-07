@@ -147,6 +147,8 @@ func toggle_cinematic_fx() -> bool:
 
 
 ## Wendet alle derzeit gültigen Einstellungen sofort an.
+## (Hinweis: einzelne Effekte sind versionsabhängig — SSAO/SSR/Vol-Fog werden
+## nur gesetzt, wenn die Engine sie unterstützt.)
 func apply() -> void:
 	_apply_engine_settings()
 	_apply_shadow_settings()
