@@ -240,6 +240,12 @@ jobs:
           name: PennerKombat-Android-release-${{ github.run_number }}
           path: build
 
+      - name: Verify APK signature and 16 KB alignment
+        run: |
+          BT="$(ls -d /usr/local/lib/android/sdk/build-tools/* | sort -V | tail -n 1)"
+          "$BT/apksigner" verify --print-certs build/PennerKombat-release.apk
+          "$BT/zipalign" -c -P 16 -v 4 build/PennerKombat-release.apk | tail -n 2
+
       - name: Create/update GitHub Release and attach APK
         env:
           GH_TOKEN: ${{ github.token }}
