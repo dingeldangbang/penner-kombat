@@ -178,7 +178,7 @@ jobs:
       - name: Start emulator + smoke test
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: ${{ github.event.inputs.emulator_api }}
+          api-level: ${{ github.event.inputs.emulator_api || '35' }}
           arch: x86_64
           profile: pixel_6
           disable-animations: true
