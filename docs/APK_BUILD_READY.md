@@ -1,13 +1,15 @@
 # Android APK build via GitHub Actions
 
-The native Godot 4 project is configured to export an installable Android APK.
+The native Godot 4 project is configured to export an installable Android APK
+for **Android 11–15 (API 30–35)**. See [ANDROID_11_15.md](ANDROID_11_15.md)
+for the full dependency/integration matrix.
 
 ## GitHub workflow
 
 [`.github/workflows/android-apk.yml`](../.github/workflows/android-apk.yml) uses
-[`barichello/godot-ci:4.2.2`](https://github.com/abarichello/godot-ci), the
-Godot CI image containing the Godot 4.2.2 export templates, Android SDK,
-build-tools, JDK and a debug keystore.
+[`barichello/godot-ci:4.7.2`](https://github.com/abarichello/godot-ci), the
+Godot CI image containing the Godot 4.7.2 export templates, Android SDK,
+build-tools, JDK 17 and a debug keystore.
 
 No Unity licence, Android SDK installation, or repository secret is required.
 The workflow:
@@ -20,7 +22,10 @@ The workflow:
 
 It runs on a pull request, on relevant pushes to `main` or `arena/**`, for
 version tags (`v*`), and can always be started from **Actions → Game CI —
-Android APK → Run workflow**.
+Android APK → Run workflow**. With the workflow-dispatch input **build_aab**
+the same run additionally exports a debug-signed **AAB** (`Android AAB` preset,
+minSdk 30 / targetSdk 35, Gradle build incl. SDK Platform 36, Build-Tools
+36.1.0 and NDK r29).
 
 ## Activating the workflow (one-time)
 
@@ -44,13 +49,20 @@ activate the workflow manually once:
 
 ## Local equivalent
 
-With Godot 4.2.2, Android export templates and Android build dependencies
-installed, the CI command is:
+With Godot 4.7.2, Android export templates and the Android dependencies
+installed (`./Tools/android_setup.sh`), the CI command is:
 
 ```bash
 mkdir -p build
 godot --headless --path . --editor --quit
 godot --headless --path . --export-debug "Android" build/PennerKombat-debug.apk
+```
+
+AAB (Google Play, minSdk 30 / targetSdk 35):
+
+```bash
+./Tools/install_android_build_template.sh            # once
+godot --headless --path . --export-debug "Android AAB" build/PennerKombat.aab
 ```
 
 ## Release signing

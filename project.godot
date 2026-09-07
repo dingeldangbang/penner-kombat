@@ -2,19 +2,24 @@
 config_version=5
 
 [application]
+
 config/name="PennerKombat"
-config/version="1.0.0"
+config/version="1.1.0"
 config/description="Dynamic GLB Combat System with OpenAI Integration"
 run/main_scene="res://scenes/ui/Editor.tscn"
 config/icon="res://icon.svg"
+config/features=PackedStringArray("4.7", "Forward Plus")
 
 [display]
+
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/size/mode=2
-window/handheld/orientation=6
+; 4 = sensor landscape: Querformat in beide Richtungen (Android 11–15 / API 30–35)
+window/handheld/orientation=4
 
 [rendering]
+
 renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
@@ -23,33 +28,47 @@ lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
 environment/defaults/default_clear_color=Color(0.1, 0.08, 0.12, 1)
 
 [audio]
+
 driver/output_latency=15
 
+[network]
+
+; Relay-Adresse für Multiplayer/Assets (NetworkManager/WebSocketClient lesen das,
+; wenn ihre @export-URL leer ist). Für Android 11–15 wss:// (TLS) verwenden —
+; Klartext ws:// ist ab API 28 blockiert und im Gradle-Build nur mit
+; --relay-Manifest-Patch möglich (Tools/install_android_build_template.sh).
+relay/url="ws://localhost:8080/kombat"
+
 [input_devices]
+
 pointing/emulate_touch_from_mouse=true
 
-[application/config]
-name="PennerKombat"
-
+; Android 11 (API 30) bis Android 15 (API 35).
+; Die Werte werden beim Gradle-Build (AAB) aus [export_presets.cfg]
+; bzw. aus dem Gradle-Build-Template übernommen. Der vorbereitete
+; Prebuilt-Template-Export (APK) übernimmt die SDK-Werte des Templates.
 [android]
+
 package/unique_name="com.pennerkombat.mobile"
 package/name="com.pennerkombat.mobile"
 package/version=1
 package/version_code=1
 permissions/internet=true
 permissions/access_network_state=true
-permissions/read_external_storage=true
-permissions/write_external_storage=true
 permissions/vibrate=true
+permissions/wake_lock=true
 min_sdk_version=30
-target_sdk_version=33
+target_sdk_version=35
 
 [android/splash]
+
 show=true
 fullscreen=true
 
 [shader_globals]
+
 xray_uniform={"type":"color","value":Color(0, 0, 0, 0)}
 
 [autoload]
+
 GlobalData="*res://scripts/autoload/GlobalData.gd"

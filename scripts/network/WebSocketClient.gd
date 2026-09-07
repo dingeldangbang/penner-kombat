@@ -9,7 +9,7 @@ signal connection_failed(error: String)
 signal text_received(text: String)
 signal json_received(data: Dictionary)
 
-@export var url: String = "ws://localhost:8080/kombat"
+@export var url: String = ""
 @export var auto_connect: bool = false
 
 var peer: WebSocketPeer = WebSocketPeer.new()
@@ -17,6 +17,11 @@ var _was_active: bool = false
 
 
 func _ready() -> void:
+	# Android: Produktions-Builds setzen network/relay/url in project.godot
+	# (empfohlen wss://), sonst lokaler Dev-Server.
+	if url.is_empty():
+		url = String(ProjectSettings.get_setting(
+			"network/relay/url", "ws://localhost:8080/kombat"))
 	if auto_connect:
 		connect_to_url(url)
 
