@@ -129,7 +129,6 @@ func _create_combatant(entity: Node3D, profile: SkillData, spawn_position: Vecto
 	var controller: CombatController = CombatController.new()
 	controller.name = fighter_name
 	controller.skill_data = profile
-	controller.global_position = spawn_position
 
 	var rigger: DynamicRigger = DynamicRigger.new()
 	rigger.name = fighter_name + "Rigger"
@@ -145,6 +144,7 @@ func _create_combatant(entity: Node3D, profile: SkillData, spawn_position: Vecto
 	controller.add_child(body_shape)
 
 	add_child(controller)
+	controller.global_position = spawn_position
 	controller.add_child(entity)
 	entity.position = Vector3.ZERO
 	rigger.rig_entity(entity, profile)

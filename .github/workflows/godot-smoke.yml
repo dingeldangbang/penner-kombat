@@ -43,7 +43,7 @@ jobs:
       - name: Arena-Boot (300 Frames)
         run: |
           set +e
-          godot --headless --path . res://scenes/combat/Arena.tscn --quit-after 300 2>&1 | tee /tmp/arena.log
+          godot --verbose --headless --path . res://scenes/combat/Arena.tscn --quit-after 300 2>&1 | tee /tmp/arena.log
           if grep -E "SCRIPT ERROR|^ERROR:" /tmp/arena.log; then
             echo "::error::=== ARENA-FEHLER (erste 25 Zeilen inkl. Shader-Kontext) ==="
             grep -E "SCRIPT ERROR|^ERROR:|Shader compilation|at line|ERROR:" /tmp/arena.log | head -25 | while IFS= read -r line; do
@@ -51,6 +51,10 @@ jobs:
             done
             echo "::error::=== SHADER-DETAILS (5 Zeilen vor + 12 nach 'Shader compilation failed') ==="
             grep -B 5 -A 12 "Shader compilation failed" /tmp/arena.log | head -120 | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+            echo "::error::=== SHADER-/RESSOURCEN-ZEILEN (verbose) ==="
+            grep -iE "shader|gdshader" /tmp/arena.log | head -60 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1
