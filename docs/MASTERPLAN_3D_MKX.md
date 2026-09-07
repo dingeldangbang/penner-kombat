@@ -265,3 +265,10 @@ curl http://localhost:5000/api/status                       # Monitoring
    `network/relay/url` auf `wss://domain/kombat` setzen.
 4. **Phase 3/4 priorisieren:** Game-Feel-Feintuning bringt den größten
    sichtbaren Sprung pro Arbeitsstunde.
+
+## 10. Verifikation (CI-verifiziert)
+
+Die Headless-Verifikation läuft in echter Godot-4.7.2-Umgebung
+(`.github/workflows/godot-smoke.yml`): Projekt-Import → Arena-Boot
+(300 Frames) → Pipeline-Test (Metarig → Rigging → Shader → Qualität).
+Lokal: `GODOT_BIN=/pfad/godot ./Tools/verify_graphics.sh`.
