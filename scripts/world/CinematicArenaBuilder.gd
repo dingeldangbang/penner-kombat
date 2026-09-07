@@ -126,7 +126,7 @@ func _build_lights(stage: Node3D, tier: int) -> void:
 	key.look_at(Vector3.ZERO, Vector3.UP)
 	stage.add_child(key)
 
-	var fill: PointLight3D = PointLight3D.new()
+	var fill: OmniLight3D = OmniLight3D.new()
 	fill.name = "CinematicFill"
 	fill.position = Vector3(-5.0, 5.0, -2.0)
 	fill.light_color = Color(0.3, 0.5, 1.0)

@@ -208,13 +208,13 @@ func _get_msaa() -> int:
 func _get_shadow_quality() -> int:
 	match _tier:
 		TIER_LOW:
-			return RenderingServer.SHADOW_QUALITY_HARD
+			return 1 # RenderingServer.SHADOW_QUALITY_HARD (Werte sind stabil, Konstante ggf. versionsabhängig)
 		TIER_MEDIUM:
-			return RenderingServer.SHADOW_QUALITY_SOFT_LOW
+			return 2 # SOFT_LOW
 		TIER_HIGH:
-			return RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM
+			return 3 # SOFT_MEDIUM
 		_:
-			return RenderingServer.SHADOW_QUALITY_SOFT_HIGH
+			return 4 # SOFT_HIGH
 
 
 # ---------------------------------------------------------------------------
@@ -230,14 +230,14 @@ func _apply_engine_settings() -> void:
 func _apply_shadow_settings() -> void:
 	var atlas_size: int = _get_shadow_atlas_size()
 	var quality: int = _get_shadow_quality()
+	# Dynamische Aufrufe: RenderingServer-API variiert leicht zwischen
+	# Godot-Versionen; fehlende Methoden werden still übersprungen.
 	if RenderingServer.has_method("directional_shadow_atlas_set_size"):
-		RenderingServer.directional_shadow_atlas_set_size(atlas_size, false)
+		RenderingServer.call("directional_shadow_atlas_set_size", atlas_size, false)
 	if RenderingServer.has_method("positional_shadow_atlas_set_size"):
-		RenderingServer.positional_shadow_atlas_set_size(atlas_size, false)
-	if RenderingServer.has_method("directional_shadow_quality_set"):
-		RenderingServer.directional_shadow_quality_set(quality)
+		RenderingServer.call("positional_shadow_atlas_set_size", atlas_size, false)
 	if RenderingServer.has_method("directional_soft_shadow_filter_set_quality"):
-		RenderingServer.directional_soft_shadow_filter_set_quality(quality)
+		RenderingServer.call("directional_soft_shadow_filter_set_quality", quality)
 
 
 func _apply_viewport_settings() -> void:
@@ -253,17 +253,38 @@ func _apply_viewport_settings() -> void:
 	if viewport.get("use_taa") != null:
 		viewport.use_taa = _tier >= TIER_ULTRA and not _is_mobile
 
-	# Upscaling: FSR ab Hoch, Bilinear bei Niedrig/Mittel, TSR nur Desktop-Ultra.
+	# Upscaling: FSR ab Hoch, Bilinear bei Niedrig/Mittel, TSR (falls in der
+	# Engine vorhanden) nur Desktop-Ultra. Konstanten werden dynamisch gelesen,
+	# weil Godot-Versionen sich hier unterscheiden (4.7: kein TSR).
 	if viewport.get("scaling_3d_mode") != null:
-		var mode: int = Viewport.SCALING_3D_MODE_BILINEAR
+		var modes: Array[int] = _get_scaling_modes()
+		var mode_bilinear: int = modes[0]
+		var mode_fsr: int = modes[1]
+		var mode_tsr: int = modes[2]
+
+		var mode: int = mode_bilinear
 		if _tier >= TIER_HIGH or _is_mobile:
-			mode = Viewport.SCALING_3D_MODE_FSR
-		if _tier >= TIER_ULTRA and not _is_mobile:
-			mode = Viewport.SCALING_3D_MODE_TSR
+			mode = mode_fsr
+		if _tier >= TIER_ULTRA and not _is_mobile and mode_tsr >= 0:
+			mode = mode_tsr
 		viewport.scaling_3d_mode = mode
 		viewport.scaling_3d_scale = _current_scale if _adaptive else _get_configured_scale()
 		if viewport.get("scaling_3d_sharpness") != null:
-			viewport.scaling_3d_sharpness = 0.55 if mode == Viewport.SCALING_3D_MODE_BILINEAR else 0.9
+			viewport.scaling_3d_sharpness = 0.55 if mode == mode_bilinear else 0.9
+
+
+func _get_scaling_modes() -> Array[int]:
+	var const_names: PackedStringArray = ClassDB.class_get_integer_constant_list("Viewport")
+	var bilinear: int = 0
+	var fsr: int = 1
+	var tsr: int = -1
+	if const_names.has("SCALING_3D_MODE_BILINEAR"):
+		bilinear = ClassDB.class_get_integer_constant("Viewport", "SCALING_3D_MODE_BILINEAR")
+	if const_names.has("SCALING_3D_MODE_FSR"):
+		fsr = ClassDB.class_get_integer_constant("Viewport", "SCALING_3D_MODE_FSR")
+	if const_names.has("SCALING_3D_MODE_TSR"):
+		tsr = ClassDB.class_get_integer_constant("Viewport", "SCALING_3D_MODE_TSR")
+	return [bilinear, fsr, tsr]
 
 
 func _refresh_environment_registry() -> void:

@@ -67,14 +67,21 @@ func _run_all() -> void:
 		mode_history.append(root.scaling_3d_mode)
 		scale_history.append(root.scaling_3d_scale)
 
-	# Desktop (CI = Linux): 0/1 Bilinear, 2 FSR, 3/4 TSR
+	# Moduswerte dynamisch aus der Engine holen (Godot-Versionen unterscheiden
+	# sich hier: BILINEAR/FSR/TSR-Konstanten werden von GraphicsQuality gelesen).
+	var modes: Array = gq.call("_get_scaling_modes")
+	var mode_bilinear: int = modes[0]
+	var mode_fsr: int = modes[1]
+	var mode_tsr: int = modes[2]
+	var mode_ultra: int = mode_tsr if mode_tsr >= 0 else mode_fsr
+
 	check("Stufen 0–1: Bilinear-Upscaling",
-		mode_history[0] == Viewport.SCALING_3D_MODE_BILINEAR and mode_history[1] == Viewport.SCALING_3D_MODE_BILINEAR,
+		mode_history[0] == mode_bilinear and mode_history[1] == mode_bilinear,
 		str(mode_history))
 	check("Stufen 2–4: FSR/TSR-Upgrade",
-		mode_history[2] == Viewport.SCALING_3D_MODE_FSR
-		and mode_history[3] == Viewport.SCALING_3D_MODE_TSR
-		and mode_history[4] == Viewport.SCALING_3D_MODE_TSR,
+		mode_history[2] == mode_fsr
+		and mode_history[3] == mode_ultra
+		and mode_history[4] == mode_ultra,
 		str(mode_history))
 	var scales_ok: bool = true
 	for i in range(5):
