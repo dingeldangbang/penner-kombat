@@ -191,6 +191,8 @@ jobs:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        # godot-ci-Container: Default-Shell ist sh (dash) → explizit bash.
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/build"
@@ -219,6 +221,7 @@ jobs:
       - name: Create/update GitHub Release and attach APK
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
           TAG="$GITHUB_REF_NAME"
