@@ -12,7 +12,7 @@ class_name MainUI
 @onready var spawn_button: Button = $MainPanel/VBoxContainer/ActionContainer/SpawnButton
 @onready var test_button: Button = $MainPanel/VBoxContainer/ActionContainer/TestButton
 @onready var file_button: Button = $MainPanel/VBoxContainer/FileContainer/FileButton
-@onready var virtual_joystick: VirtualJoystick = $TouchControls/VirtualJoystick
+@onready var virtual_joystick: PennerJoystick = $TouchControls/VirtualJoystick
 @onready var attack_button: Button = $TouchControls/AttackButton
 
 var _glb_importer: GlbImporter

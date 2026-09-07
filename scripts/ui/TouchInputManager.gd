@@ -5,7 +5,7 @@ class_name TouchInputManager
 
 static var instance: TouchInputManager
 
-@export var joystick: VirtualJoystick
+@export var joystick: PennerJoystick
 @export var light_attack_btn: TouchButton
 @export var heavy_attack_btn: TouchButton
 @export var block_btn: TouchButton

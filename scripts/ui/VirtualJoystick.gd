@@ -1,5 +1,5 @@
 extends Control
-class_name VirtualJoystick
+class_name PennerJoystick
 
 ## Mobile on-screen joystick with mouse fallback for editor testing.
 

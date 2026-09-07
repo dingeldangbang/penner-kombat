@@ -123,8 +123,8 @@ func _build_lights(stage: Node3D, tier: int) -> void:
 	key.spot_range = 30.0
 	key.spot_angle = 55.0
 	key.shadow_enabled = false
-	key.look_at(Vector3.ZERO, Vector3.UP)
 	stage.add_child(key)
+	key.look_at(Vector3.ZERO, Vector3.UP)
 
 	var fill: OmniLight3D = OmniLight3D.new()
 	fill.name = "CinematicFill"
@@ -144,8 +144,8 @@ func _build_lights(stage: Node3D, tier: int) -> void:
 		rim.spot_range = 28.0
 		rim.spot_angle = 45.0
 		rim.shadow_enabled = false
-		rim.look_at(Vector3(0, 1, 0), Vector3.UP)
 		stage.add_child(rim)
+		rim.look_at(Vector3(0, 1, 0), Vector3.UP)
 
 
 # ---------------------------------------------------------------------------

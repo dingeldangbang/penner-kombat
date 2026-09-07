@@ -7,7 +7,7 @@ class_name ArenaController
 @onready var camera_3d: Camera3D = $CameraRig/Camera3D
 @onready var spawn_p1: Marker3D = $SpawnP1
 @onready var spawn_p2: Marker3D = $SpawnP2
-@onready var virtual_joystick: VirtualJoystick = $TouchLayer/VirtualJoystick
+@onready var virtual_joystick: PennerJoystick = $TouchLayer/VirtualJoystick
 @onready var attack_button: Button = $TouchLayer/AttackButton
 
 var _player1: CombatController
