@@ -56,9 +56,22 @@ watch_and_download() { # $1 = run id, $2 = artifact prefix
   info "Warte auf Run #$id (Ctrl+C bricht nur das Warten ab) …"
   gh run watch "$id" --exit-status || die "Run #$id fehlgeschlagen — Details: gh run view $id --log"
   mkdir -p build
-  info "Lade Artefakt '$prefix-$id' nach build/ …"
-  gh run download "$id" -n "$prefix-$id" -D build
-  ok "Artefakt liegt unter build/ (siehe oben)."
+  # Artefaktname = <prefix>-<run_number> (nicht die Run-databaseId) —
+  # aus der Runs-API auflösen, Fallback auf prefix-id.
+  local name
+  name="$(gh api "/repos/$REPO/actions/runs/$id/artifacts" \
+    --jq "[.artifacts[] | select(.name | startswith(\"$prefix\"))][0].name" 2>/dev/null \
+    || true)"
+  [ -n "$name" ] || name="$prefix-$id"
+  info "Lade Artefakt '$name' nach build/ …"
+  if gh run download "$id" -n "$name" -D build; then
+    ok "Artefakt liegt unter build/ (siehe oben)."
+  else
+    echo "⚠  Download fehlgeschlagen (Blob/Netzwerk). Browser-Fallback:"
+    echo "    gh run view $id --web   →  Artefakte → herunterladen"
+    echo "    (oder: gh api /repos/$REPO/actions/runs/$id/artifacts)"
+    return 1
+  fi
 }
 
 # ---------- Status ----------
