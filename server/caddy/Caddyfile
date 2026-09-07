@@ -1,0 +1,10 @@
+# Penner Kombat — TLS-Proxy für den Mobile-Client (wss://)
+# Der Relay selbst bleibt ws:// intern; Caddy terminiert TLS und leitet
+# WebSocket-Upgrades an den Container "relay" weiter.
+# Android 11–15 (API 30–35): unbedingt wss:// verwenden (Klartext ws://
+# ist ab API 28 blockiert).
+
+{$PK_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy relay:5000
+}

@@ -43,6 +43,8 @@ Query-String (`ws://host:5000/kombat?room=AB12CD`) oder per `join`-Nachricht.
 |---|---|---|
 | `join` | `room`, `player` | Raum betreten (wird angelegt, falls neu). Erster Spieler ist Host |
 | `leave` | — | Raum verlassen |
+| `matchmaking` | `mode`, `region`, `tag` | **neu v1.1:** in die Matchmaking-Warteschlange; zwei passende Spieler (gleiche Mode/Region) erhalten einen Auto-Raum + `matched` |
+| `matchmaking_cancel` | — | **neu v1.1:** Warteschlange verlassen |
 | `ready` | `ready` (bool) | Bereitschaft; sind **alle ≥ 2** bereit, sendet der Server `start` |
 | `ping` | `t` | Antwort `pong` mit demselben `t` (Latenzmessung) |
 | `update` / `state` | beliebig (`pos`, `hp`, `combo` …) | wird 1:1 an die anderen gespiegelt |
@@ -59,8 +61,10 @@ Query-String (`ws://host:5000/kombat?room=AB12CD`) oder per `join`-Nachricht.
 | `peer_joined` / `peer_left` | `player`, `name` | Mitspieler kam/ging |
 | `room_state` | `players[]` mit `id`, `name`, `ready`, `host` | vollständige Raumliste nach jeder Änderung |
 | `start` | `room`, `at` | alle bereit → Match starten |
+| `matched` | `room`, `opponent:{player,name}`, `at` | **neu v1.1:** Matchmaking hat einen Gegner gefunden — Raum ist beigetreten, `ready` → `start` |
+| `matchmaking_update` | `status`, `mode`, `queued`/`room` | **neu v1.1:** `waiting` / `paired` / `canceled` / `timeout` |
 | `update`, `action`, `chat`, … | Originalfelder **+ `player`, `name`** | gespiegelte Nachricht eines Mitspielers |
-| `error` | `error` | `invalid_json`, `missing_room`, `room_full`, `not_in_room`, `unknown_type` |
+| `error` | `error` | `invalid_json`, `missing_room`, `room_full`, `not_in_room`, `unknown_type`, `matchmaking_disabled`, `already_in_room` |
 | `pong` | `t` | Antwort auf `ping` |
 
 **Zwei Regeln, die der Test absichert:** Der Absender bekommt seine eigene
@@ -97,10 +101,42 @@ Die Relay-URL steht in `MultiplayerConfig.relayServer`
 
 ## Deployment
 
-**Lokal / LAN:** Ein Gerät (oder ein PC im selben Netz) startet den Server,
-beide Clients tragen dessen IP ein — oder finden ihn per LAN-Discovery.
+### Schnellster Weg (Docker + TLS, empfohlen für Mobile)
 
-**Internet:** Auf einem kleinen VPS hinter einem Reverse Proxy mit TLS:
+```bash
+# VPS (Debian/Ubuntu) mit Docker + Compose v2
+PK_DOMAIN=kombat.example.de ./Tools/server_deploy.sh tls
+# → wss://kombat.example.de/kombat  (Caddy holt automatisch ein Let's-Encrypt-Zertifikat)
+curl http://localhost:5000/api/status   # Monitoring
+```
+
+Der Stack (`docker-compose.yml`) besteht aus:
+
+| Service | Aufgabe |
+|---|---|
+| `relay` | Node-Relay (Port 5000) mit Docker-Healthcheck |
+| `caddy` (nur `--profile tls`) | TLS-Terminierung + Reverse-Proxy (Auto-Zertifikat) |
+
+Manuell ohne Compose:
+
+```bash
+docker build -t penner-kombat-relay ./server
+docker run -p 5000:5000 --restart unless-stopped -e MATCHMAKING_ENABLED=true penner-kombat-relay
+```
+
+### REST-Endpunkte (neu v1.1, CORS-fähig)
+
+| Endpunkt | Inhalt |
+|---|---|
+| `GET /health` | `{ok, version, rooms, clients, matchmaking, uptime}` |
+| `GET /api/status` | vollständiger Serverstatus (Version, Warteschlange, Config) |
+| `GET /api/rooms` / `GET /rooms` | Raumliste mit `players`, `ready`, `lastActivity` |
+
+**Lokal / LAN:** Ein Gerät (oder ein PC im selben Netz) startet den Server,
+beide Clients tragen dessen IP ein — oder finden ihn per LAN-Discovery
+(ohne Docker: `cd server && npm install && npm start`).
+
+**Internet (manuell mit nginx):** Reverse Proxy mit TLS:
 
 ```nginx
 location /kombat {

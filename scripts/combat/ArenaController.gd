@@ -23,12 +23,21 @@ var _combo_count: int = 0
 var _screen_shake: ScreenShake
 var _post_processing: PostProcessing
 var _audio_manager: AudioManager
+var _kombat_camera: KombatCamera
+var _impact: ImpactFeedback
+var _shader_binder: CharacterShaderBinder
+var _cinematic_builder: CinematicArenaBuilder
+var _graphics: Variant = null
+var _announce_timer: float = 0.0
 
 
 func _ready() -> void:
+	_graphics = get_node_or_null("/root/GraphicsQuality")
 	_setup_systems()
+	_build_cinematic_stage()
 	_connect_touch_controls()
 	_start_match()
+	_announce_round_start()
 
 
 func _setup_systems() -> void:
@@ -42,6 +51,33 @@ func _setup_systems() -> void:
 	_post_processing.camera = camera_3d
 	add_child(_post_processing)
 	camera_3d.make_current()
+
+	# MKX-artige Kamera + Treffer-Feedback + Charakter-Shader
+	_kombat_camera = KombatCamera.new()
+	_kombat_camera.name = "KombatCamera"
+	_kombat_camera.camera = camera_3d
+	add_child(_kombat_camera)
+
+	_impact = ImpactFeedback.new()
+	_impact.name = "ImpactFeedback"
+	add_child(_impact)
+	_impact.initialize(_post_processing, _kombat_camera)
+
+	_shader_binder = CharacterShaderBinder.new()
+	_shader_binder.name = "CharacterShaderBinder"
+	_shader_binder.rim_strength = 1.0
+	add_child(_shader_binder)
+
+	_cinematic_builder = CinematicArenaBuilder.new()
+	_cinematic_builder.name = "CinematicArenaBuilder"
+	add_child(_cinematic_builder)
+
+
+func _build_cinematic_stage() -> void:
+	var tier: int = _graphics.get_quality_index() if _graphics != null else 2
+	_cinematic_builder.build(self, tier)
+	if _graphics != null and _graphics.has_method("refresh"):
+		_graphics.refresh()
 
 
 func _connect_touch_controls() -> void:
@@ -112,6 +148,9 @@ func _create_combatant(entity: Node3D, profile: SkillData, spawn_position: Vecto
 	controller.add_child(entity)
 	entity.position = Vector3.ZERO
 	rigger.rig_entity(entity, profile)
+	# Charakter-Shader (Rim-Light, Toon, Outline) auf Modell anwenden
+	if _shader_binder:
+		_shader_binder.apply_to(entity)
 	return controller
 
 
@@ -154,6 +193,10 @@ func _connect_fighter_signals() -> void:
 		GlobalData.add_damage_dealt(damage)
 		if hud: hud.update_combo(_combo_count)
 		if _post_processing: _post_processing.apply_combo_effects(_combo_count)
+		_on_hit_landed(_player2, damage)
+	)
+	_player2.combo_executed.connect(func(_name: String, damage: float) -> void:
+		_on_hit_landed(_player1, damage)
 	)
 
 
@@ -166,6 +209,64 @@ func _physics_process(delta: float) -> void:
 		_end_round()
 	_update_camera()
 	_update_hud()
+
+
+func _announce_round_start() -> void:
+	if hud == null:
+		return
+	hud.announce("RUNDE %d" % _round, Color(1.0, 0.75, 0.2))
+	_announce_timer = 0.0
+	# "KAMPF!" nach kurzem Vorspann (MKX-Intro) einblenden
+	var tween: Tween = create_tween()
+	tween.tween_interval(0.9)
+	tween.tween_callback(func() -> void:
+		if is_instance_valid(hud):
+			hud.announce("KAMPF!", Color(1.0, 0.18, 0.12))
+	)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is not InputEventKey:
+		return
+	var key_event: InputEventKey = event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	match key_event.keycode:
+		KEY_F1:
+			_cycle_graphics_quality()
+		KEY_F2:
+			_toggle_adaptive_resolution()
+		KEY_F3:
+			_toggle_cinematic_fx()
+
+
+func _cycle_graphics_quality() -> void:
+	if _graphics == null or not _graphics.has_method("cycle_quality"):
+		return
+	var name: String = _graphics.cycle_quality()
+	if hud:
+		hud.show_toast("Grafikstufe: %s" % name, Color(0.7, 0.9, 1.0))
+	_build_cinematic_stage()
+
+
+func _toggle_adaptive_resolution() -> void:
+	if _graphics == null or not _graphics.has_method("set_adaptive"):
+		return
+	var enabled: bool = not bool(_graphics.is_adaptive_enabled())
+	_graphics.set_adaptive(enabled)
+	if hud:
+		hud.show_toast("Dynamische Auflösung: %s" % ("AN" if enabled else "AUS"),
+			Color(0.7, 0.9, 1.0))
+
+
+func _toggle_cinematic_fx() -> void:
+	if _post_processing == null:
+		return
+	if _graphics != null and _graphics.has_method("toggle_cinematic_fx"):
+		_graphics.toggle_cinematic_fx()
+	if hud:
+		hud.show_toast("Kino-FX: %s" % ("AN" if _post_processing.are_cinematic_fx_enabled() else "AUS"),
+			Color(0.7, 0.9, 1.0))
 
 
 func _handle_keyboard_input() -> void:
@@ -181,13 +282,21 @@ func _handle_keyboard_input() -> void:
 		_player1.execute_next_combo()
 
 
+func _on_hit_landed(target: CombatController, damage: float) -> void:
+	if _impact == null or target == null or not is_instance_valid(target):
+		return
+	_impact.spawn_hit(target.global_position, damage)
+	if _shader_binder:
+		_shader_binder.flash_hit(target, clampf(damage / 40.0, 0.3, 1.0))
+
+
 func _update_camera() -> void:
 	if _player1 == null or _player2 == null:
 		return
-	var midpoint: Vector3 = (_player1.global_position + _player2.global_position) * 0.5
-	var distance: float = clampf(_player1.global_position.distance_to(_player2.global_position), 4.0, 12.0)
-	camera_3d.global_position = camera_3d.global_position.lerp(midpoint + Vector3(0, 5.0 + distance * 0.25, 8.0 + distance * 0.4), 0.08)
-	camera_3d.look_at(midpoint + Vector3.UP, Vector3.UP)
+	if _kombat_camera:
+		_kombat_camera.configure(_player1, _player2)
+		if not _kombat_camera.has_framed():
+			_kombat_camera.snap()
 
 
 func _update_hud() -> void:
@@ -240,5 +349,7 @@ func _end_match() -> void:
 		GlobalData.player_stats["losses"] = int(GlobalData.player_stats.get("losses", 0)) + 1
 	if hud:
 		hud.show_match_result("P1" if p1_won else "P2")
+	if _kombat_camera:
+		_kombat_camera.activate_finisher_zoom()
 	if _post_processing:
 		_post_processing.activate_fatality_effects()

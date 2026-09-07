@@ -196,3 +196,57 @@ func show_match_result(winner: String) -> void:
 	label.scale = Vector2.ZERO
 	tween.tween_property(label, "scale", Vector2.ONE * 1.15, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "scale", Vector2.ONE, 0.2)
+
+
+## Große MKX-artige Bildschirm-Ansage ("RUNDE 1", "KAMPF!", "FATALITY").
+func announce(text: String, color: Color = Color(1.0, 0.2, 0.15)) -> void:
+	var center: CenterContainer = CenterContainer.new()
+	center.name = "Announcement"
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Root.add_child(center)
+
+	var label: Label = Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 88)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
+	label.add_theme_constant_override("outline_size", 10)
+	label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	center.add_child(label)
+
+	var tween: Tween = create_tween()
+	label.scale = Vector2.ONE * 1.6
+	tween.tween_property(label, "modulate:a", 1.0, 0.12)
+	tween.parallel().tween_property(label, "scale", Vector2.ONE * 1.08, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.7)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(center.queue_free)
+
+
+## Kleine dezente Info-Meldung (Grafikstufen, Optionen) unten mittig.
+func show_toast(text: String, color: Color = Color(0.85, 0.9, 1.0)) -> void:
+	var container: CenterContainer = CenterContainer.new()
+	container.name = "Toast"
+	container.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	container.offset_bottom = -140.0
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Root.add_child(container)
+
+	var label: Label = Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 26)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
+	label.add_theme_constant_override("outline_size", 6)
+	label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	container.add_child(label)
+
+	var tween: Tween = create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.15)
+	tween.tween_interval(1.4)
+	tween.tween_property(label, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(container.queue_free)

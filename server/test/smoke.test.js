@@ -128,7 +128,26 @@ async function waitFor(ws, type, timeout = 2000, predicate = null) {
     const joinedD = await waitFor(d, 'joined');
     check('Raum aus Query-String', joinedD && joinedD.room === 'ZZ99YY');
 
-    b.close(); c.close(); d.close();
+    // --- 8. Matchmaking: zwei Wartende werden gepaart ---
+    const m1 = await open(URL);
+    const m2 = await open(URL);
+    m1.send(JSON.stringify({ type: 'matchmaking', mode: 'ranked', region: 'eu', player: 'Sigi' }));
+    m2.send(JSON.stringify({ type: 'matchmaking', mode: 'ranked', region: 'eu', player: 'Rolf' }));
+    const matched1 = await waitFor(m1, 'matched');
+    const matched2 = await waitFor(m2, 'matched');
+    check('Matchmaking paart beide Spieler', !!matched1 && !!matched2);
+    check('Beide erhalten denselben Raum', matched1 && matched2 && matched1.room === matched2.room);
+    check('Matched-Raum ist betretbar', !!(await waitFor(m1, 'joined', 2000, (m) => m.room === matched1.room)));
+
+    // --- 9. REST-Endpunkte ---
+    const health = await fetch(`http://127.0.0.1:${PORT}/health`).then((r) => r.json());
+    check('REST /health ok', health && health.ok === true && typeof health.uptime === 'number');
+    const status = await fetch(`http://127.0.0.1:${PORT}/api/status`).then((r) => r.json());
+    check('REST /api/status liefert Matchmaking-Info', status && status.matchmaking && status.matchmaking.enabled === true);
+    const roomList = await fetch(`http://127.0.0.1:${PORT}/api/rooms`).then((r) => r.json());
+    check('REST /api/rooms listet den Matched-Raum', Array.isArray(roomList) && roomList.some((r) => r.room === matched1.room));
+
+    b.close(); c.close(); d.close(); m1.close(); m2.close();
     await wait(200);
   } catch (e) {
     console.error('  ❌ Ausnahme:', e.message);

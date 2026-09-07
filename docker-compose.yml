@@ -1,0 +1,57 @@
+# Penner Kombat — Server-Stacks
+#
+# Basis (Relay + Healthcheck):
+#   docker compose up -d relay
+#
+# Mit TLS für Android (wss://, Auto-Zertifikat via Let's Encrypt/Caddy):
+#   PK_DOMAIN=kombat.example.de docker compose --profile tls up -d
+#   (Firewall: Port 80/443 öffnen, DNS-A-Record auf den Server zeigen)
+#
+# Der Client zeigt danach auf: wss://kombat.example.de/kombat
+services:
+  relay:
+    build: ./server
+    container_name: penner-kombat-relay
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      PORT: "5000"
+      HOST: "0.0.0.0"
+      MAX_PLAYERS: "${MAX_PLAYERS:-4}"
+      MATCHMAKING_ENABLED: "${MATCHMAKING_ENABLED:-true}"
+      MATCHMAKING_TIMEOUT_MS: "${MATCHMAKING_TIMEOUT_MS:-90000}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optionaler TLS-Endpunkt (gleichzeitig Reverse Proxy):
+  #   wss://DEINE-DOMAIN/kombat  →  relay:5000/kombat
+  caddy:
+    image: caddy:2-alpine
+    container_name: penner-kombat-caddy
+    profiles: ["tls"]
+    restart: unless-stopped
+    depends_on:
+      - relay
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PK_DOMAIN: "${PK_DOMAIN:?PK_DOMAIN muss gesetzt sein (z. B. kombat.example.de)}"
+    volumes:
+      - ./server/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

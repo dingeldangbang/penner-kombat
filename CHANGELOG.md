@@ -2,6 +2,16 @@
 
 ## [Unveröffentlicht]
 
+### 🎬 MKX-Grafik-Upgrade (Phase 0) + Mobile-Server v1.1 — Masterplan
+- **`docs/MASTERPLAN_3D_MKX.md`**: vollständiger Ziel-/Fahrplan „Mortal Kombat X“-Look & Game-Feel (Analysen, Technik, Phasen 0–5, Mobile-Tier-Tabelle, DoD, Risiken).
+- **`GraphicsQuality` (Autoload):** 5 Qualitätsstufen (Niedrig→Kino), Mobil-Erkennung, FSR/TSR-Upscaling, MSAA, SSAO/SSR/Voll-Fog/Glow pro Stufe, **adaptive Auflösung** (FPS-Regelung gegen Thermal-Throttling), Persistenz `user://graphics.cfg`; Hotkeys im Kampf: `F1` Stufe · `F2` Adaptive · `F3` Kino-FX.
+- **Neue Shader:** `shaders/PennerCharacter3D.gdshader` (Toon-PBR, Rim-Light, Silhouetten-Outline, Hit-Flash), `shaders/WetFloor.gdshader` (Pfützen, Fresnel-Spiegelung, Neon-Gitter, Regen), `shaders/ArenaSky.gdshader` (Nachthimmel, Horizont-Glühen, Sterne).
+- **Arena:** `CinematicArenaBuilder` (Sky, Nassboden, Neon-Bühnenrand, MultiMesh-Crowd, Nebel, Spot/Fill/Rim-Lichter, Props), Arena-Environment auf ACES + Glow + SSAO + Fog umgestellt.
+- **Kamera & Game-Feel:** `KombatCamera` (Framing, dynamisches FOV, Punch-/Finisher-Zoom), `ImpactFeedback` (Hit-Stop, HitSpark, Shockwave, Flash, Shake), `CharacterShaderBinder` wandelt GLB-Modelle zur Laufzeit um; HUD: „RUNDE/KAMPF!“-Ansagen + Info-Toasts.
+- **Post-Processing:** ACES-Tonemap, Film-Grain, Chromatic Aberration, Letterbox, Treffer-Flash (ein Canvas-Shader, mobil-freundlich).
+- **Server v1.1 (`server/`):** Matchmaking (`matchmaking`/`matchmaking_cancel`, Timeout), REST `GET /health` · `/api/status` · `/api/rooms` (CORS), Version im `welcome`; Smoke-Test 24/24 grün.
+- **Mobile-Server-Betrieb:** `server/Dockerfile` (Healthcheck) + `server/.env.example` + `docker-compose.yml` (Relay + optionaler Caddy-TLS-Proxy) + `server/caddy/Caddyfile` + `Tools/server_deploy.sh` (up/tls/status/logs/stop).
+
 ### Android 11–15 (API 30–35) — Abhängigkeiten & Anbindungen
 - **Engine-Ziel:** Godot 4.7.2 (targetSdk 35, 16-KB-Page-Size, NDK r29-Template); Projekt-Features auf 4.7 markiert.
 - **`export_presets.cfg`:** Preset `Android` (Debug-APK) + Preset `Android AAB` (Gradle-Build: minSdk 30 / targetSdk 35, `compress_native_libraries=false`, ausgeweitete Permissions).

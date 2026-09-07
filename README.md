@@ -8,9 +8,12 @@
 
 ---
 
-## ✅ Aktueller Stand (2026-08-24)
+## ✅ Aktueller Stand (2026-09-07)
 
-Das Repository enthält die **vollständige Godot 4 Mobile/Editor-Version** mit einer modernen, professionellen Asset-Pipeline.
+Das Repository enthält die **vollständige Godot 4 Mobile/Editor-Version** mit
+einer modernen, professionellen Asset-Pipeline — plus **MKX-Grafik-Upgrade
+(Phase 0)** und **Mobile-Server v1.1** (Matchmaking + TLS-Deployment).
+Fahrplan & Detailüberlegungen: **[docs/MASTERPLAN_3D_MKX.md](docs/MASTERPLAN_3D_MKX.md)**.
 
 ### Kern-Highlights
 - **Advanced Asset Pipeline** mit Atomic Chunking (auch für >1 GB große ZIP-Archive)
@@ -20,6 +23,15 @@ Das Repository enthält die **vollständige Godot 4 Mobile/Editor-Version** mit 
 - Mobile-Optimierungen (LOD, PerformanceManager, Touch)
 - **Android 11–15 (API 30–35)**: Export-Presets, SDK-Setup, CI-APK + optionales AAB, 16-KB-Page-Size, `ws://`/`wss://`-Relay-Anbindung — Details in [docs/ANDROID_11_15.md](docs/ANDROID_11_15.md)
 - 9 spielbare Charaktere + KI + VFX + Audio
+
+### 🎬 MKX-Grafik-Upgrade (Phase 0) — kurz
+- **`GraphicsQuality`** (Autoload): 5 Stufen (Niedrig→Kino), FSR/TSR, **adaptive Auflösung**;
+  Hotkeys im Kampf: `F1` Stufe · `F2` Adaptive · `F3` Kino-FX
+- **Neue Shader:** Charakter Toon-PBR (Rim/Outline), nasser Arena-Boden, Nachthimmel
+- **Arena-Dressing:** `CinematicArenaBuilder` — Neon, Crowd, Nebel, Spotlights, Props
+- **Game-Feel:** `KombatCamera` (Punch-/Finisher-Zoom) + `ImpactFeedback` (Hit-Stop, Sparks, Shockwave)
+- **HUD:** „RUNDE 1 / KAMPF!“-Ansagen, Info-Toasts
+- **Server v1.1:** Matchmaking + REST-Status-API + Docker/Caddy-TLS → `./Tools/server_deploy.sh tls`
 
 ---
 

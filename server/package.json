@@ -1,8 +1,8 @@
 {
   "name": "penner-kombat-relay",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "WebSocket-Relay für Penner Kombat: Räume, Spiegelung von Zustands- und Aktionsnachrichten.",
+  "description": "WebSocket-Relay für Penner Kombat: Räume, Matchmaking, Spiegelung von Zustands- und Aktionsnachrichten, REST-Status-API. Docker-ready für Mobile (Android 11–15, wss://).",
   "license": "CC-BY-NC-4.0",
   "type": "commonjs",
   "main": "src/relay.js",

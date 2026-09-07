@@ -1,6 +1,12 @@
 # 📊 STATUS — was ist da, was fehlt wirklich
 
-Stand: 2026-08-22 · Branch `arena/01a0264e-penner-kombat`
+Stand: 2026-09-07 · Branch `arena/01a079e0-penner-kombat`
+
+> **Update 2026-09-07:** Grafik-Upgrade Phase 0 ist umgesetzt
+> (`GraphicsQuality` 5 Stufen + adaptive Auflösung, Arena-Shader & Dressing,
+> `KombatCamera`, `ImpactFeedback`, Charakter-Shader-Binder, Post-FX) und der
+> Relay ist jetzt ein **Mobile-Server v1.1** (Matchmaking, REST, Docker/TLS).
+> Vollständiger Ziel-/Fahrplan: **`docs/MASTERPLAN_3D_MKX.md`**.
 
 Diese Datei gleicht die kursierenden „Was fehlt noch?"-Checklisten mit dem
 **tatsächlichen Repo-Inhalt** ab. Kurzfassung: **Code ist praktisch vollständig,

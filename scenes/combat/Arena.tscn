@@ -22,12 +22,21 @@ roughness = 0.85
 
 [sub_resource type="Environment" id="Environment_arena"]
 background_mode = 1
-background_color = Color(0.08, 0.06, 0.1, 1)
+background_color = Color(0.05, 0.04, 0.08, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.3, 0.3, 0.4, 1)
-ambient_light_energy = 0.75
+ambient_light_color = Color(0.35, 0.4, 0.55, 1)
+ambient_light_energy = 0.8
 glow_enabled = true
-glow_intensity = 0.35
+glow_intensity = 0.9
+glow_hdr_threshold = 0.85
+tonemap_mode = 3
+tonemap_exposure = 1.05
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.4
+fog_enabled = true
+fog_density = 0.008
+fog_light_color = Color(0.1, 0.1, 0.15, 1)
 
 [node name="Arena" type="Node3D"]
 script = ExtResource("1_arena")

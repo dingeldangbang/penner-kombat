@@ -59,3 +59,6 @@ crashlytics-build.properties
 server/node_modules/
 server/package-lock.json
 server/npm-debug.log*
+
+# Relay-Server: lokale Env-Dateien
+server/.env
