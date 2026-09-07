@@ -32,9 +32,10 @@ CMD="${1:-status}"
 ARG="${2:-}"
 
 # ---------- Hilfsfunktionen ----------
-die() { echo "❌ $*" >&2; exit 1; }
+die()  { echo "❌ $*" >&2; exit 1; }
 info() { echo "ℹ  $*"; }
 ok()   { echo "✅ $*"; }
+warn() { echo "⚠  $*"; }
 
 require_gh() {
   command -v gh >/dev/null 2>&1 || die "gh CLI fehlt — https://cli.github.com installieren"
