@@ -67,8 +67,33 @@ godot --headless --path . --export-debug "Android AAB" build/PennerKombat.aab
 
 ## Release signing
 
-The committed workflow deliberately produces a debug APK so it works without
-secrets. A Play Store or production release must use a private release keystore
-outside the repository and `--export-release`; never commit a keystore or its
-passwords. Configure the release keystore fields in `export_presets.cfg` at CI
-runtime from GitHub Secrets before adding a separate signed-release job.
+The committed workflow deliberately produces a debug APK on every push so it
+works without secrets. On **version tags (`v*`)** a dedicated job
+`Signed APK → GitHub Release` exports a signed APK, creates a GitHub Release
+and attaches the APK as a downloadable asset:
+
+`git tag v1.1.0 && git push origin v1.1.0` — or `./Tools/gh_android.sh release v1.1.0`.
+
+### Real release signing (recommended for distribution)
+
+Create a private keystore once, **never commit it**, and add three repository
+secrets. Godot reads them at export time via `GODOT_ANDROID_KEYSTORE_RELEASE_*`:
+
+```bash
+keytool -v -genkeypair -keystore release.keystore -alias pennerkombat \
+  -keyalg RSA -keysize 2048 -validity 10000
+# keystore-Passwort == Key-Passwort (Godot-Anforderung)
+
+base64 -w0 release.keystore > release.keystore.b64     # macOS: base64 -i …-o …
+
+gh secret set ANDROID_KEYSTORE_BASE64 < release.keystore.b64
+gh secret set ANDROID_KEYSTORE_PASSWORD
+gh secret set ANDROID_KEY_ALIAS        # z. B. pennerkombat
+```
+
+With all three secrets set, every `v*` tag produces a **release-signed** APK;
+the job fails loudly if the secrets are incomplete. Without them the job emits
+a warning and uploads a **debug-signed** APK (fine for sideloading/tests, not
+for Play Store distribution). Keep the keystore file and passwords outside the
+repository — never commit a keystore or its passwords; the project never
+requires them in `export_presets.cfg`.

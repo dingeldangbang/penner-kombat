@@ -66,8 +66,20 @@ Der Job installiert das APK und prüft, ob der Prozess
 ```
 
 Das taggt lokal, pusht den Tag (Workflow läuft auf `v*`), wartet auf den
-Run, lädt das APK und erstellt **GitHub Release** `v1.1.0` mit angehängter
-APK. Für ein produktives, signiertes AAB siehe §7 (Secrets/Release-Keystore).
+Run und zeigt danach das **GitHub Release** `v1.1.0` mit angehängter,
+**signierter APK** an (`Signed APK → GitHub Release`-Job). Der Job exportiert
+mit `--export-release` (Release-Keystore aus den Secrets
+`ANDROID_KEYSTORE_BASE64` / `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS`,
+siehe `docs/APK_BUILD_READY.md`) — fehlen die Secrets, wird eine
+debug-signierte APK mit Warnung veröffentlicht.
+
+## 5b. Signatur prüfen
+
+```bash
+# APK aus dem Release herunterladen und mit apksigner (SDK-Build-Tools) prüfen:
+$ANDROID_HOME/build-tools/35.0.1/apksigner verify --print-certs PennerKombat-release.apk
+# Aus dem GitHub-Release: gh release download v1.1.0 -p '*.apk' -D build
+```
 
 ## 6. Matrix Android 11–15 (CI deckt das ab)
 

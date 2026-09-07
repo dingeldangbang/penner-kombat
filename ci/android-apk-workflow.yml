@@ -2,8 +2,9 @@ name: Game CI — Android APK
 
 # Exports the Godot 4.7 project as an installable, debug-signed Android APK
 # (Android 11–15 / API 30–35) and, on request, a Play-Store-ready AAB via
-# the Gradle build. Optional: installs the APK on an Android 11–15 emulator
-# (API 30–35) as a smoke test.
+# the Gradle build. On version tags (v*) a **signed APK is published as a
+# GitHub Release asset** (release keystore from secrets, debug fallback).
+# Optional: installs the APK on an Android 11–15 emulator (API 30–35).
 #
 # The barichello/godot-ci:4.7.2 image contains Godot 4.7.2, matching export
 # templates, Android SDK build-tools, JDK 17 and the debug keystore, so no
@@ -13,7 +14,7 @@ name: Game CI — Android APK
 # Everything can be driven from the local machine via GitHub CLI:
 #   ./Tools/gh_android.sh build apk|aab|all
 #   ./Tools/gh_android.sh emulator 35
-#   ./Tools/gh_android.sh release v1.0.0
+#   ./Tools/gh_android.sh release v1.0.0   # → signierte APK im GitHub Release
 
 on:
   workflow_dispatch:
@@ -158,6 +159,80 @@ jobs:
           path: build/PennerKombat-debug.aab
           if-no-files-found: error
           retention-days: 30
+
+  # Tag-Pipeline (v*): signierte Release-APK → GitHub Release als Download-Asset.
+  # Signierung:
+  #   - Secrets ANDROID_KEYSTORE_BASE64 + ANDROID_KEYSTORE_PASSWORD + ANDROID_KEY_ALIAS
+  #     gesetzt → echter Release-Keystore (Godot exportiert --export-release).
+  #   - Nicht gesetzt → Debug-Signatur (Keystore im CI-Image, Warnung im Log).
+  release-apk:
+    name: Signed APK → GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: barichello/godot-ci:4.7.2
+    # Für `gh release create/upload` (Asset anhängen) braucht dieser Job
+    # Schreibrechte auf Contents — überschreibt das Top-Level-`read`.
+    permissions:
+      contents: write
+    env:
+      HOME: /root
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Import project resources
+        run: godot --headless --path "$GITHUB_WORKSPACE" --editor --quit
+
+      - name: Export signed release APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build"
+          if [ -n "$KEYSTORE_B64" ]; then
+            if [ -z "$KEYSTORE_PASS" ] || [ -z "$KEY_ALIAS" ]; then
+              echo "::error::Secrets unvollständig: ANDROID_KEYSTORE_BASE64 + ANDROID_KEYSTORE_PASSWORD + ANDROID_KEY_ALIAS müssen zusammen gesetzt sein." >&2
+              exit 1
+            fi
+            echo "$KEYSTORE_B64" | base64 -d > /tmp/pennerkombat-release.keystore
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/tmp/pennerkombat-release.keystore
+            export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$KEY_ALIAS"
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$KEYSTORE_PASS"
+            echo "Signiere mit Release-Keystore (Alias `$KEY_ALIAS`) …"
+            godot --headless --path "$GITHUB_WORKSPACE" \
+              --export-release "Android" \
+              "$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
+          else
+            echo "::warning::Keine Release-Keystore-Secrets gesetzt — veröffentliche debug-signierte APK (Test/Installation)."
+            echo "            Echte Signatur: gh secret set ANDROID_KEYSTORE_BASE64/… — siehe docs/APK_BUILD_READY.md"
+            godot --headless --path "$GITHUB_WORKSPACE" \
+              --export-debug "Android" \
+              "$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
+          fi
+          test -s "$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
+
+      - name: Create/update GitHub Release and attach APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="$GITHUB_REF_NAME"
+          APK="$GITHUB_WORKSPACE/build/PennerKombat-release.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+            echo "Release $TAG existierte bereits — APK aktualisiert."
+          else
+            gh release create "$TAG" "$APK" \
+              --title "Penner Kombat $TAG" \
+              --generate-notes
+          fi
+          gh release view "$TAG" --json name,tagName,assets \
+            --jq '"✅ Release \(.tagName) — Assets: " + ([.assets[].name] | join(", "))'
 
   # Optional (workflow_dispatch → "emulator_test"): installs the APK on an
   # Android 11–15 emulator (API 30–35) and verifies it launches.

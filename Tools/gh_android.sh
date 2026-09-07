@@ -159,25 +159,33 @@ if [ "$CMD" = "download" ]; then
   exit 0
 fi
 
-# ---------- Release ----------
+# ---------- Release (signierte APK im GitHub Release) ----------
 if [ "$CMD" = "release" ]; then
   require_gh
   TAG="${ARG:?Nutzung: release vX.Y.Z}"
   workflow_exists || die "Workflow fehlt — ./Tools/gh_android.sh activate"
-  info "Tagge $TAG und pushe (Workflow läuft auf Tags v*) …"
+  info "Tagge $TAG und pushe (Workflow-Job 'Signed APK → GitHub Release' läuft auf Tags v*) …"
   git tag -f "$TAG"
-  git push -f origin "$TAG"
-  sleep 8
+  git push -f origin "$TAG" 2>&1 | tail -2 || die "Tag-Push fehlgeschlagen (Branch-Rechte prüfen)"
+  sleep 10
   id="$(gh run list --workflow "$WORKFLOW" --branch "$TAG" --limit 1 --json databaseId -q '.[0].databaseId')"
   [ -n "$id" ] || die "Kein Tag-Run gefunden"
   echo "$id" > build/.last_run_id
-  watch_and_download "$id" "$APK_PREFIX"
-  gh release create "$TAG" \
-    build/PennerKombat-debug.apk \
-    --title "Penner Kombat $TAG" \
-    --notes "Android 11–15 (API 30–35) Debug-APK — via GitHub CLI/CI gebaut." \
-    --verify-tag
-  ok "Release '$TAG' erstellt (APK angehängt)."
+  info "Warte auf Tag-Run #$id (APK + ggf. AAB + Release-Anhang) …"
+  gh run watch "$id" --exit-status || die "Run #$id fehlgeschlagen — Details: gh run view $id --log"
+  ok "Run grün. Release:"
+  gh release view "$TAG" --json name,tagName,assets \
+    --jq '"  \(.tagName) — Assets: " + ([.assets[].name] | join(", "))' 2>/dev/null \
+    || info "Release erscheint gleich: https://github.com/$REPO/releases/tag/$TAG"
+  # Signatur-Hinweis (nur wenn Secrets nicht gesetzt sind, sagt das Workflow-Log)
+  if gh secret list 2>/dev/null | grep -q ANDROID_KEYSTORE_BASE64; then
+    ok "Release-Keystore-Secret vorhanden → Release-Signatur."
+  else
+    warn "Keine ANDROID_KEYSTORE_BASE64-Secrets — APK ist debug-signiert. Echte Signatur:"
+    warn "  gh secret set ANDROID_KEYSTORE_BASE64 <release.keystore.b64>"
+    warn "  gh secret set ANDROID_KEYSTORE_PASSWORD <pass>"
+    warn "  gh secret set ANDROID_KEY_ALIAS <alias>"
+  fi
   exit 0
 fi
 

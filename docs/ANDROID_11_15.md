@@ -162,9 +162,15 @@ ReactiveCircus/android-emulator-runner.
 ## 6. Installations-/Release-Weg
 
 1. Debug-APK aus CI herunterladen und sideloaden (`adb install` oder Dateimanager).
-2. Für Google Play: AAB (Workflow-Input `build_aab`) → Play Console →
+2. **Signierte APK auf GitHub:** Tag `v*` pushen
+   (`./Tools/gh_android.sh release v1.1.0`) → Workflow exportiert
+   `PennerKombat-release.apk` (Release-Keystore aus Secrets
+   `ANDROID_KEYSTORE_BASE64`/`ANDROID_KEYSTORE_PASSWORD`/`ANDROID_KEY_ALIAS`,
+   sonst Debug-Fallback) und hängt sie als **GitHub-Release-Asset** an.
+   Keystore-Anlage: `docs/APK_BUILD_READY.md` → „Release signing“.
+3. Für Google Play: AAB (Workflow-Input `build_aab`) → Play Console →
    Play-App-Signing (Keystore niemals ins Repo).
-3. Versionierung: `package/version=1`, `version/code=1` in `project.godot` und
+4. Versionierung: `package/version=1`, `version/code=1` in `project.godot` und
    in den Presets vor jedem Upload erhöhen.
 
 ## 7. Gleichwertige Alternativen („wenn nicht möglich“)
