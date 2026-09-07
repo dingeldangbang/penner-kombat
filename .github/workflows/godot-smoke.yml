@@ -49,8 +49,8 @@ jobs:
             grep -E "SCRIPT ERROR|^ERROR:|Shader compilation|at line|ERROR:" /tmp/arena.log | head -25 | while IFS= read -r line; do
               echo "::error::$line"
             done
-            echo "::error::=== SHADER-DETAILS (10 Zeilen nach 'Shader compilation failed') ==="
-            grep -A 10 "Shader compilation failed" /tmp/arena.log | head -60 | while IFS= read -r line; do
+            echo "::error::=== SHADER-DETAILS (5 Zeilen vor + 12 nach 'Shader compilation failed') ==="
+            grep -B 5 -A 12 "Shader compilation failed" /tmp/arena.log | head -120 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1

@@ -44,12 +44,12 @@ void fragment() {
 	// Fresnel-Spiegelung am Bodenrand (wirkt mit SSR ultra-stark, tut aber auch ohne)
 	vec3 view_dir = normalize(CAMERA_POSITION_WORLD - v_world);
 	float fresnel = pow(1.0 - abs(dot(normalize(NORMAL), view_dir)), 3.0);
-	EMISSION = accent_color * fresnel * reflection_strength * 0.6;
+	EMISSION += accent_color.rgb * fresnel * reflection_strength * 0.6;
 
 	// Neon-Gitterlinien auf dem Boden (MKX-Stage-Branding)
 	vec2 grid = abs(fract(v_uv * vec2(noise_scale * 2.0)) - 0.5);
 	float line = 1.0 - smoothstep(0.485, 0.5, max(grid.x, grid.y));
-	EMISSION += accent_color * line * grid_glow * (0.7 + 0.3 * sin(TIME * 2.0));
+	EMISSION += accent_color.rgb * line * grid_glow * (0.7 + 0.3 * sin(TIME * 2.0));
 
 	// feine Regenspritzer ("Sparkle")
 	float sparkle = step(0.9985, hash(floor(v_uv * noise_scale * 6.0) + floor(TIME * 9.0))) * wet * ripple_strength;

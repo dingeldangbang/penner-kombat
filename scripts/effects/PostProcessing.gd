@@ -90,6 +90,7 @@ uniform float aberration = 0.0018;
 uniform float flash = 0.0;
 uniform vec4 flash_color : source_color = vec4(1.0, 0.92, 0.8, 1.0);
 uniform float letterbox = 0.0;
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear;
 
 float hash01(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -103,8 +104,8 @@ void fragment() {
 	// Chromatic Aberration: Farbkanäle radial leicht versetzen
 	vec2 dir = normalize(centered + vec2(0.0001));
 	vec2 offset = dir * aberration * (0.25 + d * d);
-	vec4 tex = texture(SCREEN_TEXTURE, SCREEN_UV + offset);
-	vec4 tex_r = texture(SCREEN_TEXTURE, SCREEN_UV - offset * 0.6);
+	vec4 tex = texture(screen_tex, SCREEN_UV + offset);
+	vec4 tex_r = texture(screen_tex, SCREEN_UV - offset * 0.6);
 
 	float alpha = v + flash * 0.45;
 	vec3 col = mix(tex_r.rgb, tex.rgb, 0.5);
