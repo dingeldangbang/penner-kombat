@@ -50,9 +50,10 @@ void fragment() {
 	METALLIC = metallic;
 	SPECULAR = 0.6;
 
-	// Rim-Light: Neon-Streifen am Modellrand
-	RIM = rim_color.rgb * rim_strength * pow(1.0 - ndv, 2.2);
-	RIM_MASK = pow(1.0 - ndv, 1.6);
+	// Rim-Light: Neon-Streifen am Modellrand (EMISSION-basiert, versionssicher —
+	// das RIM/RIM_MASK-Konstrukt ist zwischen Godot-Versionen nicht stabil)
+	float rim = pow(1.0 - ndv, 2.2);
+	EMISSION += rim_color.rgb * rim_strength * rim * 0.8;
 
 	// Treffer-Blitz: kurzes Aufleuchten bei Impact
 	EMISSION = emission_color * emission_energy;
