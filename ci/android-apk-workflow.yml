@@ -31,7 +31,7 @@ on:
       emulator_api:
         description: "Emulator API level (30=Android 11 … 35=Android 15)"
         required: true
-        default: "35"
+        default: "30"
         type: choice
         options:
           - "30"
@@ -117,7 +117,7 @@ jobs:
   # NDK r29 (as required by Godot 4.7's config.gradle).
   export-aab:
     name: Export Android AAB (optional)
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build_aab == 'true') || (github.event_name == 'push' && github.ref == 'refs/heads/arena/01a07925-penner-kombat')
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_aab == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     container:
@@ -163,7 +163,7 @@ jobs:
   # Android 11–15 emulator (API 30–35) and verifies it launches.
   emulator-smoke-test:
     name: Emulator smoke test (API 30–35)
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.emulator_test == 'true') || (github.event_name == 'push' && github.ref == 'refs/heads/arena/01a07925-penner-kombat')
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.emulator_test == 'true'
     needs: export-apk
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -178,9 +178,12 @@ jobs:
       - name: Start emulator + smoke test
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
-          api-level: ${{ github.event.inputs.emulator_api || '35' }}
+          # GitHub-Hosted-Runner ohne KVM: fürs Booten "default"-Image + Soft-Accel
+          # und längeres Timeout; verlässliche Gerätetests → Firebase Test Lab.
+          api-level: ${{ github.event.inputs.emulator_api || '30' }}
           arch: x86_64
-          profile: pixel_6
+          disable-linux-hw-accel: true
+          emulator-boot-timeout: "900"
           disable-animations: true
           script: |
             adb install -r build/PennerKombat-debug.apk

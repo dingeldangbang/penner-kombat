@@ -73,11 +73,16 @@ APK. Für ein produktives, signiertes AAB siehe §7 (Secrets/Release-Keystore).
 
 | Android | API | CI-Emulator-Job | APK | AAB |
 |---|---|---|---|---|
-| 11 | 30 | `emulator 30` | ✅ | minSdk 30 ✅ |
+| 11 | 30 | `emulator 30` (Default, bewährt) | ✅ | minSdk 30 ✅ |
 | 12 / 12L | 31–32 | `emulator 31` | ✅ | ✅ |
 | 13 | 33 | `emulator 33` | ✅ | ✅ |
 | 14 | 34 | `emulator 34` | ✅ | ✅ |
-| 15 | 35 | `emulator 35` | ✅ | targetSdk 35 ✅ |
+| 15 | 35 | `emulator 35` (braucht viel RAM/Bootzeit; siehe Hinweis) | ✅ | targetSdk 35 ✅ |
+
+> Hinweis Emulator: GitHub-Hosted-Runner haben **kein KVM** — der Emulator bootet
+> im Software-Modus. API 30/31 sind damit zuverlässig testbar; für API 34/35
+> (und für die verbindliche Gerätematrix) ist **Firebase Test Lab** oder ein
+> Self-Hosted-Runner mit KVM die robustere Alternative.
 
 ## 7. Grenzen / Produktion
 
