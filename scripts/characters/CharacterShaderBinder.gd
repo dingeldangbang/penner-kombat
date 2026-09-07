@@ -50,6 +50,26 @@ func _bind_mesh(mesh: MeshInstance3D) -> void:
 		var surface_mat: Material = mesh.get_surface_override_material(i)
 		if surface_mat != null:
 			applied_any = _bind_material(surface_mat, mesh) or applied_any
+
+	# GLB/GLTF-Importe legen Materialien in den Mesh-Surfaces ab (kein Override).
+	# Mesh-Ressource duplizieren, damit andere Instanzen unverändert bleiben.
+	if mesh.mesh != null and mesh.mesh.get_surface_count() > 0:
+		var converted_any: bool = false
+		var needs_duplicate: bool = false
+		for i in range(mesh.mesh.get_surface_count()):
+			var base_mat: Material = mesh.mesh.surface_get_material(i)
+			if base_mat is StandardMaterial3D:
+				needs_duplicate = true
+				converted_any = true
+		if needs_duplicate:
+			var owned: Mesh = mesh.mesh.duplicate() as Mesh
+			for i in range(owned.get_surface_count()):
+				var base_mat: Material = owned.surface_get_material(i)
+				if base_mat is StandardMaterial3D:
+					owned.surface_set_material(i, _convert_material(base_mat as StandardMaterial3D))
+			mesh.mesh = owned
+			applied_any = true
+
 	if applied_any:
 		_applied_meshes += 1
 
@@ -68,6 +88,19 @@ func _bind_material(material: Material, mesh: MeshInstance3D) -> bool:
 	if source == null:
 		return false
 
+	var target: ShaderMaterial = _convert_material(source)
+
+	# Override-Material ersetzen (nicht das geteilte Mesh-Ressourcen-Material).
+	if mesh.material_override == material:
+		mesh.material_override = target
+	else:
+		for i in range(mesh.get_surface_override_material_count()):
+			if mesh.get_surface_override_material(i) == material:
+				mesh.set_surface_override_material(i, target)
+	return true
+
+
+func _convert_material(source: BaseMaterial3D) -> ShaderMaterial:
 	var target: ShaderMaterial = ShaderMaterial.new()
 	target.shader = _shader
 	target.set_shader_parameter("albedo_tint", source.albedo_color if source.albedo_color.a > 0.0 else Color.WHITE)
@@ -82,15 +115,7 @@ func _bind_material(material: Material, mesh: MeshInstance3D) -> bool:
 	target.set_shader_parameter("rim_color", rim_color)
 	target.set_shader_parameter("toon_bands", toon_bands)
 	target.set_shader_parameter("outline_strength", outline_strength)
-
-	# Override-Material ersetzen (nicht das geteilte Mesh-Ressourcen-Material).
-	if mesh.material_override == material:
-		mesh.material_override = target
-	else:
-		for i in range(mesh.get_surface_override_material_count()):
-			if mesh.get_surface_override_material(i) == material:
-				mesh.set_surface_override_material(i, target)
-	return true
+	return target
 
 
 func _update_uniforms(shader_mat: ShaderMaterial) -> void:
@@ -119,6 +144,11 @@ func _collect_shader_materials(node: Node, out: Array = []) -> Array:
 			var sm2: ShaderMaterial = mesh.get_surface_override_material(i) as ShaderMaterial
 			if sm2 != null and sm2.shader == _shader:
 				out.append(sm2)
+		if mesh.mesh != null:
+			for i in range(mesh.mesh.get_surface_count()):
+				var sm3: ShaderMaterial = mesh.mesh.surface_get_material(i) as ShaderMaterial
+				if sm3 != null and sm3.shader == _shader:
+					out.append(sm3)
 	for child in node.get_children():
 		_collect_shader_materials(child, out)
 	return out

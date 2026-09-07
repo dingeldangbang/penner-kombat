@@ -1,0 +1,76 @@
+name: Godot Smoke — Grafik & Pipeline
+
+# Headless-Verifikation in echter Godot-4.7.2-Umgebung (barichello/godot-ci):
+#   1. Projekt-Import (Parser/Registrierung aller GDScripte & Shader)
+#   2. Arena-Start (Autoloads, GraphicsQuality, CinematicArenaBuilder,
+#      KombatCamera, ImpactFeedback, HUD-Ansagen) — 300 Frames
+#   3. Pipeline-Test: GLB-Metarig -> Skeleton -> DynamicRigger ->
+#      CharacterShaderBinder -> ImpactFeedback -> GraphicsQuality-Stufen
+#
+# Lokal äquivalent: ./Tools/verify_graphics.sh   (benötigt Godot im PATH
+# oder GODOT_BIN=/pfad/zu/godot)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - arena/**
+    paths:
+      - "scripts/**"
+      - "scenes/**"
+      - "shaders/**"
+      - "test_assets/**"
+      - "Tools/**"
+      - "project.godot"
+      - ".github/workflows/godot-smoke.yml"
+
+jobs:
+  smoke:
+    name: Godot 4.7.2 Headless Smoke
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.7.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Godot-Version
+        run: godot --version
+
+      - name: Projekt-Import (Parser & Ressourcen)
+        run: godot --headless --path . --import 2>&1 | tee /tmp/import.log
+
+      - name: Arena-Boot (300 Frames)
+        run: |
+          set +e
+          godot --headless --path . res://scenes/combat/Arena.tscn --quit-after 300 2>&1 | tee /tmp/arena.log
+          if grep -E "SCRIPT ERROR|^ERROR:" /tmp/arena.log; then
+            echo "::error::Arena-Boot meldet Engine-/Skript-Fehler — siehe /tmp/arena.log"
+            exit 1
+          fi
+          echo "Arena-Boot OK (keine Fehler in ${PIPESTATUS[0]:-?} …)"
+
+      - name: Pipeline-Test (Metarig → Rigging → Shader → Qualität)
+        run: |
+          set +e
+          godot --headless --path . --script res://scripts/Testing/PipelineSmoke.gd 2>&1 | tee /tmp/pipeline.log
+          status=${PIPESTATUS[0]}
+          echo "Pipeline-Exit-Code: $status"
+          exit $status
+
+      - name: Fehler-Log komprimiert anzeigen
+        if: failure()
+        run: |
+          echo "--- IMPORT ---"; grep -E "SCRIPT ERROR|^ERROR:" /tmp/import.log | head -40 || true
+          echo "--- ARENA ---"; grep -E "SCRIPT ERROR|^ERROR:" /tmp/arena.log | head -40 || true
+          echo "--- PIPELINE ---"; grep -E "SCRIPT ERROR|^ERROR:|❌" /tmp/pipeline.log | head -40 || true
+
+      - name: Logs hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-smoke-logs
+          path: |
+            /tmp/import.log
+            /tmp/arena.log
+            /tmp/pipeline.log
+          if-no-files-found: ignore

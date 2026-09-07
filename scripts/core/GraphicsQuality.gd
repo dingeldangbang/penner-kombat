@@ -100,6 +100,8 @@ func set_quality(tier: int, save: bool = true) -> void:
 	# Kino-Stufe auf Mobilgeräten nicht erlauben (zu teuer).
 	if _is_mobile and _tier > TIER_HIGH:
 		_tier = TIER_HIGH
+	# Neue Stufe startet mit der zugehörigen Ziel-Auflösung (adaptive regelt danach).
+	_current_scale = _get_configured_scale()
 	apply()
 	if save:
 		_save_config()
