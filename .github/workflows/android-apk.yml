@@ -248,15 +248,15 @@ jobs:
           TAG="$GITHUB_REF_NAME"
           APK="build/PennerKombat-release.apk"
           test -s "$APK"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$APK" --clobber
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" -R "$GITHUB_REPOSITORY" --clobber
             echo "Release $TAG existierte bereits — APK aktualisiert."
           else
-            gh release create "$TAG" "$APK" \
+            gh release create "$TAG" "$APK" -R "$GITHUB_REPOSITORY" \
               --title "Penner Kombat $TAG" \
               --generate-notes
           fi
-          gh release view "$TAG" --json name,tagName,assets \
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json name,tagName,assets \
             --jq '"✅ Release \(.tagName) — Assets: " + ([.assets[].name] | join(", "))'
 
   # Optional (workflow_dispatch → "emulator_test"): installs the APK on an
