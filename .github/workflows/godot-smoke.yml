@@ -43,35 +43,35 @@ jobs:
       - name: Arena-Boot (300 Frames)
         run: |
           set +e
-          godot --verbose --headless --path . res://scenes/combat/Arena.tscn --quit-after 300 2>&1 | tee /tmp/arena.log
+          godot --verbose --headless --path . res://scenes/combat/Arena.tscn --quit-after 300 > /tmp/arena.log 2>&1
+          godot_status=$?
+          echo "GODOT_EXIT=$godot_status"
           if grep -E "SCRIPT ERROR|^ERROR:" /tmp/arena.log; then
-            echo "::error::=== ARENA-FEHLER (erste 25 Zeilen inkl. Shader-Kontext) ==="
-            grep -E "SCRIPT ERROR|^ERROR:|Shader compilation|at line|ERROR:" /tmp/arena.log | head -25 | while IFS= read -r line; do
-              echo "::error::$line"
-            done
-            echo "::error::=== SHADER-DETAILS (5 Zeilen vor + 12 nach 'Shader compilation failed') ==="
-            grep -B 5 -A 12 "Shader compilation failed" /tmp/arena.log | head -120 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
-            echo "::error::=== SHADER-/RESSOURCEN-ZEILEN (verbose) ==="
-            grep -iE "shader|gdshader" /tmp/arena.log | head -60 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
+            {
+              echo "### 🩸 Arena-Boot fehlgeschlagen (Godot-Exit: $godot_status)"
+              echo ""
+              echo "\`\`\`text"
+              tail -120 /tmp/arena.log
+              echo "\`\`\`"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          echo "Arena-Boot OK (keine Fehler in ${PIPESTATUS[0]:-?} …)"
+          echo "Arena-Boot OK"
 
       - name: Pipeline-Test (Metarig → Rigging → Shader → Qualität)
         run: |
           set +e
-          godot --headless --path . --script res://scripts/Testing/PipelineSmoke.gd 2>&1 | tee /tmp/pipeline.log
-          status=${PIPESTATUS[0]}
+          godot --headless --path . --script res://scripts/Testing/PipelineSmoke.gd > /tmp/pipeline.log 2>&1
+          status=$?
           echo "Pipeline-Exit-Code: $status"
           if [ "$status" -ne 0 ]; then
-            echo "::error::=== PIPELINE-FEHLER (erste 40 Zeilen) ==="
-            grep -E "❌|SCRIPT ERROR|^ERROR:" /tmp/pipeline.log | head -40 | while IFS= read -r line; do
-              echo "::error::$line"
-            done
+            {
+              echo "### 🧪 Pipeline-Test fehlgeschlagen (Exit: $status)"
+              echo ""
+              echo "\`\`\`text"
+              tail -120 /tmp/pipeline.log
+              echo "\`\`\`"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit $status
 
